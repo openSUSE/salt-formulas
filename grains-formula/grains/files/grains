@@ -1,0 +1,4 @@
+{% set cfg_grains = salt['pillar.get']('grains', {}) -%}
+{% if cfg_grains -%}
+{{ cfg_grains|yaml(False) }}
+{% endif -%}
