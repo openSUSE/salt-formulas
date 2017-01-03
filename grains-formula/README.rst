@@ -18,7 +18,7 @@ Available states
 .. contents::
     :local:
 
- ``grains``
- ----------
+``grains``
+----------
 
- Installs the /etc/salt/grains file and manages its content.
+Installs the /etc/salt/grains file and manages its content.
