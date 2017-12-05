@@ -5,9 +5,9 @@
 /etc/zypp/zypp.conf:
   ini.options_present:
     - sections:
-        {% for section, data in zypp_conf.iteritems() %}
+        {% for section, data in zypp_conf.items() %}
         {{ section }}:
-          {% for config, value in data.iteritems() %}
+          {% for config, value in data.items() %}
           {{ config }}: '{{ value }}'
           {% endfor %}
         {% endfor %}
@@ -17,9 +17,9 @@
 /etc/zypp/zypper.conf:
   ini.options_present:
     - sections:
-        {% for section, data in zypper_conf.iteritems() %}
+        {% for section, data in zypper_conf.items() %}
         {{ section }}:
-          {% for config, value in data.iteritems() %}
+          {% for config, value in data.items() %}
           {{ config }}: '{{ value }}'
           {% endfor %}
         {% endfor %}
