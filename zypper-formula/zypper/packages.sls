@@ -6,8 +6,6 @@ zypper_pkg_{{ package }}:
     - name: {{ package }}
     {% if 'refresh' in data %}
     - refresh: {{ data.refresh }}
-    {% else %}
-    - refresh: True
     {% endif %}
     {% if 'fromrepo' in data %}
     - fromrepo: {{ data.fromrepo }}
