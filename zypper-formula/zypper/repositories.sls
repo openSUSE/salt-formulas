@@ -13,8 +13,8 @@
     {% if 'gpgcheck' in data %}
     - gpgcheck: {{ data.gpgcheck }}
     {% endif %}
-    {% if 'key_url' in data %}
-    - key_url: {{ data.key_url }}
+    {% if 'gpgkey' in data or 'key_url' in data %}
+    - gpgkey: {{ data.gpgkey | default(data.key_url) }}
     {% endif %}
     {% if 'gpgautoimport' in data %}
     - gpgautoimport: {{ data.gpgautoimport }}
