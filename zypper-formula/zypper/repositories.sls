@@ -4,6 +4,7 @@
 {{ repo }}:
   pkgrepo.managed:
     - baseurl: {{ data.baseurl }}
+    - enabled: {{ data.enabled | default(True) }}
     - priority: {{ data.priority | default(99) }}
     - gpgcheck: {{ data.gpgcheck | default(True) }}
     - refresh: {{ data.refresh | default(False) }}
