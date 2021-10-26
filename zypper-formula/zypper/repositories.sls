@@ -4,19 +4,11 @@
 {{ repo }}:
   pkgrepo.managed:
     - baseurl: {{ data.baseurl }}
-    {% if 'priority' in data %}
-    - priority: {{ data.priority }}
-    {% endif %}
-    {% if 'refresh' in data %}
-    - refresh: {{ data.refresh }}
-    {% endif %}
-    {% if 'gpgcheck' in data %}
-    - gpgcheck: {{ data.gpgcheck }}
-    {% endif %}
+    - priority: {{ data.priority | default(99) }}
+    - gpgcheck: {{ data.gpgcheck | default(True) }}
+    - refresh: {{ data.refresh | default(False) }}
     {% if 'gpgkey' in data or 'key_url' in data %}
+    - gpgautoimport: {{ data.gpgautoimport | default(True) }}
     - gpgkey: {{ data.gpgkey | default(data.key_url) }}
-    {% endif %}
-    {% if 'gpgautoimport' in data %}
-    - gpgautoimport: {{ data.gpgautoimport }}
     {% endif %}
 {% endfor %}
