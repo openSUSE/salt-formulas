@@ -1,0 +1,26 @@
+infrastructure:
+  domains:
+    example.com:
+      clusters:
+        examplecluster:
+          external: False
+          primary: examplenode1
+          netapp:
+            host: 192.0.2.1:8080
+            vs_primary: examplessdvs
+            vs_secondary: examplehddvs
+            igroup_primary: exampleigroup
+          city: Vienna
+      machines:
+        examplevm:
+          usage: Testing
+          cluster: examplecluster
+          interfaces:
+            eth0:
+              ip4: 192.0.2.10
+              ip6: '2001:DB8:2:10::'
+              mac: '00:00:5E:00:53:00'
+              bridge: examplebridge
+          ram: 512MB
+          vcpu: 1
+          image: example.raw
