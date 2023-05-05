@@ -1,0 +1,49 @@
+{#-
+Jinja variable mapping file
+Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- set domain = pillar.domain | default(None) -%}
+{%- set deployhost = pillar.target | default(None) -%}
+{%- set fqdn = deployhost ~ '.' ~ domain -%}
+
+{%- if deployhost is not none and domain is not none -%}
+
+{%- set lockfile = 'lock_' ~ fqdn -%}
+{%- set lowpillar = salt.pillar.get('profile:orchestra') -%}
+{%- set globalpillar = lowpillar['global'] -%}
+{%- set racktables = lowpillar['global']['racktables'] -%}
+{#- to-do: allow external deployhosts and domains to be inserted via cli pillar -#}
+{%- set basepillar = lowpillar['domains'][domain] -%}
+{%- set vmpillar = basepillar['machines'][deployhost] -%}
+{%- set cluster = vmpillar['cluster'] -%}
+{%- set clusterpillar = basepillar['clusters'][cluster] -%}
+{%- set clusterprimary = clusterpillar['primary'] -%}
+{%- set clustertype = clusterpillar['type'] -%}
+{%- set netapppillar = clusterpillar['netapp'] -%}
+{%- set netapp_host = netapppillar['host'] -%}
+{%- set netapp_vs_primary = netapppillar['vs_primary'] -%}
+{%- if 'vs_secondary' in netapppillar -%}
+{%- set netapp_vs_secondary = netapppillar['vs_secondary'] -%}
+{%- else -%}
+{%- set netapp_vs_secondary = netapp_vs_primary -%}
+{%- endif -%}
+{%- set netapp_igroup_primary = netapppillar['igroup_primary'] -%}
+{%- set disks = vmpillar['disks'] -%}
+{#- to-do: fetch ansiblegate host from pillar -#}
+{%- set ansiblegate = 'ansiblegate' -%}
+
+{%- endif -%}
