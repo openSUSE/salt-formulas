@@ -1,0 +1,39 @@
+{#-
+Jinja variables file for the os-update Salt state
+Copyright (C) 2023 Georg Pfuetzenreuter
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- set defaults = {} -%}
+
+{%- load_yaml as defaults_timer -%}
+enable: true
+time: false
+{%- endload -%}
+
+{%- load_yaml as defaults_config -%}
+update_cmd: auto
+reboot_cmd: auto
+restart_services: 'yes'
+ignore_services_from_restart:
+  - dbus
+services_triggering_reboot:
+  - dbus
+{%- endload -%}
+
+{%- do defaults.update(defaults_timer) -%} {%- do defaults.update(defaults_config) -%}
+
+{%- set config  = salt.pillar.get('os-update', default=defaults, merge=True, merge_nested_lists=False) -%}
+{%- set options = defaults_config.keys() -%}
