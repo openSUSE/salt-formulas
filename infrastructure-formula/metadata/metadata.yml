@@ -1,0 +1,4 @@
+summary:
+  Salt states specific to the openSUSE/SUSE infrastructures
+description:
+  Custom Salt states specific to the openSUSE/SUSE infrastructures.

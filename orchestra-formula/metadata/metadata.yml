@@ -1,0 +1,4 @@
+summary:
+  Salt orchestration helper states
+description:
+  Salt helper states for the openSUSE/SUSE infrastructure orchestration states.

@@ -1,0 +1,4 @@
+summary:
+  Salt states for managing lunmap
+description:
+  Salt states for managing LUN mappings.
