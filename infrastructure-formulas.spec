@@ -27,42 +27,53 @@ License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
 Source:         _service
+Requires:       infrastructure-formula
+Requires:       libvirt-formula
+Requires:       lunmap-formula
+Requires:       orchestra-formula
+Requires:       suse_ha-formula
 BuildArch:      noarch
 
 %description
 Custom Salt states used in the openSUSE and SUSE infrastructures.
 
+%package common
+Summary:        Files and directories shared by formulas
+
+%description common
+Files and directories shared by openSUSE/SUSE infrastructure formuas.
+
 %package -n infrastructure-formula
 Summary:        Salt states specific to the openSUSE/SUSE infrastructures
-Requires:       %{name}
+Requires:       %{name}-common
 
 %description -n infrastructure-formula
 Custom Salt states specific to the openSUSE/SUSE infrastructures.
 
 %package -n suse_ha-formula
 Summary:        Salt states for managing SLE HA clusters
-Requires:       %{name}
+Requires:       %{name}-common
 
 %description -n suse_ha-formula
 Salt states for managing SUSE Linux Enterprise HA clusters.
 
 %package -n libvirt-formula
 Summary:        Salt states for managing libvirt
-Requires:       %{name}
+Requires:       %{name}-common
 
 %description -n libvirt-formula
 Salt states for managing libvirt servers.
 
 %package -n lunmap-formula
 Summary:        Salt states for managing lunmap
-Requires:       %{name}
+Requires:       %{name}-common
 
 %description -n lunmap-formula
 Salt states for managing LUN mappings.
 
 %package -n orchestra-formula
 Summary:        Salt orchestration helper states
-Requires:       %{name}
+Requires:       %{name}-common
 
 %description -n orchestra-formula
 Salt helper states for the openSUSE/SUSE infrastructure orchestration states.
@@ -97,6 +108,8 @@ do
 done
 
 %files
+
+%files common
 %license COPYING
 %doc README.md
 %dir %{fdir}
