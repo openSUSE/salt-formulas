@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import resources_dir -%}
+{%- from './map.jinja' import resources_dir -%}
 {%- macro primitive_resource(resource, class, type, instance_attributes, operations, meta_attributes, provider='NONE') %}
 ha_resource_file_{{ resource }}:
   file.managed:
