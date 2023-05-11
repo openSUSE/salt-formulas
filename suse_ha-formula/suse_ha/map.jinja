@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- set hapillar = salt['pillar.get']('suse_ha') -%}
-{%- set resources_dir = hapillar['resources_dir'] -%}
+{%- set resources_dir = hapillar.get('resources_dir', '/data/ha/resources') -%}
 
 {%- set cluster = hapillar['cluster'] -%}
 {%- set management = hapillar['management'] -%}
