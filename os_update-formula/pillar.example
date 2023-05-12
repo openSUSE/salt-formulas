@@ -1,0 +1,18 @@
+os-update:
+  # by default, the timer is enabled
+  # to keep it disabled, set this to false
+  enable: true
+
+  # by default, no timer override will be installed, and the packaged default will apply
+  # to install an override, use the syntax described in systemd.timer(5) - example:
+  # time: 'Thu *-*-01/4 02:00:00'
+  time: false
+
+  # options written to /etc/os-update.conf
+  update_cmd: auto
+  reboot_cmd: auto
+  restart_services: 'yes'
+  ignore_services_from_restart:
+    - dbus
+  services_triggering_reboot:
+    - dbus
