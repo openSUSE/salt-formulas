@@ -58,15 +58,22 @@ for directory in directories:
     if Path.is_file(Path(metadata)):
         with open(metadata) as yml:
             meta = yaml.safe_load(yml)
-            summary = meta.get('summary', None)
-            description = meta.get('description', None)
+        summary = meta.get('summary', None)
+        description = meta.get('description', None)
+        lic = meta.get('license', None)
     else:
-        log.warning('No metadata for {}'.format(formula))
+        log.warning('No metadata file for {}'.format(formula))
         summary = None
         description = None
+    if summary is None:
+        abort('Cannot proceed without at least a summary in the metadata file for the {} formula'.format(formula))
     log.info('Summary: {}'.format(str(summary)))
     log.info('Description: {}'.format(str(description)))
-    formulas.update({formula: {'summary': summary, 'description': description}})
+    log.info('License: {}'.format(str(lic)))
+    if any([Path.is_file(Path('{}/{}'.format(directory, file))) for file in ['COPYING', 'LICENCE', 'LICENSE']]) and lic is None:
+        log.warning('Formula {} ships a custom license, but does not declare it in its metadata. Make sure to update the generated spec file!'.format(formula))
+        lic = 'FIX-ME'
+    formulas.update({formula: {'summary': summary, 'description': description, 'license': lic}})
 
 log.debug(formulas)
 
