@@ -1,0 +1,4 @@
+summary:
+  Salt state for managing grains
+license:
+  Apache-2.0
