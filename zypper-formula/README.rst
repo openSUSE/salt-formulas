@@ -2,13 +2,6 @@
 zypper-formula
 ==============
 
-TODO
-
-.. note::
-
-    See the full `Salt Formulas installation and usage instructions
-    <http://docs.saltstack.com/en/latest/topics/development/conventions/formulas.html>`_.
-
 Available states
 ================
 
@@ -28,9 +21,9 @@ Handles /etc/zypp/zypp.conf and /etc/zypp/zypper.conf
 ``zypper.packages``
 -------------------
 
-TODO
+Installs packages defined in the `zypper:packages` pillar
 
 ``zypper.repositories``
 -----------------------
 
-TODO
+Configure repositories defined in the `zypper:repositories` pillar
