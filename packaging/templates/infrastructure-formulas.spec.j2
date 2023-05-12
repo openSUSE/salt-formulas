@@ -46,6 +46,9 @@ Files and directories shared by openSUSE/SUSE infrastructure formuas.
 %package -n {{ formula }}-formula
 Summary:        {{ config.summary }}
 Requires:       %{name}-common
+{%- if config.license is not none %}
+License:        {{ config.license }}
+{%- endif %}
 
 %description -n {{ formula }}-formula
 {{ config.description if config.description else config.summary ~ '.' }}
@@ -78,6 +81,16 @@ do
     cp -rv "$src_metadata" "%{buildroot}$dst_metadata"
     echo "$dst_metadata" >> "$fname.files"
   fi
+
+  for license in 'COPYING' 'LICENCE' 'LICENSE'
+  do
+    if [ -f "$formula/$license" ]
+    then
+      echo "%%license $formula/$license" >> "$fname.files"
+      break
+    fi
+  done
+
 done
 
 %files
