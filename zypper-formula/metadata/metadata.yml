@@ -1,0 +1,6 @@
+summary:
+  Salt states for managing zypper
+description:
+  Salt states for configuring packages, repositories, and zypper itself.
+license:
+  Apache-2.0

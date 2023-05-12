@@ -1,0 +1,17 @@
+zypper:
+  config:
+    zypp_conf:
+      main:
+        solver.onlyRequires: 'true'
+  packages:
+    tmux
+    vim
+  repositories:
+    repo-oss:
+      baseurl: https://download.opensuse.org/distribution/leap/15.4/repo/oss
+      priority: 99
+      refresh: False
+    repo-update-oss:
+      baseurl: https://download.opensuse.org/update/leap/15.4/oss
+      priority: 99
+      refresh: True
