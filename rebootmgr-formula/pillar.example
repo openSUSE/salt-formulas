@@ -1,0 +1,9 @@
+rebootmgr:
+  # by default, the service will be enabled
+  # to ensure it stays disabled, set this to false
+  enable: true
+
+  # options written to /etc/rebootmgr.conf
+  window-start: '3:30'
+  window-duration: '1h30m'
+  strategy: 'best-effort'
