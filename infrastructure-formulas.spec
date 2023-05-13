@@ -27,11 +27,15 @@ License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
 Source:         _service
+Requires:       grains-formula
 Requires:       infrastructure-formula
 Requires:       libvirt-formula
 Requires:       lunmap-formula
 Requires:       orchestra-formula
+Requires:       os_update-formula
+Requires:       rebootmgr-formula
 Requires:       suse_ha-formula
+Requires:       zypper-formula
 BuildArch:      noarch
 
 %description
@@ -39,26 +43,22 @@ Custom Salt states used in the openSUSE and SUSE infrastructures.
 
 %package common
 Summary:        Files and directories shared by formulas
+License:        GPL-3.0-or-later
 
 %description common
 Files and directories shared by openSUSE/SUSE infrastructure formuas.
 
 %package -n infrastructure-formula
 Summary:        Salt states specific to the openSUSE/SUSE infrastructures
+License:        GPL-3.0-or-later
 Requires:       %{name}-common
 
 %description -n infrastructure-formula
 Custom Salt states specific to the openSUSE/SUSE infrastructures.
 
-%package -n suse_ha-formula
-Summary:        Salt states for managing SLE HA clusters
-Requires:       %{name}-common
-
-%description -n suse_ha-formula
-Salt states for managing SUSE Linux Enterprise HA clusters.
-
 %package -n libvirt-formula
 Summary:        Salt states for managing libvirt
+License:        GPL-3.0-or-later
 Requires:       %{name}-common
 
 %description -n libvirt-formula
@@ -66,6 +66,7 @@ Salt states for managing libvirt servers.
 
 %package -n lunmap-formula
 Summary:        Salt states for managing lunmap
+License:        GPL-3.0-or-later
 Requires:       %{name}-common
 
 %description -n lunmap-formula
@@ -73,10 +74,51 @@ Salt states for managing LUN mappings.
 
 %package -n orchestra-formula
 Summary:        Salt orchestration helper states
+License:        GPL-3.0-or-later
 Requires:       %{name}-common
 
 %description -n orchestra-formula
 Salt helper states for the openSUSE/SUSE infrastructure orchestration states.
+
+%package -n suse_ha-formula
+Summary:        Salt states for managing SLE HA clusters
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n suse_ha-formula
+Salt states for managing SUSE Linux Enterprise HA clusters.
+
+%package -n grains-formula
+Summary:        Salt state for managing grains
+License:        Apache-2.0
+Requires:       %{name}-common
+
+%description -n grains-formula
+Salt state for managing grains.
+
+%package -n os_update-formula
+Summary:        Salt states for managing os-update
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n os_update-formula
+Salt states for managing os-update.
+
+%package -n rebootmgr-formula
+Summary:        Salt states for managing rebootmgr
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n rebootmgr-formula
+Salt states for managing rebootmgr.
+
+%package -n zypper-formula
+Summary:        Salt states for managing zypper
+License:        Apache-2.0
+Requires:       %{name}-common
+
+%description -n zypper-formula
+Salt states for configuring packages, repositories, and zypper itself.
 
 %prep
 mv %{_sourcedir}/salt-formulas-%{version}/* .
@@ -105,6 +147,16 @@ do
     cp -rv "$src_metadata" "%{buildroot}$dst_metadata"
     echo "$dst_metadata" >> "$fname.files"
   fi
+
+  for license in 'COPYING' 'LICENCE' 'LICENSE'
+  do
+    if [ -f "$formula/$license" ]
+    then
+      echo "%%license $formula/$license" >> "$fname.files"
+      break
+    fi
+  done
+
 done
 
 %files
@@ -114,15 +166,24 @@ done
 %doc README.md
 %dir %{fdir}
 %dir %{sdir}
+%dir %{mdir}
 
 %files -n infrastructure-formula -f infrastructure.files
-
-%files -n suse_ha-formula -f suse_ha.files
 
 %files -n libvirt-formula -f libvirt.files
 
 %files -n lunmap-formula -f lunmap.files
 
 %files -n orchestra-formula -f orchestra.files
+
+%files -n suse_ha-formula -f suse_ha.files
+
+%files -n grains-formula -f grains.files
+
+%files -n os_update-formula -f os_update.files
+
+%files -n rebootmgr-formula -f rebootmgr.files
+
+%files -n zypper-formula -f zypper.files
 
 %changelog
