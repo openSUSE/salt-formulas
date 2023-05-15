@@ -1,0 +1,6 @@
+# yes, libvirt starts with "lib"...
+addFilter('libvirt-formula.noarch: W: shlib-policy-missing-lib')
+addFilter('infrastructure-formulas.noarch: W: explicit-lib-dependency libvirt-formula')
+
+# this is a meta-package installing all the formula subpackages, it doesn't need any files
+addFilter('infrastructure-formulas.noarch: W: suse-filelist-empty packages without any files are discouraged in SUSE')
