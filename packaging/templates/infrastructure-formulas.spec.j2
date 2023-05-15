@@ -60,31 +60,60 @@ mv %{_sourcedir}/salt-formulas-%{version}/* .
 %build
 
 %install
-install -dm0755 %{buildroot}%{sdir} %{buildroot}%{mdir}
+install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states
+
+dst_execumodules="%{sdir}/_modules"
+dst_statemodules="%{sdir}/_states"
 
 for formula in $(find -mindepth 1 -maxdepth 1 -type d -name '*-formula' -printf '%%P\n')
 do
   echo "$formula"
   fname="${formula%%-*}"
 
+  src_metadata="$formula/metadata"
   src_states="$formula/$fname"
   if [ ! -d "$src_states" ]
   then
     src_states="$formula/${fname//_/-}"
   fi
-  src_metadata="$formula/metadata"
+  src_execumodules="$formula/_modules"
+  src_statemodules="$formula/_states"
 
-  dst_states="%{sdir}/$fname"
   dst_metadata="%{mdir}/$fname"
-
-  cp -rv "$src_states" "%{buildroot}$dst_states"
-  echo "$dst_states" > "$fname.files"
+  dst_states="%{sdir}/$fname"
 
   if [ -d "$src_metadata" ]
   then
     cp -rv "$src_metadata" "%{buildroot}$dst_metadata"
-    echo "$dst_metadata" >> "$fname.files"
+    echo "$dst_metadata" > "$fname.files"
   fi
+
+  if [ -d "$src_states" ]
+  then
+    cp -rv "$src_states" "%{buildroot}$dst_states"
+    echo "$dst_states" >> "$fname.files"
+  else
+    echo "Warning: $formula does not ship with any states"
+  fi
+
+  for mod in execu state
+  do
+    case "$mod" in
+      'execu' ) src="$src_execumodules"
+                dst="$dst_execumodules"
+      ;;
+      'state' ) src="$src_statemodules"
+                dst="$dst_statemodules"
+      ;;
+    esac
+
+    if [ -d "$src" ]
+    then
+      find "$src" -type f \
+        -execdir install -vm0644 {} "%{buildroot}$dst" \; \
+        -execdir sh -cx 'echo "$1/$(basename $2)" >> "$3"' prog "$dst" {} "../../$fname.files" \;
+    fi
+  done
 
   for license in 'COPYING' 'LICENCE' 'LICENSE'
   do
@@ -103,8 +132,9 @@ done
 %license COPYING
 %doc README.md
 %dir %{fdir}
-%dir %{sdir}
 %dir %{mdir}
+%dir %{sdir}
+%dir %{sdir}/_{modules,states}
 {% for formula in formulas.keys() %}
 %files -n {{ formula }}-formula -f {{ formula }}.files
 {% endfor %}
