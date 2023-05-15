@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        0.2
+Version:        0
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -62,12 +62,16 @@ mv %{_sourcedir}/salt-formulas-%{version}/* .
 %install
 install -dm0755 %{buildroot}%{sdir} %{buildroot}%{mdir}
 
-for formula in $(find -mindepth 1 -maxdepth 1 -type d -not -path './.git' -printf '%%P\n')
+for formula in $(find -mindepth 1 -maxdepth 1 -type d -name '*-formula' -printf '%%P\n')
 do
   echo "$formula"
   fname="${formula%%-*}"
 
   src_states="$formula/$fname"
+  if [ ! -d "$src_states" ]
+  then
+    src_states="$formula/${fname//_/-}"
+  fi
   src_metadata="$formula/metadata"
 
   dst_states="%{sdir}/$fname"
