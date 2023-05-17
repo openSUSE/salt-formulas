@@ -135,7 +135,7 @@ pacemaker.service:
     - require:
       - suse_ha_packages
       - corosync.service
-{%- if sysconfig | length %}
+{%- if sysconfig.pacemaker | length %}
     - watch:
       - file: /etc/sysconfig/pacemaker
   file.keyvalue:
@@ -143,7 +143,7 @@ pacemaker.service:
     - separator: '='
     - show_changes: True
     - key_values:
-        {%- for key, value in sysconfig.items() %}
+        {%- for key, value in sysconfig.pacemaker.items() %}
         '{{ key }}': '"{{ value }}"'
         {%- endfor %}
     - require:

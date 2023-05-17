@@ -17,4 +17,5 @@ fencing:
       meta_attributes:
         target-role: Started
 sysconfig:
-  LRMD_MAX_CHILDREN: 4
+  pacemaker:
+    LRMD_MAX_CHILDREN: 4
