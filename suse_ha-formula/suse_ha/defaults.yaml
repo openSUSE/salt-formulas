@@ -1,6 +1,7 @@
 ---
 resources_dir: /data/kvm/resources
 fencing:
+  enable: true
   ipmi:
     primitive:
       operations:

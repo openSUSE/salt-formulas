@@ -50,7 +50,7 @@ ha_setup_stonith:
     - require:
       - pacemaker.service
 
-{% if fencing['stonith_enabled'], False == True %}
+{% if fencing.enable and fencing['stonith_enabled'], False == True %}
 {%- if 'no_quorum_policy' in management %}
 ha_default_quorum_policy:
   cmd.run:
@@ -83,7 +83,7 @@ ha_add_admin_ip:
       - ha_setup_stonith
 -#}
 
-{%- if 'ipmi' in fencing %}
+{%- if fencing.enable and 'ipmi' in fencing %}
 {%- for host, config in fencing.ipmi.hosts.items() %}
 {%- set instance_attributes = {
       'hostname': host, 'ipaddr': config['ip'], 'passwd': '/etc/pacemaker/ha_ipmi_' ~ host, 'userid': config['user'],
@@ -119,7 +119,7 @@ include:
 {%- else %}
 {%- do salt.log.info('Not sending any Pacemaker configuration - ' ~ myfqdn ~ ' is not the designated controller.') -%}
 
-{%- if 'ipmi' in fencing %}
+{%- if fencing.enable and 'ipmi' in fencing %}
 {%- for host, config in fencing.ipmi.hosts.items() %}
 {{ ipmi_secret(host, config['secret'], False) }}
 {%- endfor %}
