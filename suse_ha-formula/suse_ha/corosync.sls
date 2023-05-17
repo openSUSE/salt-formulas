@@ -40,7 +40,7 @@ corosync.service:
     {%- endif %}
     - user: root
     - group: root
-    - mode: 400
+    - mode: '0400'
 
 /etc/corosync/corosync.conf:
   file.managed:
@@ -48,7 +48,7 @@ corosync.service:
     - template: jinja
     - user: root
     - group: root
-    - mode: 644
+    - mode: '0644'
     - context:
         cluster: {{ cluster }}
         multicast: {{ multicast }}

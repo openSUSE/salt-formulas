@@ -1,9 +1,10 @@
+---
 infrastructure:
   domains:
     example.com:
       clusters:
         examplecluster:
-          external: False
+          external: false
           primary: examplenode1
           netapp:
             host: 192.0.2.1:8080
