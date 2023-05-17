@@ -1,0 +1,6 @@
+---
+summary:
+  Salt state module for managing lockfiles
+description:
+  # yamllint disable-line rule:line-length
+  Salt state module allowing you to place a lock file prior to other states in order to prevent simultaneous executions.
