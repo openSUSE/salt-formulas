@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from './map.jinja' import resources_dir -%}
+{%- from './map.jinja' import resources_dir, management -%}
 {%- macro primitive_resource(resource, class, type, instance_attributes, operations, meta_attributes, provider='NONE') %}
 ha_resource_file_{{ resource }}:
   file.managed:
@@ -45,4 +45,32 @@ ha_resource_update_{{ resource }}:
 #}
 {%- endmacro %}
 
+{%- macro rsc_default(option) -%}
+{%- set value = management.get(option.replace('-','_'), None) %}
+{%- if value is not none %}
+ha_rsc_default_{{ option }}:
+  cmd.run:
+    - name: 'crm configure rsc_defaults {{ option }}={{ value }}'
+    - unless: 'test $(crm_attribute -t rsc_defaults -G -n {{ option }} -q) == {{ value }}'
+    - require:
+      - pacemaker.service
+{%- else %}
+{%- do salt.log.debug('suse_ha: not configuring ' ~ option) %}
+{%- endif %}
+{%- endmacro -%}
 
+{%- macro ipmi_secret(host, secret, dc) -%}
+ha_fencing_ipmi_secret_{{ host }}:
+  file.managed:
+    - name: /etc/pacemaker/ha_ipmi_{{ host }}
+    - contents: '{{ secret }}'
+    - contents_newline: False
+    - mode: '0600'
+    - require:
+      - suse_ha_packages
+{%- if dc %}
+    - require_in:
+      - ha_resource_file_{{ host }}
+      - ha_resource_update_{{ host }}
+{%- endif %}
+{%- endmacro -%}
