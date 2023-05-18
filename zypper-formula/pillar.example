@@ -4,8 +4,10 @@ zypper:
       main:
         solver.onlyRequires: 'true'
   packages:
-    tmux
-    vim
+    tmux: {}
+    vim: {}
+    fish:
+      refresh: true
   repositories:
     repo-oss:
       baseurl: https://download.opensuse.org/distribution/leap/15.4/repo/oss
