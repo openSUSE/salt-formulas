@@ -114,6 +114,7 @@ ha_add_node_utilization_clone:
       - ha_add_node_utilization_primitive
 
 include:
+  - .packages
   - .resources
 
 {%- else %}
