@@ -27,7 +27,9 @@ suse_ha_packages:
       - fence-agents
       - ldirectord
       - pacemaker
+      {%- if grains.osfullname != 'openSUSE Tumbleweed' %}
       - python3-python-dateutil
+      {%- endif %}
       - resource-agents
       - virt-top
 
