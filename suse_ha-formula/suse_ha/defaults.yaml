@@ -1,5 +1,9 @@
 ---
 resources_dir: /data/kvm/resources
+cluster:
+  crypto_cipher: aes256
+  crypto_hash: sha512
+  ip_version: ipv6
 fencing:
   enable: true
   ipmi:
