@@ -15,13 +15,13 @@ suse_ha:
     name: salt-minion
     # "ipv6" by default
     ip_version: ipv4
-    # generate an authkey using `corosync-keygen` and transform it to base64 using `base64 -w0 /etc/corosync/authkey`
-    # it is highly recommended to additionally encrypt the base64 string using PGP, in which case the file header needs to be #!gpg|yaml for the binary to stay in tact
-    cluster_secret: !!binary |
-      LGljyn1fBRRcxLxFEgOmhILNTFY/13Cn3EwqqaBN6ynrX6flhiGyTjfW8eAQ1zlJex3uO9kssIcANw9uXLLpOCJ/Fvia3yzHNzCIxfW0zayUOBSMypN1TMKjad5/n8frAFZWNBhTcbk1Cwi764yBj8ErhsPh264qEreRzznJFGI=
     # native Corosync only requires the nodeid for IPv6 based operation - this formula always requires it
     nodeid: 1
   multicast:
     # configure the bind address in a node-specific pillar and have it merged
     bind_address: '192.168.121.55'
     address: '239.0.0.1'
+  # generate an authkey using `corosync-keygen` and transform it to base64 using `base64 -w0 /etc/corosync/authkey`
+  # it is highly recommended to additionally encrypt the base64 string using PGP, in which case the file header needs to be #!gpg|yaml for the binary to stay intact
+  cluster_secret: !!binary |
+    LGljyn1fBRRcxLxFEgOmhILNTFY/13Cn3EwqqaBN6ynrX6flhiGyTjfW8eAQ1zlJex3uO9kssIcANw9uXLLpOCJ/Fvia3yzHNzCIxfW0zayUOBSMypN1TMKjad5/n8frAFZWNBhTcbk1Cwi764yBj8ErhsPh264qEreRzznJFGI=
