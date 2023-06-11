@@ -39,7 +39,7 @@ ha_default_resource_stickiness:
 
 ha_setup_stonith:
   cmd.run:
-    {% if fencing['stonith_enabled'], False
+    {% if fencing.enable and fencing['stonith_enabled']
       and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
     - name: crm configure property stonith-enabled=true
     - unless: test $(crm configure get_property stonith-enabled) == 'true'
