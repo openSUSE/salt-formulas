@@ -27,7 +27,10 @@ ha_resources_directory:
 {#- custom resources if defined in the suse_ha:resources pillar #}
 {%- if resources is defined and resources is not none and resources | length > 0 %}
 {%- for resource, config in resources.items() %}
-{{ primitive_resource(resource, config['class'], config['type'], config['attributes'], config['operations'], config['meta_attributes']) }}
+{%- if not 'type' in config -%}{%- do salt.log.error('Resource ' ~ resource ~ ' is missing "type"') -%}{%- endif %}
+{{ primitive_resource(
+    resource, config.get('class', 'ocf'), config.get('type', None),
+    config.get('attributes', {}), config.get('operations', {}), config.get('meta_attributes', {}), config.get('provider', 'heartbeat')) }}
 {%- endfor %}
 {%- else %}
 {%- do salt.log.debug('Skipping construction of custom resources') %}
