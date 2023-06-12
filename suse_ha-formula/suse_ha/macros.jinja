@@ -17,20 +17,31 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- from './map.jinja' import resources_dir, management -%}
-{%- macro primitive_resource(resource, class, type, instance_attributes, operations, meta_attributes, provider='NONE') %}
+{%- macro primitive_resource(resource, class, type, instance_attributes, operations, meta_attributes, provider='NONE', clone={}) %}
 ha_resource_file_{{ resource }}:
   file.managed:
     - name: {{ resources_dir }}/{{ resource }}.xml
-    - source: salt://{{ slspath }}/files/primitive.xml.j2
+    - source: salt://{{ slspath }}/files/cib/{{ 'clone' if clone else 'resource' }}.xml.j2
     - template: jinja
     - context:
-        resource_id: {{ resource }}
-        resource_class: {{ class }}
-        resource_type: {{ type }}
-        attributes: {{ instance_attributes }}
-        operations: {{ operations }}
-        meta_attributes: {{ meta_attributes }}
-        provider: {{ provider }}
+        {%- if clone %}
+        {%- if 'resource_id' in clone -%}
+        {%- set clone_id = clone['resource_id'] %}
+        {%- else %}
+        {%- set clone_id = resource ~ '-clone' %}
+        {%- endif %}
+        clones:
+          {{ clone_id }}:
+            meta_attributes: {{ clone.get('meta_attributes', {}) }}
+        {%- endif %}
+        primitives:
+          {{ resource }}:
+            resource_class: {{ class }}
+            resource_type: {{ type }}
+            attributes: {{ instance_attributes }}
+            operations: {{ operations }}
+            meta_attributes: {{ meta_attributes }}
+            provider: {{ provider }}
     - require:
       - file: ha_resources_directory
 

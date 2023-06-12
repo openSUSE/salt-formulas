@@ -30,7 +30,8 @@ ha_resources_directory:
 {%- if not 'type' in config -%}{%- do salt.log.error('Resource ' ~ resource ~ ' is missing "type"') -%}{%- endif %}
 {{ primitive_resource(
     resource, config.get('class', 'ocf'), config.get('type', None),
-    config.get('attributes', {}), config.get('operations', {}), config.get('meta_attributes', {}), config.get('provider', 'heartbeat')) }}
+    config.get('attributes', {}), config.get('operations', {}), config.get('meta_attributes', {}), config.get('provider', 'heartbeat'),
+    config.get('clone', {})) }}
 {%- endfor %}
 {%- else %}
 {%- do salt.log.debug('Skipping construction of custom resources') %}
