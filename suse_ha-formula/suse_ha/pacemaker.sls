@@ -98,20 +98,17 @@ ha_add_admin_ip:
 {%- endif %}
 
 {#- to-do: figure out if these values make sense #}
-ha_add_node_utilization_primitive:
-  cmd.run:
-    - name: crm configure primitive p-node-utilization ocf:pacemaker:NodeUtilization op start timeout=90 interval=0 op stop timeout=100 interval=0 op monitor timeout=20s interval=60s meta target-role=Started
-    - unless: crm resource list p-node-utilization
-    - require:
-      - pacemaker.service
+{#- to-do: allow override using pillar #}
+{%- set utilization_meta_attributes = {'target-role': 'Started'} %}
+{%- set utilization_operations = {
+      'start': {'interval': 0, 'timeout': 90},
+      'stop': {'interval': 0, 'timeout': 100},
+      'monitor': {'interval': '60s', 'timeout': '20s'}
+} %}
 
-ha_add_node_utilization_clone:
-  cmd.run:
-    - name: crm configure clone c-node-utilization p-node-utilization meta target-role=Started
-    - unless: crm resource list c-node-utilization
-    - require:
-      - pacemaker.service
-      - ha_add_node_utilization_primitive
+{{ primitive_resource('p-node-utilization', class='ocf', type='NodeUtilization', instance_attributes={}, provider='pacemaker',
+                      meta_attributes=utilization_meta_attributes, operations=utilization_operations,
+                      clone={ 'resource_id': 'c-node-utilization', 'meta_attributes': {'target-role': 'Started', 'interleave': 'true'} }) }}
 
 include:
   - .packages
