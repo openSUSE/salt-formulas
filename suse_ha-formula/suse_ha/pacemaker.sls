@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- from slspath ~ '/map.jinja' import cluster, fencing, management, sysconfig -%}
-{%- from slspath ~ '/macros.jinja' import ha_resource, rsc_default, ipmi_secret -%}
+{%- from slspath ~ '/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
 {%- if salt['cmd.retcode']('test -x /usr/sbin/crmadmin') == 0 -%}
@@ -29,35 +29,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 {% if myfqdn == clusterdc or myhost == clusterdc %}
 {#- to-do: the crm script generates the XML but fails to patch the config with "name 'cibadmin_opt' is not defined" - bug?
-ha_default_resource_stickiness:
-  cmd.run:
-    - name: crm configure property default-resource-stickiness=1000
-    - unless: test $(crm configure get_property default-resource-stickiness) gt 0
-    - require:
-      - pacemaker.service
+{{ property('default-resource-stickiness', 1000) }}
 #}
 
-ha_setup_stonith:
-  cmd.run:
-    {% if fencing.enable and fencing['stonith_enabled']
-      and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
-    - name: crm configure property stonith-enabled=true
-    - unless: test $(crm configure get_property stonith-enabled) == 'true'
-    {% else %}
-    - name: crm configure property stonith-enabled=false
-    - unless: test $(crm configure get_property stonith-enabled) == 'false'
-    {% endif %}
-    - require:
-      - pacemaker.service
+{%- if fencing.enable and fencing['stonith_enabled']
+  and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
+{{ property('stonith-enabled', 'true') }}
+{% else %}
+{{ property('stonith-enabled', 'false') }}
+{% endif %}
 
-{% if fencing.enable and fencing['stonith_enabled'], False == True %}
+{%- if fencing.enable and fencing['stonith_enabled'], False == True %}
 {%- if 'no_quorum_policy' in management %}
-ha_default_quorum_policy:
-  cmd.run:
-    - name: 'crm configure property no-quorum-policy={{ management.no_quorum_policy }}'
-    - unless: 'test $(crm configure get_property no-quorum-policy) == {{ management.no_quorum_policy }}'
-    - require:
-      - pacemaker.service
+{{ property('no-quorum-policy', management.no_quorum_policy) }}
 {%- endif %}
 
 {#-
