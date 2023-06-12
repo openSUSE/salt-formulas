@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {{ property('default-resource-stickiness', 1000) }}
 #}
 
-{%- if fencing.enable and fencing['stonith_enabled']
+{%- if fencing.enable and fencing.get('stonith_enabled', False)
   and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
 {{ property('stonith-enabled', 'true') }}
 {% else %}
