@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- from slspath ~ '/map.jinja' import resources, resources_dir -%}
-{%- from slspath ~ '/macros.jinja' import primitive_resource -%}
+{%- from slspath ~ '/macros.jinja' import ha_resource -%}
 
 ha_resources_directory:
   file.directory:
@@ -28,7 +28,7 @@ ha_resources_directory:
 {%- if resources is defined and resources is not none and resources | length > 0 %}
 {%- for resource, config in resources.items() %}
 {%- if not 'type' in config -%}{%- do salt.log.error('Resource ' ~ resource ~ ' is missing "type"') -%}{%- endif %}
-{{ primitive_resource(
+{{ ha_resource(
     resource, config.get('class', 'ocf'), config.get('type', None),
     config.get('attributes', {}), config.get('operations', {}), config.get('meta_attributes', {}), config.get('provider', 'heartbeat'),
     config.get('clone', {})) }}

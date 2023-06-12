@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- from slspath ~ '/map.jinja' import cluster, fencing, management, sysconfig -%}
-{%- from slspath ~ '/macros.jinja' import primitive_resource, rsc_default, ipmi_secret -%}
+{%- from slspath ~ '/macros.jinja' import ha_resource, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
 {%- if salt['cmd.retcode']('test -x /usr/sbin/crmadmin') == 0 -%}
@@ -89,7 +89,7 @@ ha_add_admin_ip:
       'hostname': host, 'ipaddr': config['ip'], 'passwd': '/etc/pacemaker/ha_ipmi_' ~ host, 'userid': config['user'],
       'interface': config['interface'], 'passwd_method': 'file', 'ipmitool': '/usr/bin/ipmitool', 'priv': config['priv'] } %}
 
-{{ primitive_resource(host, class='stonith', type='external/ipmi', instance_attributes=instance_attributes,
+{{ ha_resource(host, class='stonith', type='external/ipmi', instance_attributes=instance_attributes,
                       operations=fencing.ipmi.primitive.operations, meta_attributes=fencing.ipmi.primitive.meta_attributes) }}
 
 {{ ipmi_secret(host, config['secret'], True) }}
@@ -106,7 +106,7 @@ ha_add_admin_ip:
       'monitor': {'interval': '60s', 'timeout': '20s'}
 } %}
 
-{{ primitive_resource('p-node-utilization', class='ocf', type='NodeUtilization', instance_attributes={}, provider='pacemaker',
+{{ ha_resource('p-node-utilization', class='ocf', type='NodeUtilization', instance_attributes={}, provider='pacemaker',
                       meta_attributes=utilization_meta_attributes, operations=utilization_operations,
                       clone={ 'resource_id': 'c-node-utilization', 'meta_attributes': {'target-role': 'Started', 'interleave': 'true'} }) }}
 

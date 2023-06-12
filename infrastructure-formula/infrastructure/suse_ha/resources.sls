@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'suse_ha/macros.jinja' import primitive_resource -%}
+{%- from 'suse_ha/macros.jinja' import ha_resource -%}
 
 {#- virtual machine resources below are constructed if instructed by the deploy_vm orchestration state #}
 {%- if pillar['do_vd'] | default(False) %}
@@ -69,7 +69,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
       'migration-threshold': 0
 } %}
 
-{{ primitive_resource('VM_' ~ machine, 'ocf', 'VirtualDomain', instance_attributes, operations, meta_attributes, 'heartbeat') }}
+{{ ha_resource('VM_' ~ machine, 'ocf', 'VirtualDomain', instance_attributes, operations, meta_attributes, 'heartbeat') }}
 
 {%- endif %}
 {%- endfor %}
