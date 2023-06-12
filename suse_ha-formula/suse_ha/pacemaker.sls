@@ -73,6 +73,12 @@ ha_add_admin_ip:
       'hostname': host, 'ipaddr': config['ip'], 'passwd': '/etc/pacemaker/ha_ipmi_' ~ host, 'userid': config['user'],
       'interface': config['interface'], 'passwd_method': 'file', 'ipmitool': '/usr/bin/ipmitool', 'priv': config['priv'] } %}
 
+{#- at the time of writing, this requires a custom patch: https://github.com/ClusterLabs/cluster-glue/pull/39 #}
+{%- if 'port' in config %}
+{%- do instance_attributes.update({'ipport': config['port']}) -%}
+{%- endif %}
+
+{#- to-do: support other agents besides external/ipmi #}
 {{ ha_resource(host, class='stonith', type='external/ipmi', instance_attributes=instance_attributes,
                       operations=fencing.ipmi.primitive.operations, meta_attributes=fencing.ipmi.primitive.meta_attributes) }}
 
