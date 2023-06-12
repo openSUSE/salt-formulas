@@ -54,6 +54,13 @@ ha_resource_update_{{ resource }}:
     - require:
         - pacemaker.service
 #}
+
+ha_resource_start_{{ resource }}:
+   cmd.run:
+     - name: crm resource start {{ resource }}
+     - unless: test $(crm resource status {{ resource }}|awk '{ print $4; exit }') == running
+     - require:
+       - cmd: ha_resource_update_{{ resource }}
 {%- endmacro %}
 
 {%- macro rsc_default(option) -%}
