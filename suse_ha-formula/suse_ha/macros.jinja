@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- from './map.jinja' import resources_dir, management -%}
-{%- macro ha_resource(resource, class, type, instance_attributes, operations, meta_attributes={}, provider='NONE', clone={}) %}
+{%- macro ha_resource(resource, class, type, instance_attributes, operations, meta_attributes={}, provider='NONE', clone={}, requires=[]) %}
 ha_resource_file_{{ resource }}:
   file.managed:
     - name: {{ resources_dir }}/{{ resource }}.xml
@@ -44,6 +44,9 @@ ha_resource_file_{{ resource }}:
             provider: {{ provider }}
     - require:
       - file: ha_resources_directory
+      {%- for require in requires %}
+      - {{ require }}
+      {%- endfor %}
 
 ha_resource_update_{{ resource }}:
   cmd.run:

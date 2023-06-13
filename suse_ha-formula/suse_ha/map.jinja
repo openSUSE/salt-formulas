@@ -48,3 +48,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- else -%}
 {%- set fencing = fencing_base -%}
 {%- endif -%}
+
+{%- set sbd = fencing.get('sbd', {}) -%}

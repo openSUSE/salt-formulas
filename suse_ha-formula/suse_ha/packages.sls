@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
+{%- from slspath ~ '/map.jinja' import fencing -%}
+
 suse_ha_packages:
   pkg.installed:
     - pkgs:
@@ -32,6 +34,6 @@ suse_ha_packages:
       {%- endif %}
       - resource-agents
       - virt-top
-
-# in case we need SBD in the future, we can include this with a conditional
-#- sbd
+      {%- if 'sbd' in fencing %}
+      - sbd
+      {%- endif %}

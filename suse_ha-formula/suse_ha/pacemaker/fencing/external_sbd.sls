@@ -22,6 +22,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set instance_defaults = fencing_sbd.get('defaults', {}) -%}
 {%- set attributes = ['pcmk_host_list', 'pcmk_delay_base', 'pcmk_delay_max'] %}
 
+include:
+  - suse_ha.sbd
+
 {%- if 'instances' in fencing_sbd %}
 {%- for instance, config in fencing_sbd.instances.items() %}
 {%- set instance_attributes = {} -%}
@@ -34,7 +37,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- endif %}
 {%- endfor %}
 
-{{ ha_resource('sbd-' ~ instance, class='stonith', type='external/sbd', instance_attributes=instance_attributes, operations=fencing.sbd.primitive.operations) }}
+{{ ha_resource('sbd-' ~ instance, class='stonith', type='external/sbd', instance_attributes=instance_attributes, operations=fencing.sbd.primitive.operations, requires=['service: sbd_service']) }}
 
 {%- endfor %}
 {%- else %}
