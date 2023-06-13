@@ -1,0 +1,53 @@
+#!yaml
+
+# needed for Corosync peer discovery
+mine_functions:
+  network.get_hostname: []
+
+suse_ha:
+  fencing:
+    # enabled by default, needs additional configuration
+    enable: false
+  cluster:
+    # the name of the cluster needs to be a string all node hostnames start with
+    # for example, if the cluster nodes are named "pizza1", "pizza2" and "pizza3", then the cluster name must be "pizza"
+    # this is needed for Corosync peer discovery using wildcard targeting in the form of "pizza*"
+    name: salt-minion
+    # "ipv6" by default
+    ip_version: ipv4
+    # native Corosync only requires the nodeid for IPv6 based operation - this formula always requires it
+    nodeid: 1
+  multicast:
+    # configure the bind address in a node-specific pillar and have it merged
+    bind_address: '192.168.121.55'
+    address: '239.0.0.1'
+  # generate an authkey using `corosync-keygen` and transform it to base64 using `base64 -w0 /etc/corosync/authkey`
+  # it is highly recommended to additionally encrypt the base64 string using PGP, in which case the file header needs to be #!gpg|yaml for the binary to stay intact
+  cluster_secret: !!binary |
+    LGljyn1fBRRcxLxFEgOmhILNTFY/13Cn3EwqqaBN6ynrX6flhiGyTjfW8eAQ1zlJex3uO9kssIcANw9uXLLpOCJ/Fvia3yzHNzCIxfW0zayUOBSMypN1TMKjad5/n8frAFZWNBhTcbk1Cwi764yBj8ErhsPh264qEreRzznJFGI=
+  # cluster resources
+  resources:
+    # name of the primitive resource
+    cluster-httpd:
+      # options are mostly following the CIB syntax
+      class: ocf
+      type: apache
+      attributes:
+        configfile: /etc/apache2/httpd.conf
+      operations:
+        monitor:
+          interval: 120s
+          timeout: 60s
+      meta_attributes:
+        target-role: Started
+      # without "clone" being present, a regular primitive resource will be created
+      # with "clone", a clone resource containing the primitive resource will be created
+      clone:
+        # optional "resource_id", by default, the clone resource will be given the name of the primitive resource with a "-clone" suffix
+        resource_id: sample_clone
+        # optional meta attributes for the clone resource
+        meta_attributes:
+          target-role: Started
+          # proper booleans seem to work albeit the Pacemaker documentation using lowercase true/false values
+          # to be on the safe side, the lowercase boolean value can be quoted
+          interleave: true

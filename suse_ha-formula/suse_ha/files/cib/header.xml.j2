@@ -1,0 +1,6 @@
+{%- set managed_by_salt = salt['pillar.get']('managed_by_salt_xml', '') -%}
+<?xml version="1.0" ?>
+{{ managed_by_salt }}
+<cib>
+  <configuration>
+    <resources>

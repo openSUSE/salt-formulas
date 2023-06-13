@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import cluster, fencing, management -%}
-{%- from slspath ~ '/macros.jinja' import primitive_resource -%}
+{%- from slspath ~ '/map.jinja' import cluster, fencing, management, sysconfig -%}
+{%- from slspath ~ '/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
 {%- if salt['cmd.retcode']('test -x /usr/sbin/crmadmin') == 0 -%}
@@ -29,69 +29,31 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 {% if myfqdn == clusterdc or myhost == clusterdc %}
 {#- to-do: the crm script generates the XML but fails to patch the config with "name 'cibadmin_opt' is not defined" - bug?
-ha_default_resource_stickiness:
-  cmd.run:
-    - name: crm configure property default-resource-stickiness=1000
-    - unless: test $(crm configure get_property default-resource-stickiness) gt 0
-    - require:
-      - pacemaker.service
+{{ property('default-resource-stickiness', 1000) }}
 #}
 
-ha_setup_stonith:
-  cmd.run:
-    {% if fencing['stonith_enabled'], False
-      and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
-    - name: crm configure property stonith-enabled=true
-    - unless: test $(crm configure get_property stonith-enabled) == 'true'
-    {% else %}
-    - name: crm configure property stonith-enabled=false
-    - unless: test $(crm configure get_property stonith-enabled) == 'false'
-    {% endif %}
-    - require:
-      - pacemaker.service
+{%- if fencing.enable and fencing.get('stonith_enabled', False)
+  and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
+{{ property('stonith-enabled', 'true') }}
+{% else %}
+{{ property('stonith-enabled', 'false') }}
+{% endif %}
 
-{% if fencing['stonith_enabled'], False == True %}
+{%- if fencing.enable and fencing['stonith_enabled'], False == True %}
 {%- if 'no_quorum_policy' in management %}
-ha_default_quorum_policy:
-  cmd.run:
-    - name: 'crm configure property no-quorum-policy={{ management.no_quorum_policy }}'
-    - unless: 'test $(crm configure get_property no-quorum-policy) == {{ management.no_quorum_policy }}'
-    - require:
-      - pacemaker.service
+{{ property('no-quorum-policy', management.no_quorum_policy) }}
 {%- endif %}
 
 {#-
 optional resource meta configuration
 https://clusterlabs.org/pacemaker/doc/deprecated/en-US/Pacemaker/1.1/html/Pacemaker_Explained/s-resource-options.html
 -#}
-{%- if 'failure_timeout' in management %}
-ha_default_failure_timeout:
-  cmd.run:
-    - name: 'crm configure rsc_defaults failure-timeout={{ management.failure_timeout }}'
-    - unless: 'test $(crm_attribute -t rsc_defaults -G -n failure-timeout -q) == {{ management.failure_timeout }}'
-    - require:
-      - pacemaker.service
-{%- endif %}
-
-{%- if 'migration_threshold' in management %}
-ha_default_migration_threshold:
-  cmd.run:
-    - name: 'crm configure rsc_defaults migration-threshold={{ management.migration_threshold }}'
-    - unless: 'test $(crm_attribute -t rsc_defaults -G -n migration-threshold -q) == {{ management.migration_threshold }}'
-    - require:
-      - pacemaker.service
-{%- endif %}
+{{ rsc_default('failure-timeout') }}
+{{ rsc_default('migration-threshold') }}
 
 {%- endif -%}
 
-{%- if 'allow_migrate' in management %}
-ha_default_allow_migrate:
-  cmd.run:
-    - name: 'crm configure rsc_defaults allow-migrate={{ management.allow_migrate }}'
-    - unless: 'test $(crm_attribute -t rsc_defaults -G -n allow-migrate -q) == {{ management.allow_migrate }}'
-    - require:
-      - pacemaker.service
-{%- endif %}
+{{ rsc_default('allow-migrate') }}
 
 {#-
 we currently don't use this
@@ -105,65 +67,49 @@ ha_add_admin_ip:
       - ha_setup_stonith
 -#}
 
-{%- if 'ipmi' in fencing %}
+{%- if fencing.enable and 'ipmi' in fencing %}
 {%- for host, config in fencing.ipmi.hosts.items() %}
 {%- set instance_attributes = {
       'hostname': host, 'ipaddr': config['ip'], 'passwd': '/etc/pacemaker/ha_ipmi_' ~ host, 'userid': config['user'],
       'interface': config['interface'], 'passwd_method': 'file', 'ipmitool': '/usr/bin/ipmitool', 'priv': config['priv'] } %}
-{%- set operations = {
-      'start': {'timeout': 20, 'interval': 0}, 'stop': {'timeout': 15, 'interval': 0}, 'monitor': {'timeout': 20, 'interval': 3600} } %}
-{%- set meta_attributes = {
-      'target-role': 'Started' } %}
 
-{{ primitive_resource(host, class='stonith', type='external/ipmi',
-                      instance_attributes=instance_attributes, operations=operations, meta_attributes=meta_attributes) }}
+{#- at the time of writing, this requires a custom patch: https://github.com/ClusterLabs/cluster-glue/pull/39 #}
+{%- if 'port' in config %}
+{%- do instance_attributes.update({'ipport': config['port']}) -%}
+{%- endif %}
 
-ha_fencing_ipmi_secret_{{ host }}:
-  file.managed:
-    - name: /etc/pacemaker/ha_ipmi_{{ host }}
-    - contents: '{{ config['secret'] }}'
-    - contents_newline: False
-    - mode: '0600'
-    - require:
-      - suse_ha_packages
-    - require_in:
-      - ha_resource_file_{{ host }}
-      - ha_resource_update_{{ host }}
+{#- to-do: support other agents besides external/ipmi #}
+{{ ha_resource(host, class='stonith', type='external/ipmi', instance_attributes=instance_attributes,
+                      operations=fencing.ipmi.primitive.operations, meta_attributes=fencing.ipmi.primitive.meta_attributes) }}
+
+{{ ipmi_secret(host, config['secret'], True) }}
+
 {%- endfor %}
 {%- endif %}
 
 {#- to-do: figure out if these values make sense #}
-ha_add_node_utilization_primitive:
-  cmd.run:
-    - name: crm configure primitive p-node-utilization ocf:pacemaker:NodeUtilization op start timeout=90 interval=0 op stop timeout=100 interval=0 op monitor timeout=20s interval=60s meta target-role=Started
-    - unless: crm resource list p-node-utilization
-    - require:
-      - pacemaker.service
+{#- to-do: allow override using pillar #}
+{%- set utilization_meta_attributes = {'target-role': 'Started'} %}
+{%- set utilization_operations = {
+      'start': {'interval': 0, 'timeout': 90},
+      'stop': {'interval': 0, 'timeout': 100},
+      'monitor': {'interval': '60s', 'timeout': '20s'}
+} %}
 
-ha_add_node_utilization_clone:
-  cmd.run:
-    - name: crm configure clone c-node-utilization p-node-utilization meta target-role=Started
-    - unless: crm resource list c-node-utilization
-    - require:
-      - pacemaker.service
-      - ha_add_node_utilization_primitive
+{{ ha_resource('p-node-utilization', class='ocf', type='NodeUtilization', instance_attributes={}, provider='pacemaker',
+                      meta_attributes=utilization_meta_attributes, operations=utilization_operations,
+                      clone={ 'resource_id': 'c-node-utilization', 'meta_attributes': {'target-role': 'Started', 'interleave': 'true'} }) }}
 
 include:
+  - .packages
   - .resources
 
 {%- else %}
 {%- do salt.log.info('Not sending any Pacemaker configuration - ' ~ myfqdn ~ ' is not the designated controller.') -%}
 
-{%- if 'ipmi' in fencing %}
+{%- if fencing.enable and 'ipmi' in fencing %}
 {%- for host, config in fencing.ipmi.hosts.items() %}
-ha_fencing_ipmi_secret_{{ host }}:
-  file.managed:
-    - name: /etc/pacemaker/ha_ipmi_{{ host }}
-    - contents: '{{ config['secret'] }}'
-    - contents_newline: False
-    - mode: '0600'
-    - require:
-      - suse_ha_packages
+{{ ipmi_secret(host, config['secret'], False) }}
 {%- endfor %}
 {%- endif %}
 
@@ -177,6 +123,7 @@ pacemaker.service:
     - require:
       - suse_ha_packages
       - corosync.service
+{%- if sysconfig.pacemaker | length %}
     - watch:
       - file: /etc/sysconfig/pacemaker
   file.keyvalue:
@@ -184,9 +131,12 @@ pacemaker.service:
     - separator: '='
     - show_changes: True
     - key_values:
-        'LRMD_MAX_CHILDREN': '"4"'
+        {%- for key, value in sysconfig.pacemaker.items() %}
+        '{{ key }}': '"{{ value }}"'
+        {%- endfor %}
     - require:
       - suse_ha_packages
+{%- endif %}
 {%- else %}
 {%- do salt.log.error('suse_ha: cluster pillar not configured, not enabling Pacemaker!') %}
 {%- endif %}

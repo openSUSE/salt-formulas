@@ -16,16 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- set hapillar = salt['pillar.get']('suse_ha') -%}
-{%- set resources_dir = hapillar.get('resources_dir', '/data/ha/resources') -%}
+{%- import_yaml './defaults.yaml' as defaults -%}
+{%- set hapillar  = salt.pillar.get('suse_ha', default=defaults, merge=True, merge_nested_lists=False) -%}
+{%- set resources_dir = hapillar.get('resources_dir') -%}
 
-{%- set cluster = hapillar['cluster'] -%}
-{%- set management = hapillar['management'] -%}
+{%- set cluster = hapillar.get('cluster', {}) -%}
+{%- set management = hapillar.get('management', {}) -%}
 {%- if 'multicast' in hapillar -%}
 {%- set multicast = hapillar['multicast'] -%}
 {%- else -%}
 {%- set multicast = {} -%}
 {%- do salt.log.error('suse_ha: No multicast pillar provided - configuration might be incomplete!') -%}
 {%- endif -%}
-{%- set fencing = hapillar['fencing'] -%}
-{%- set resources = hapillar['resources'] -%}
+{%- set fencing = hapillar.get('fencing', {}) -%}
+{%- set resources = hapillar.get('resources', {}) -%}
+{%- set sysconfig = hapillar.get('sysconfig', {}) -%}

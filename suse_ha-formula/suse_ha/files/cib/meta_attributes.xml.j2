@@ -1,0 +1,7 @@
+        {%- if config['meta_attributes'] | length %}
+        <meta_attributes id="{{ resource_id }}-meta_attributes">
+          {%- for nvpair, value in config['meta_attributes'].items() %}
+          <nvpair name="{{ nvpair }}" value="{{ value }}" id="{{ resource_id }}-meta_attributes-{{ nvpair }}"/>
+          {%- endfor %}
+        </meta_attributes>
+        {%- endif %}

@@ -16,21 +16,32 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from './map.jinja' import resources_dir -%}
-{%- macro primitive_resource(resource, class, type, instance_attributes, operations, meta_attributes, provider='NONE') %}
+{%- from './map.jinja' import resources_dir, management -%}
+{%- macro ha_resource(resource, class, type, instance_attributes, operations, meta_attributes, provider='NONE', clone={}) %}
 ha_resource_file_{{ resource }}:
   file.managed:
     - name: {{ resources_dir }}/{{ resource }}.xml
-    - source: salt://{{ slspath }}/files/primitive.xml.j2
+    - source: salt://{{ slspath }}/files/cib/{{ 'clone' if clone else 'resource' }}.xml.j2
     - template: jinja
     - context:
-        resource_id: {{ resource }}
-        resource_class: {{ class }}
-        resource_type: {{ type }}
-        attributes: {{ instance_attributes }}
-        operations: {{ operations }}
-        meta_attributes: {{ meta_attributes }}
-        provider: {{ provider }}
+        {%- if clone %}
+        {%- if 'resource_id' in clone -%}
+        {%- set clone_id = clone['resource_id'] %}
+        {%- else %}
+        {%- set clone_id = resource ~ '-clone' %}
+        {%- endif %}
+        clones:
+          {{ clone_id }}:
+            meta_attributes: {{ clone.get('meta_attributes', {}) }}
+        {%- endif %}
+        primitives:
+          {{ resource }}:
+            resource_class: {{ class }}
+            resource_type: {{ type }}
+            attributes: {{ instance_attributes }}
+            operations: {{ operations }}
+            meta_attributes: {{ meta_attributes }}
+            provider: {{ provider }}
     - require:
       - file: ha_resources_directory
 
@@ -43,6 +54,50 @@ ha_resource_update_{{ resource }}:
     - require:
         - pacemaker.service
 #}
+
+ha_resource_start_{{ resource }}:
+   cmd.run:
+     - name: crm resource start {{ resource }}
+     - unless: test $(crm resource status {{ resource }}|awk '{ print $4; exit }') == running
+     - require:
+       - cmd: ha_resource_update_{{ resource }}
 {%- endmacro %}
 
+{%- macro property(option, value) -%}
+ha_property_{{ option }}:
+  cmd.run:
+    - name: 'crm configure property {{ option }}={{ value }}'
+    - unless: 'test $(crm configure get_property {{ option }}) == {{ value }}'
+    - require:
+      - pacemaker.service
+{%- endmacro -%}
 
+{%- macro rsc_default(option) -%}
+{%- set value = management.get(option.replace('-','_'), None) %}
+{%- if value is not none %}
+ha_rsc_default_{{ option }}:
+  cmd.run:
+    - name: 'crm configure rsc_defaults {{ option }}={{ value }}'
+    - unless: 'test $(crm_attribute -t rsc_defaults -G -n {{ option }} -q) == {{ value }}'
+    - require:
+      - pacemaker.service
+{%- else %}
+{%- do salt.log.debug('suse_ha: not configuring ' ~ option) %}
+{%- endif %}
+{%- endmacro -%}
+
+{%- macro ipmi_secret(host, secret, dc) -%}
+ha_fencing_ipmi_secret_{{ host }}:
+  file.managed:
+    - name: /etc/pacemaker/ha_ipmi_{{ host }}
+    - contents: '{{ secret }}'
+    - contents_newline: False
+    - mode: '0600'
+    - require:
+      - suse_ha_packages
+{%- if dc %}
+    - require_in:
+      - ha_resource_file_{{ host }}
+      - ha_resource_update_{{ host }}
+{%- endif %}
+{%- endmacro -%}

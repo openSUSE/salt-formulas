@@ -1,0 +1,10 @@
+{%- set source = 'suse_ha/files/cib/' -%}
+{%- include source ~ 'header.xml.j2' -%}
+{%- for clone, config in clones.items() %}
+{%- set resource_id = clone %}
+      <clone id="{{ resource_id }}">
+{%- include source ~ 'meta_attributes.xml.j2' %}
+{%- include source ~ 'primitive.xml.j2' %}
+      </clone>
+{% endfor %}
+{%- include source ~ 'footer.xml.j2' -%}

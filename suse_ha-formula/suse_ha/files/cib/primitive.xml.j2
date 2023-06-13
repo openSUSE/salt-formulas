@@ -1,0 +1,20 @@
+{%- for primitive, config in primitives.items() %}
+{%- set resource_id = primitive %}
+      <primitive id="{{ resource_id }}" class="{{ config['resource_class'] }}" type="{{ config['resource_type'] }}" {%- if config['provider'] != 'NONE' %} provider="{{ config['provider'] }}" {%- endif -%}>
+        {%- if config['attributes'] | length > 0 %}
+        <instance_attributes id="{{ resource_id }}-instance_attributes">
+          {%- for nvpair, value in config['attributes'].items() %}
+          <nvpair name="{{ nvpair }}" value="{{ value }}" id="{{ resource_id }}-instance_attributes-{{ nvpair }}"/>
+          {%- endfor %}
+        </instance_attributes>
+        {%- endif %}
+        {%- if config['operations'] | length > 0 %}
+        <operations>
+          {%- for op, opconfig in config['operations'].items() %}
+          <op name="{{ op }}" timeout="{{ opconfig ['timeout'] }}" interval="{{ opconfig ['interval'] }}" id="{{ resource_id }}-{{ op }}-{{ opconfig ['interval'] }}"/>
+          {%- endfor %}
+        </operations>
+        {%- endif %}
+{%- include source ~ 'meta_attributes.xml.j2' %}
+      </primitive>
+{%- endfor %}
