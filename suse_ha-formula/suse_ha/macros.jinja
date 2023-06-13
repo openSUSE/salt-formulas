@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ha_resource_file_{{ resource }}:
   file.managed:
     - name: {{ resources_dir }}/{{ resource }}.xml
-    - source: salt://{{ slspath }}/files/cib/{{ 'clone' if clone else 'resource' }}.xml.j2
+    - source: salt://suse_ha/files/cib/{{ 'clone' if clone else 'resource' }}.xml.j2
     - template: jinja
     - context:
         {%- if clone %}
