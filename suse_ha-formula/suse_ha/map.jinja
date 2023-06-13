@@ -28,6 +28,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set multicast = {} -%}
 {%- do salt.log.error('suse_ha: No multicast pillar provided - configuration might be incomplete!') -%}
 {%- endif -%}
-{%- set fencing = hapillar.get('fencing', {}) -%}
+{%- set fencing_base = hapillar.get('fencing', {}) -%}
 {%- set resources = hapillar.get('resources', {}) -%}
 {%- set sysconfig = hapillar.get('sysconfig', {}) -%}
+
+{%- if 'ipmi' in fencing_base -%}
+{%- import_yaml './defaults/fencing/external_ipmi.yaml' as fencing_external_ipmi -%}
+{%- do fencing_base.update(fencing_external_ipmi) -%}
+{%- set fencing = salt.pillar.get('suse_ha:fencing', default=fencing_base, merge=True) -%}
+{%- else -%}
+{%- set fencing = fencing_base -%}
+{%- endif -%}
