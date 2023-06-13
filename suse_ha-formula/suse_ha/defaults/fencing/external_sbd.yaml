@@ -1,0 +1,13 @@
+---
+sbd:
+  primitive:
+    operations:
+      start:
+        timeout: 20
+        interval: 0
+      stop:
+        timeout: 15
+        interval: 0
+      monitor:
+        timeout: 20
+        interval: 3600

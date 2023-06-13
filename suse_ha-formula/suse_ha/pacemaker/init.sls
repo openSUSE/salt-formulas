@@ -82,8 +82,13 @@ ha_add_admin_ip:
 
 include:
   - suse_ha.packages
-{%- if fencing.enable and 'ipmi' in fencing %}
+{%- if fencing.enable %}
+{%- if 'ipmi' in fencing %}
   - .fencing.external_ipmi
+{%- endif %}
+{%- if 'sbd' in fencing %}
+  - .fencing.external_sbd
+{%- endif %}
 {%- endif %}
   - suse_ha.resources
 

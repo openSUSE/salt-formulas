@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set resources = hapillar.get('resources', {}) -%}
 {%- set sysconfig = hapillar.get('sysconfig', {}) -%}
 
-{%- set fence_agents = ['external_ipmi'] -%}
+{%- set fence_agents = ['external_ipmi', 'external_sbd'] -%}
 {%- set fence_ns = namespace(construct=false) -%}
 
 {%- for agent in fence_agents -%}
