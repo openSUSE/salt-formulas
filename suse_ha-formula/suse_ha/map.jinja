@@ -32,9 +32,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set resources = hapillar.get('resources', {}) -%}
 {%- set sysconfig = hapillar.get('sysconfig', {}) -%}
 
-{%- if 'ipmi' in fencing_base -%}
-{%- import_yaml './defaults/fencing/external_ipmi.yaml' as fencing_external_ipmi -%}
-{%- do fencing_base.update(fencing_external_ipmi) -%}
+{%- set fence_agents = ['external_ipmi'] -%}
+{%- set fence_ns = namespace(construct=false) -%}
+
+{%- for agent in fence_agents -%}
+{%- if agent.replace('external_', '') in fencing_base -%}
+{%- import_yaml './defaults/fencing/' ~ agent ~ '.yaml' as fencing_defaults -%}
+{%- do fencing_base.update(fencing_defaults) -%}
+{%- set fence_ns.construct = true -%}
+{%- endif -%}
+{%- endfor -%}
+
+{%- if fence_ns.construct -%}
 {%- set fencing = salt.pillar.get('suse_ha:fencing', default=fencing_base, merge=True) -%}
 {%- else -%}
 {%- set fencing = fencing_base -%}
