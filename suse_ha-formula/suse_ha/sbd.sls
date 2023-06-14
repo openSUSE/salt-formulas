@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import sbd, sysconfig -%}
+{%- from slspath ~ '/map.jinja' import sbd, sysconfig, is_primary -%}
 {%- if 'devices' in sbd %}
 include:
   - .packages
@@ -51,6 +51,7 @@ include:
 {%- do salt.log.debug('suse_ha: constructed SBD cmd_format: ' ~ cmd_format) -%}
 {%- do salt.log.debug('suse_ha: constructed SBD cmd_check: ' ~ cmd_check) %}
 
+{%- if is_primary %}
 sbd_shutdown:
   service.dead:
     - name: corosync
@@ -67,6 +68,9 @@ sbd_format_devices:
     {%- endif %}
     - require:
       - suse_ha_packages
+{%- else %}
+{%- do salt.log.debug('suse_ha: skipping SBD device creation on non-primary node') -%}
+{%- endif %}
 
 sbd_sysconfig:
   file.keyvalue:
@@ -92,8 +96,9 @@ sbd_service:
     - name: sbd
     - require:
       - suse_ha_packages
-    - watch:
+      {%- if is_primary %}
       - cmd: sbd_format_devices
+      {%- endif %}
       - file: sbd_sysconfig
 
 {%- else %}
