@@ -1,0 +1,5 @@
+---
+summary:
+  Salt states for managing multipath
+description:
+  Salt states for installing multipath-tools and managing multipath/multipathd
