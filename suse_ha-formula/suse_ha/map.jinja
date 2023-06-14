@@ -50,3 +50,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- endif -%}
 
 {%- set sbd = fencing.get('sbd', {}) -%}
+
+{%- set host = grains['host'] -%}
+{%- set id = grains['id'] -%}
+
+{%- set nodes = salt['mine.get'](cluster.name ~ '*', 'network.get_hostname') | sort -%}
+{%- if nodes | length -%}
+{%- set primary = nodes[0] -%}
+{%- do salt.log.debug('suse_ha: elected primary node is ' ~ primary) -%}
+{%- else -%}
+{%- do salt.log.error('suse_ha: no nodes found in cluster') -%}
+{%- set primary = None -%}
+{%- endif -%}
+
+{%- if host == primary or id == primary -%}
+{%- set is_primary = True -%}
+{%- else -%}
+{%- set is_primary = False -%}
+{%- endif -%}
+{%- do salt.log.debug('suse_ha: is_primary: ' ~ is_primary) -%}
