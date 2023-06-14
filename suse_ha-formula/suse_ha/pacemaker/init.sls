@@ -108,6 +108,10 @@ pacemaker.service:
   service.running:
     - enable: True
     - reload: True
+    - retry:
+        attempts: 3
+        interval: 10
+        splay: 5
     - require:
       - suse_ha_packages
       - corosync.service
