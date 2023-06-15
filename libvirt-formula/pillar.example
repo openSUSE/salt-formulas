@@ -1,0 +1,18 @@
+# these optional pillars support arbitrary configuration options
+# the following examples reflect the formula defaults which can be extended or overwritten if needed
+
+# everything under "libvirt" will be set in libvirt.conf
+libvirt:
+  uri_default: "qemu:///system"
+
+# everything under "libvirtd" will be set in libvirtd.conf
+libvirtd:
+  max_clients: 128
+
+# everything under "qemu" will be set in qemu.conf
+qemu:
+  security_driver: apparmor
+  security_default_confined: 1
+  security_require_confined: 1
+  lock_manager: lockd
+  set_process_name: 1
