@@ -17,9 +17,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- import_yaml './defaults/libvirt.yaml' as defaults_libvirt -%}
+{%- import_yaml './defaults/libvirtd.yaml' as defaults_libvirtd -%}
 {%- import_yaml './defaults/qemu.yaml' as defaults_qemu -%}
 
-{%- set config_libvirt  = salt.pillar.get('libvirt', default=defaults_libvirt, merge=True, merge_nested_lists=False) -%}
-{%- set config_qemu  = salt.pillar.get('qemu', default=defaults_qemu, merge=True, merge_nested_lists=False) -%}
+{%- set config_libvirt = salt.pillar.get('libvirt', default=defaults_libvirt, merge=True, merge_nested_lists=False) -%}
+{%- set config_libvirtd = salt.pillar.get('libvirtd', default=defaults_libvirtd, merge=True, merge_nested_lists=False) -%}
+{%- set config_qemu = salt.pillar.get('qemu', default=defaults_qemu, merge=True, merge_nested_lists=False) -%}
 
-{%- set config = {'libvirt': config_libvirt, 'qemu': config_qemu} -%}
+{%- set config = {'libvirt': config_libvirt, 'libvirtd': config_libvirtd, 'qemu': config_qemu} -%}
