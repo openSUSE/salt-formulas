@@ -39,7 +39,7 @@ libvirt_files:
     - template: jinja
     - source: salt://{{ slspath }}/files{{ libvirt_configpath }}config.jinja
     - names:
-      {%- for file in config.keys() %}
+      {%- for file in ['libvirt', 'libvirtd', 'qemu'] %}
       - {{ libvirt_configpath }}{{ file ~ '.conf' }}:
         - context:
             config: {{ config.get(file, {}) }}
@@ -54,11 +54,18 @@ libvirt_service_stop:
     - onchanges:
       - file: libvirt_files
 
-libvirt_socket_run:
+{%- for socket, enable in config.sockets.items() %}
+{%- if not socket.startswith('libvirtd') %}{%- set socket = 'libvirtd-' ~ socket -%}{%- endif %}
+libvirt_{{ socket }}_socket:
+{%- if enable %}
   service.running:
-    - name: libvirtd.socket
-    - enable: True
     - reload: False
+{%- else %}
+  service.dead:
+{%- endif %}
+    - name: {{ socket }}.socket
+    - enable: {{ enable }}
     - require:
       - pkg: libvirt_packages
       - file: libvirt_files
+{%- endfor %}
