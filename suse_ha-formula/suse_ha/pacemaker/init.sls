@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/../map.jinja' import cluster, fencing, management, sysconfig -%}
-{%- from slspath ~ '/../macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
+{%- from 'suse_ha/map.jinja' import cluster, fencing, management, sysconfig -%}
+{%- from 'suse_ha/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
 {%- if salt['cmd.retcode']('test -x /usr/sbin/crmadmin') == 0 -%}
