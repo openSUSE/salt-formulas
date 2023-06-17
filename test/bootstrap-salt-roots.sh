@@ -30,6 +30,8 @@ do
   src_formula="/vagrant/$src_states"
   src_pillar="/vagrant/$formula/pillar.example"
   src_test_pillar="/vagrant/$formula/tests/pillar.sls"
+  src_test_pillars="/vagrant/$formula/tests/pillars"
+  dst_pillar_base="/srv/pillar/samples/$fname"
   if [ ! -d "$src_formula" ]
   then
     fname="${fname//_/-}"
@@ -40,10 +42,25 @@ do
   then
     ln -s "$src_formula" "/srv/formulas"
   fi
-  dst_pillar="/srv/pillar/samples/$fname.sls"
+  dst_pillar="$dst_pillar_base.sls"
+  # formulas having a tests/pillar.sls file
   if [ -f "$src_test_pillar" ]
   then
     cp "$src_test_pillar" "$dst_pillar"
+  # formulas having files in tests/pillars/
+  # (assumes there to be an init.sls file)
+  elif [ -d "$src_test_pillars" ]
+  then
+    dst_pillar="$dst_pillar_base"
+    if [ ! -d "$dst_pillar" ]
+    then
+      mkdir "$dst_pillar"
+    fi
+    while read sls
+    do
+      cp "$sls" "$dst_pillar"
+    done < <(find $src_test_pillars -name '*.sls' -type f)
+  # formulas without specific test pillars, fall back to pillar.example
   elif [ -f "$src_pillar" ]
   then
     cp "$src_pillar" "$dst_pillar"
