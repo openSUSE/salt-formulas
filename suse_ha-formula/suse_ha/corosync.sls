@@ -16,10 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import hapillar, cluster, multicast -%}
+{%- from slspath ~ '/map.jinja' import hapillar, cluster, fencing, multicast, is_primary -%}
+{%- if 'sbd' in fencing -%}{%- set hook_sbd = True -%}{%- else -%}{%- set hook_sbd = False %}{%- endif %}
 
 include:
   - .packages
+  {%- if hook_sbd %}
+  - .sbd
+  {%- endif %}
 
 {%- if 'name' in cluster %}
 corosync.service:
@@ -28,9 +32,18 @@ corosync.service:
     - reload: False
     - require:
       - suse_ha_packages
+      {%- if hook_sbd %}
+      - service: sbd_service
+      {%- endif %}
     - watch:
       - file: /etc/corosync/corosync.conf
       - file: /etc/corosync/authkey
+      {%- if hook_sbd %}
+      {%- if is_primary %}
+      - cmd: sbd_format_devices
+      {%- endif %}
+      - file: sbd_sysconfig
+      {%- endif %}
 
 /etc/corosync/authkey:
   file.managed:

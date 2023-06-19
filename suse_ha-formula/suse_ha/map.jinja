@@ -28,6 +28,44 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set multicast = {} -%}
 {%- do salt.log.error('suse_ha: No multicast pillar provided - configuration might be incomplete!') -%}
 {%- endif -%}
-{%- set fencing = hapillar.get('fencing', {}) -%}
+{%- set fencing_base = hapillar.get('fencing', {}) -%}
 {%- set resources = hapillar.get('resources', {}) -%}
 {%- set sysconfig = hapillar.get('sysconfig', {}) -%}
+
+{%- set fence_agents = ['external_ipmi', 'external_sbd'] -%}
+{%- set fence_ns = namespace(construct=false) -%}
+
+{%- for agent in fence_agents -%}
+{%- if agent.replace('external_', '') in fencing_base -%}
+{%- import_yaml './defaults/fencing/' ~ agent ~ '.yaml' as fencing_defaults -%}
+{%- do fencing_base.update(fencing_defaults) -%}
+{%- set fence_ns.construct = true -%}
+{%- endif -%}
+{%- endfor -%}
+
+{%- if fence_ns.construct -%}
+{%- set fencing = salt.pillar.get('suse_ha:fencing', default=fencing_base, merge=True) -%}
+{%- else -%}
+{%- set fencing = fencing_base -%}
+{%- endif -%}
+
+{%- set sbd = fencing.get('sbd', {}) -%}
+
+{%- set host = grains['host'] -%}
+{%- set id = grains['id'] -%}
+
+{%- set nodes = salt['mine.get'](cluster.name ~ '*', 'network.get_hostname') | sort -%}
+{%- if nodes | length -%}
+{%- set primary = nodes[0] -%}
+{%- do salt.log.debug('suse_ha: elected primary node is ' ~ primary) -%}
+{%- else -%}
+{%- do salt.log.error('suse_ha: no nodes found in cluster') -%}
+{%- set primary = None -%}
+{%- endif -%}
+
+{%- if host == primary or id == primary -%}
+{%- set is_primary = True -%}
+{%- else -%}
+{%- set is_primary = False -%}
+{%- endif -%}
+{%- do salt.log.debug('suse_ha: is_primary: ' ~ is_primary) -%}

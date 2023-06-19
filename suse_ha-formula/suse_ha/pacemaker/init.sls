@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import cluster, fencing, management, sysconfig -%}
-{%- from slspath ~ '/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
+{%- from 'suse_ha/map.jinja' import cluster, fencing, management, sysconfig -%}
+{%- from 'suse_ha/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
 {%- if salt['cmd.retcode']('test -x /usr/sbin/crmadmin') == 0 -%}
@@ -32,7 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {{ property('default-resource-stickiness', 1000) }}
 #}
 
-{%- if fencing.enable and fencing.get('stonith_enabled', False)
+{%- if fencing.enable and fencing.get('stonith_enable', False)
   and (salt['mine.get'](cluster.name ~ '*', 'network.get_hostname', tgt_type='compound') | length()) >= 2 %}
 {{ property('stonith-enabled', 'true') }}
 {% else %}
@@ -67,26 +67,6 @@ ha_add_admin_ip:
       - ha_setup_stonith
 -#}
 
-{%- if fencing.enable and 'ipmi' in fencing %}
-{%- for host, config in fencing.ipmi.hosts.items() %}
-{%- set instance_attributes = {
-      'hostname': host, 'ipaddr': config['ip'], 'passwd': '/etc/pacemaker/ha_ipmi_' ~ host, 'userid': config['user'],
-      'interface': config['interface'], 'passwd_method': 'file', 'ipmitool': '/usr/bin/ipmitool', 'priv': config['priv'] } %}
-
-{#- at the time of writing, this requires a custom patch: https://github.com/ClusterLabs/cluster-glue/pull/39 #}
-{%- if 'port' in config %}
-{%- do instance_attributes.update({'ipport': config['port']}) -%}
-{%- endif %}
-
-{#- to-do: support other agents besides external/ipmi #}
-{{ ha_resource(host, class='stonith', type='external/ipmi', instance_attributes=instance_attributes,
-                      operations=fencing.ipmi.primitive.operations, meta_attributes=fencing.ipmi.primitive.meta_attributes) }}
-
-{{ ipmi_secret(host, config['secret'], True) }}
-
-{%- endfor %}
-{%- endif %}
-
 {#- to-do: figure out if these values make sense #}
 {#- to-do: allow override using pillar #}
 {%- set utilization_meta_attributes = {'target-role': 'Started'} %}
@@ -101,8 +81,16 @@ ha_add_admin_ip:
                       clone={ 'resource_id': 'c-node-utilization', 'meta_attributes': {'target-role': 'Started', 'interleave': 'true'} }) }}
 
 include:
-  - .packages
-  - .resources
+  - suse_ha.packages
+{%- if fencing.enable %}
+{%- if 'ipmi' in fencing %}
+  - .fencing.external_ipmi
+{%- endif %}
+{%- if 'sbd' in fencing %}
+  - .fencing.external_sbd
+{%- endif %}
+{%- endif %}
+  - suse_ha.resources
 
 {%- else %}
 {%- do salt.log.info('Not sending any Pacemaker configuration - ' ~ myfqdn ~ ' is not the designated controller.') -%}
@@ -120,6 +108,10 @@ pacemaker.service:
   service.running:
     - enable: True
     - reload: True
+    - retry:
+        attempts: 3
+        interval: 10
+        splay: 5
     - require:
       - suse_ha_packages
       - corosync.service
@@ -130,6 +122,9 @@ pacemaker.service:
     - name: /etc/sysconfig/pacemaker
     - separator: '='
     - show_changes: True
+    {%- if opts['test'] %}
+    - ignore_if_missing: True
+    {%- endif %}
     - key_values:
         {%- for key, value in sysconfig.pacemaker.items() %}
         '{{ key }}': '"{{ value }}"'
