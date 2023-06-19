@@ -75,4 +75,7 @@ tee /srv/pillar/full.sls >/dev/null <<EOF
 include:
   - samples.*
 EOF
-
+if [ ! -d '/data' ]
+then
+  mkdir '/data'
+fi
