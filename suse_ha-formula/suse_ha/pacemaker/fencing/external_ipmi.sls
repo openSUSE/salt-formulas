@@ -27,7 +27,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
       'hostname': host, 'ipaddr': config['ip'], 'passwd': '/etc/pacemaker/ha_ipmi_' ~ host, 'userid': config['user'],
       'interface': config['interface'], 'passwd_method': 'file', 'ipmitool': '/usr/bin/ipmitool', 'priv': config['priv'] } %}
 
-{#- at the time of writing, this requires a custom patch: https://github.com/ClusterLabs/cluster-glue/pull/39 #}
 {%- if 'port' in config %}
 {%- do instance_attributes.update({'ipport': config['port']}) -%}
 {%- endif %}
