@@ -1,0 +1,24 @@
+{%- from 'multipath/macros.jinja' import device -%}
+{%- from 'multipath/map.jinja' import config -%}
+
+{%- for section in config.keys() %}
+{%- if config[section] %}
+{{ section }} {
+{%- if section == 'defaults' or section == 'blacklist' %}
+  {%- for option, value in config[section].items() %}
+  {%- if option == 'devices' %}
+  {%- for subsection in value %}
+  {{ device(subsection) }}
+  {%- endfor %}
+  {%- else %}
+  {{ option }} {{ value }}
+  {%- endif %}
+  {%- endfor %}
+{%- elif section == 'devices' %}
+  {%- for subsection in config[section] %}
+  {{ device(subsection) }}
+  {%- endfor %}
+{%- endif %}
+}
+{%- endif %}
+{%- endfor %}
