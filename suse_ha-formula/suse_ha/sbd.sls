@@ -21,17 +21,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 include:
   - .packages
 
-{%- set devices = sbd['devices'] %}
+{%- set devices = sbd['devices'] -%}
 {%- set cmd_base = 'sbd' -%}
 {%- set sbd_ns = namespace(deviceargs='', timeoutargs='', devices='') -%}
 
 {%- for device in devices -%}
 {%- set sbd_ns.deviceargs = sbd_ns.deviceargs ~ ' -d ' ~ device -%}
-{%- set sbd_ns.devices = sbd_ns.devices ~ device -%}
-{%- if not loop.last -%}
-{%- set sbd_ns.devices = sbd_ns.devices ~ ';' -%}
-{%- endif -%}
-{%- endfor -%} {#- close devices loop -#}
+{%- endfor -%}
+{%- set sbd_ns.devices = devices | join(';') -%}
 
 {%- if 'timeouts' in sbd -%}
 {%- set timeout_msgwait = sbd.timeouts.get('msgwait', False) -%}
@@ -41,8 +38,8 @@ include:
 {%- set timeout_watchdog = sbd.timeouts.get('watchdog', False) -%}
 {%- if timeout_watchdog -%}
 {%- set sbd_ns.timeoutargs = sbd_ns.timeoutargs ~ ' -1 ' ~ timeout_watchdog -%}
-{%- endif %}
-{%- endif %} {#- close timeouts check -#}
+{%- endif -%}
+{%- endif -%} {#- close timeouts check -#}
 
 {%- set cmd_base = cmd_base ~ ' ' ~ sbd_ns.deviceargs ~ ' ' -%}
 {%- set cmd_format = cmd_base ~ sbd_ns.timeoutargs ~ ' create' -%}
