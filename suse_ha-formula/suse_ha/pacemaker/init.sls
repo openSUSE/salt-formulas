@@ -122,6 +122,9 @@ pacemaker.service:
     - name: /etc/sysconfig/pacemaker
     - separator: '='
     - show_changes: True
+    {%- if opts['test'] %}
+    - ignore_if_missing: True
+    {%- endif %}
     - key_values:
         {%- for key, value in sysconfig.pacemaker.items() %}
         '{{ key }}': '"{{ value }}"'
