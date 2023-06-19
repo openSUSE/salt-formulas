@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        0.2
+Version:        0.5
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -30,7 +30,9 @@ Source:         _service
 Requires:       grains-formula
 Requires:       infrastructure-formula
 Requires:       libvirt-formula
+Requires:       lock-formula
 Requires:       lunmap-formula
+Requires:       multipath-formula
 Requires:       orchestra-formula
 Requires:       os_update-formula
 Requires:       rebootmgr-formula
@@ -120,33 +122,82 @@ Requires:       %{name}-common
 %description -n zypper-formula
 Salt states for configuring packages, repositories, and zypper itself.
 
+%package -n lock-formula
+Summary:        Salt state module for managing lockfiles
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n lock-formula
+Salt state module allowing you to place a lock file prior to other states in order to prevent simultaneous executions.
+
+%package -n multipath-formula
+Summary:        Salt states for managing multipath
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n multipath-formula
+Salt states for installing multipath-tools and managing multipath/multipathd
+
 %prep
 mv %{_sourcedir}/salt-formulas-%{version}/* .
 
 %build
 
 %install
-install -dm0755 %{buildroot}%{sdir} %{buildroot}%{mdir}
+install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states
 
-for formula in $(find -mindepth 1 -maxdepth 1 -type d -not -path './.git' -printf '%%P\n')
+dst_execumodules="%{sdir}/_modules"
+dst_statemodules="%{sdir}/_states"
+
+for formula in $(find -mindepth 1 -maxdepth 1 -type d -name '*-formula' -printf '%%P\n')
 do
   echo "$formula"
   fname="${formula%%-*}"
 
-  src_states="$formula/$fname"
   src_metadata="$formula/metadata"
+  src_states="$formula/$fname"
+  if [ ! -d "$src_states" ]
+  then
+    src_states="$formula/${fname//_/-}"
+  fi
+  src_execumodules="$formula/_modules"
+  src_statemodules="$formula/_states"
 
-  dst_states="%{sdir}/$fname"
   dst_metadata="%{mdir}/$fname"
-
-  cp -rv "$src_states" "%{buildroot}$dst_states"
-  echo "$dst_states" > "$fname.files"
+  dst_states="%{sdir}/$fname"
 
   if [ -d "$src_metadata" ]
   then
     cp -rv "$src_metadata" "%{buildroot}$dst_metadata"
-    echo "$dst_metadata" >> "$fname.files"
+    echo "$dst_metadata" > "$fname.files"
   fi
+
+  if [ -d "$src_states" ]
+  then
+    cp -rv "$src_states" "%{buildroot}$dst_states"
+    echo "$dst_states" >> "$fname.files"
+  else
+    echo "Warning: $formula does not ship with any states"
+  fi
+
+  for mod in execu state
+  do
+    case "$mod" in
+      'execu' ) src="$src_execumodules"
+                dst="$dst_execumodules"
+      ;;
+      'state' ) src="$src_statemodules"
+                dst="$dst_statemodules"
+      ;;
+    esac
+
+    if [ -d "$src" ]
+    then
+      find "$src" -type f \
+        -execdir install -vm0644 {} "%{buildroot}$dst" \; \
+        -execdir sh -cx 'echo "$1/$(basename $2)" >> "$3"' prog "$dst" {} "../../$fname.files" \;
+    fi
+  done
 
   for license in 'COPYING' 'LICENCE' 'LICENSE'
   do
@@ -165,8 +216,9 @@ done
 %license COPYING
 %doc README.md
 %dir %{fdir}
-%dir %{sdir}
 %dir %{mdir}
+%dir %{sdir}
+%dir %{sdir}/_{modules,states}
 
 %files -n infrastructure-formula -f infrastructure.files
 
@@ -185,5 +237,9 @@ done
 %files -n rebootmgr-formula -f rebootmgr.files
 
 %files -n zypper-formula -f zypper.files
+
+%files -n lock-formula -f lock.files
+
+%files -n multipath-formula -f multipath.files
 
 %changelog
