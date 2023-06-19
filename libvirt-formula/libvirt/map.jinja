@@ -1,0 +1,30 @@
+{#-
+Jinja variables file for libvirt related Salt states
+Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- import_yaml './defaults/libvirt.yaml' as defaults_libvirt -%}
+{%- import_yaml './defaults/libvirtd.yaml' as defaults_libvirtd -%}
+{%- import_yaml './defaults/qemu.yaml' as defaults_qemu -%}
+{%- import_yaml './defaults/sockets.yaml' as defaults_sockets -%}
+
+{%- set defaults = {'libvirt': {}, 'libvirtd': {}, 'qemu': {}, 'sockets': {}} -%}
+{%- do defaults.libvirt.update(defaults_libvirt) -%}
+{%- do defaults.libvirtd.update(defaults_libvirtd) -%}
+{%- do defaults.qemu.update(defaults_qemu) -%}
+{%- do defaults.sockets.update(defaults_sockets) -%}
+
+{%- set config = salt.pillar.get('libvirt', default=defaults, merge=True, merge_nested_lists=False) -%}

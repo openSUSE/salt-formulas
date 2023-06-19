@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set libvirt_configs = ['network'] -%}
 {%- set libvirt_drivers = ['network', 'qemu', 'storage-disk', 'storage-mpath'] -%}
 {%- set libvirt_configpath = '/etc/libvirt/' -%}
-{%- set libvirt_configfiles = ['libvirt', 'qemu'] -%}
+{%- from 'libvirt/map.jinja' import config -%}
 
 libvirt_packages:
   pkg.installed:
@@ -36,26 +36,14 @@ libvirt_packages:
 
 libvirt_files:
   file.managed:
+    - template: jinja
+    - source: salt://{{ slspath }}/files{{ libvirt_configpath }}config.jinja
     - names:
-      {%- for file in libvirt_configfiles %}
-      {%- set file = file ~ '.conf' %}
-      - {{ libvirt_configpath }}{{ file }}:
-        - source: salt://{{ slspath }}/files{{ libvirt_configpath }}{{ file }}
+      {%- for file in ['libvirt', 'libvirtd', 'qemu'] %}
+      - {{ libvirt_configpath }}{{ file ~ '.conf' }}:
+        - context:
+            config: {{ config.get(file, {}) }}
       {%- endfor %}
-
-libvirt_socket_enable:
-  service.enabled:
-    - name: libvirtd.socket
-    - require:
-      - pkg: libvirt_packages
-
-libvirt_socket_run:
-  service.running:
-    - name: libvirtd.socket
-    - reload: False
-    - require:
-      - pkg: libvirt_packages
-      - file: libvirt_files
 
 # will restart itself through socket activation
 libvirt_service_stop:
@@ -63,5 +51,21 @@ libvirt_service_stop:
     - name: libvirtd.service
     - require:
       - pkg: libvirt_packages
-    - watch:
+    - onchanges:
       - file: libvirt_files
+
+{%- for socket, enable in config.sockets.items() %}
+{%- if not socket.startswith('libvirtd') %}{%- set socket = 'libvirtd-' ~ socket -%}{%- endif %}
+libvirt_{{ socket }}_socket:
+{%- if enable %}
+  service.running:
+    - reload: False
+{%- else %}
+  service.dead:
+{%- endif %}
+    - name: {{ socket }}.socket
+    - enable: {{ enable }}
+    - require:
+      - pkg: libvirt_packages
+      - file: libvirt_files
+{%- endfor %}

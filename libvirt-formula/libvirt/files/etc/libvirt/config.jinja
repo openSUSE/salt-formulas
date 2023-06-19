@@ -1,0 +1,6 @@
+{%- for option, value in config.items() %}
+{%- if value is not number %}
+{%- set value = '"' ~ value ~ '"' %}
+{%- endif %}
+{{ option }} = {{ value }}
+{%- endfor %}
