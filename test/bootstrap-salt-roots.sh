@@ -79,3 +79,5 @@ if [ ! -d '/data' ]
 then
   mkdir '/data'
 fi
+# to-do: somehow only run this if needed
+/vagrant/test/scripts/iscsi.sh
