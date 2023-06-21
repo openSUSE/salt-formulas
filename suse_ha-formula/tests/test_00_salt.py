@@ -1,78 +1,13 @@
 import copy
-import dotenv
+#import dotenv
 import json
-import os
+#import os
 import pytest
 import re
-import vagrant
+#import vagrant
 import testinfra
-#testinfra_hosts = ['scullery-minion0', 'scullery-minion1', 'scullery-master0']
 
-env = os.environ.copy()
-
-def _vagrant():
-    return vagrant.Vagrant(quiet_stderr=False)
-
-# https://stackoverflow.com/a/9808122
-def find(key, value):
-  for k, v in value.items():
-    if k == key:
-      yield v
-    elif isinstance(v, dict):
-      for result in find(key, v):
-        yield result
-    elif isinstance(v, list):
-      for d in v:
-        for result in find(key, d):
-          yield result
-
-
-def find_changes(result, count=False):
-    found = find('changes', result)
-    changed = False
-    counter = 0
-    for change in list(found):
-        if change:
-            changed = True
-            if count is False:
-                break
-            count += 1
-    if count is False:
-        return changed
-    return changed, counter
-
-
-def setgrains(grains, host):
-    for grainpair in grains:
-        grain='test:{}'.format(grainpair[0])
-        value=str(grainpair[1])
-        setgrain = host.salt('grains.set', [grain, value, 'force=True'])
-
-
-@pytest.fixture(scope='session')
-def reset():
-    v = _vagrant()
-    envmap = dotenv.dotenv_values('.scullery_env')
-    for variable, value in envmap.items():
-        env[variable] = value
-    v.env = env
-    v.destroy()
-    v.up()
-    ssh_config = v.ssh_config()
-    with open('.scullery_ssh', 'w') as fh:
-        fh.write(ssh_config)
-
-
-def modes():
-    # 'medium' removed -> FIXME results in error about undefined fence_base being undefined ?
-    # 'large' removed -> FIXME handle error about no defined STONITH resources
-    return ['small', 'large_ipmi', 'large_ipmi_custom', 'large_sbd']
-
-
-@pytest.fixture(params=modes())
-def mode(request):
-    return request.param
-
+from helpers import *
 
 def grainsdata(grainmode):
     if grainmode == 'small':
@@ -254,9 +189,10 @@ expectations_state_apply_common = {
             'pkg_|-suse_ha_packages_|-suse_ha_packages_|-installed': {
                 'comment': '11 targeted packages were installed/updated.'
             },
-            'file_|-ha_resources_directory_|-/data/resources_|-directory': {
-                'comment': ''
-            },
+# ???
+#            'file_|-ha_resources_directory_|-/data/resources_|-directory': {
+#                'comment': ''
+#            },
             'file_|-/etc/corosync/corosync.conf_|-/etc/corosync/corosync.conf_|-managed': {
                 'comment': 'File /etc/corosync/corosync.conf updated'
             },
@@ -278,18 +214,18 @@ expectations_state_apply_moded = {
         'large': {},
         'large_ipmi': {
             'file_|-ha_fencing_ipmi_secret_dev-ipmi0_|-/etc/pacemaker/ha_ipmi_dev-ipmi0_|-managed': {
-                'comment': ''
+                'comment': 'File /etc/pacemaker/ha_ipmi_dev-ipmi0 updated'
             },
             'file_|-ha_fencing_ipmi_secret_dev-ipmi1_|-/etc/pacemaker/ha_ipmi_dev-ipmi1_|-managed': {
-                'comment': ''
+                'comment': 'File /etc/pacemaker/ha_ipmi_dev-ipmi1 updated'
             },
         },
         'large_ipmi_custom': {
             'file_|-ha_fencing_ipmi_secret_dev-ipmi0_|-/etc/pacemaker/ha_ipmi_dev-ipmi0_|-managed': {
-                'comment': ''
+                'comment': 'File /etc/pacemaker/ha_ipmi_dev-ipmi0 updated'
             },
             'file_|-ha_fencing_ipmi_secret_dev-ipmi1_|-/etc/pacemaker/ha_ipmi_dev-ipmi1_|-managed': {
-                'comment': ''
+                'comment': 'File /etc/pacemaker/ha_ipmi_dev-ipmi1 updated'
             },
         },
         'large_sbd': {
@@ -297,17 +233,18 @@ expectations_state_apply_moded = {
                 'comment': '12 targeted packages were installed/updated.'
             },
             'file_|-sbd_sysconfig_|-/etc/sysconfig/sbd_|-keyvalue': {
-                'comment': ''
+                'changes': {'diff': '- #SBD_DEVICE=\"\"\n+ SBD_DEVICE=/dev/sda;/dev/sdb;/dev/sdc\n- SBD_WATCHDOG_DEV=/dev/watchdog\n+ SBD_WATCHDOG_DEV=\"/dev/null\"\n'},
+                'comment': 'Changed 2 lines'
             },
-            'service_|-sbd_service_|-sbd_|-enabled': {
-                'comment': ''
-            },
-            'service_|-corosync.service_|-corosync.service_|-running': {
-                'comment': ''
-            },
-            'service_|-pacemaker.service_|-pacemaker.service_|-running': {
-                'comment': ''
-            },
+#            'service_|-sbd_service_|-sbd_|-enabled': {
+#                'comment': ''
+#            },
+#            'service_|-corosync.service_|-corosync.service_|-running': {
+#                'comment': ''
+#            },
+#            'service_|-pacemaker.service_|-pacemaker.service_|-running': {
+#                'comment': ''
+#            },
         },
 }
 expectations_state_apply_params = [
@@ -316,57 +253,93 @@ expectations_state_apply_params = [
 ]
 host_params = [
         pytest.param(h)
-        for h in testinfra.get_hosts(['scullery-minion0', 'scullery-minion1'], ssh_config='.scullery_ssh', sudo=True)
+        # to-do: detect multiple masters
+        for h in testinfra.get_hosts(['scullery-master0'], ssh_config='.scullery_ssh', sudo=True)
 ]
-@pytest.mark.parametrize('minion', host_params)
+@pytest.mark.parametrize('master', host_params)
 @pytest.mark.parametrize('mode, expected', expectations_state_apply_params)
-def test_salt_state_apply(minion, mode, expected, reset):
+def test_salt_state_apply_ng(master, mode, expected, save, reset):
     print('mode: ' + mode)
-    setgrains(grainsdata(mode), minion)
-
-    minion.salt('saltutil.refresh_pillar')
-    minion.salt('mine.update')
-
-    # the first time the state applied Corosync might not be ready, and fail to start
-    # to-do: add some sort of "wait for readiness" logic to the formula
-    #result0 = host.salt('state.apply', 'suse_ha', expect_rc=[1])
-    result0 = minion.salt('state.apply', 'suse_ha')
-    with open('/dev/shm/result0_{}'.format(mode), 'w', encoding='utf-8') as fh:
-        json.dump(result0, fh, ensure_ascii=False, indent=4)
-
-    #host.salt('mine.update')
-
-    #try:
-    #    result1 = host.salt('state.apply', 'suse_ha')
-    #except Exception:
-    #    pass
-    #with open('/dev/shm/result1_{}'.format(mode), 'w', encoding='utf-8') as fh:
-    #    json.dump(result1, fh, ensure_ascii=False, indent=4)
-    # well maybe one result is good enough now??
-    result = result0
-
-    changed, changes = find_changes(result, True)
-    assert changed
-    print('changes: ' + str(changes))
-
-    #result = host.salt('state.apply', 'suse_ha')
-    #assert result
-    #changed = find_changes(result)
-    #assert not changed
-
-    #result = result['local']
+    if 'sbd' in mode:
+        bootstrap_sbd(master)
+    # to-do: detect minions from --hosts
+    target = 'scullery-minion*'
+    setgrains(grainsdata(mode), master, target)
+    salt = f'salt --out=json --static {target}'
+    master.run(f'{salt} saltutil.refresh_pillar')
+    master.run(f'{salt} mine.update')
+    apply = master.run(f'{salt} state.apply suse_ha')
+    rc = apply.rc
+    print('Apply rc is: {}'.format(str(rc)))
+    result = json.loads(apply.stdout)
+    with open('/dev/shm/result_master_{}'.format(mode), 'w') as fh:
+        json.dump(result, fh)
+    assert rc == 0
     expected_moderesults = copy.deepcopy(expectations_state_apply_common)
     expected_moderesults.update(expected)
+    for retminion in result:
+        print(f'Now validating {retminion}')
+        assert result[retminion].pop('retcode') == 0
+        for state, body in result[retminion].items():
+            fields = body.keys()
+            assert 'comment' in fields, 'States must return a comment'
+            assert 'result' in fields, 'States must return a result'
+            assert state in expected_moderesults, 'States must be tracked in test suite'
+            assert body['result'] is not False
+            for field in fields:
+                if field in expected_moderesults[state]:
+                    assert body[field] == expected_moderesults[state][field]
 
-    for state, body in result.items():
-        print(state)
-        fields = body.keys()
-        assert 'comment' in fields, 'States must return a comment'
-        assert 'result' in fields, 'States must return a result'
-        assert state in expected_moderesults, 'States must be tracked in test suite'
-        assert body['result'] is not False
-        # FIXME
-        for field in fields:
-            if field in expected_moderesults[state]:
-                assert body[field] == expected_moderesults[state][field]
 
+#@pytest.mark.parametrize('minion', host_params)
+#@pytest.mark.parametrize('mode, expected', expectations_state_apply_params)
+#def test_salt_state_apply(minion, mode, expected, reset):
+#    print('mode: ' + mode)
+#    setgrains(grainsdata(mode), minion)
+#
+#    minion.salt('saltutil.refresh_pillar')
+#    minion.salt('mine.update')
+#
+#    # the first time the state applied Corosync might not be ready, and fail to start
+#    # to-do: add some sort of "wait for readiness" logic to the formula
+#    #result0 = host.salt('state.apply', 'suse_ha', expect_rc=[1])
+#    result0 = minion.salt('state.apply', 'suse_ha')
+#    with open('/dev/shm/result0_{}'.format(mode), 'w', encoding='utf-8') as fh:
+#        json.dump(result0, fh, ensure_ascii=False, indent=4)
+#
+#    #host.salt('mine.update')
+#
+#    #try:
+#    #    result1 = host.salt('state.apply', 'suse_ha')
+#    #except Exception:
+#    #    pass
+#    #with open('/dev/shm/result1_{}'.format(mode), 'w', encoding='utf-8') as fh:
+#    #    json.dump(result1, fh, ensure_ascii=False, indent=4)
+#    # well maybe one result is good enough now??
+#    result = result0
+#
+#    changed, changes = find_changes(result, True)
+#    assert changed
+#    print('changes: ' + str(changes))
+#
+#    #result = host.salt('state.apply', 'suse_ha')
+#    #assert result
+#    #changed = find_changes(result)
+#    #assert not changed
+#
+#    #result = result['local']
+#    expected_moderesults = copy.deepcopy(expectations_state_apply_common)
+#    expected_moderesults.update(expected)
+#
+#    for state, body in result.items():
+#        print(state)
+#        fields = body.keys()
+#        assert 'comment' in fields, 'States must return a comment'
+#        assert 'result' in fields, 'States must return a result'
+#        assert state in expected_moderesults, 'States must be tracked in test suite'
+#        assert body['result'] is not False
+#        # FIXME
+#        for field in fields:
+#            if field in expected_moderesults[state]:
+#                assert body[field] == expected_moderesults[state][field]
+#
