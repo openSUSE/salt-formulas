@@ -82,14 +82,27 @@ def _call(host, certificate, key, rundir, playbook, extravars={}, descend=[]):
     return task
 
 
-def get_lun(uuid=None):
+def get_lun(comment=None, uuid=None):
+    if (comment is not None) and (uuid is not None):
+        log.error(f'Only a single filter may be specified')
+        raise ValueError('Only a single filter may be specified')
     varmap = _config()
-    if uuid:
-        varmap.update({'extravars': {'ontap_lun_uuid': uuid}})
+    extravars = None
+
+    if comment:
+        playbook = 'fetch-lun-by-comment_restit'
+        extravars = {'extravars': {'ontap_lun_comment': comment}}
+    elif uuid:
         playbook = 'fetch-lun_restit'
-    else:
+        extravars = {'extravars': {'ontap_lun_uuid': uuid}}
+
+    if extravars is None:
         playbook = 'fetch-luns_restit'
+    else:
+        varmap.update(extravars)
+
     descend = ['response', 'records']
     varmap.update({'playbook': f'playbooks/{playbook}.yml', 'descend': descend})
+
     result = _call(**varmap)
     return result
