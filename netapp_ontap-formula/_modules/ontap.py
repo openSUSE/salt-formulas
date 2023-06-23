@@ -37,7 +37,10 @@ def _find(key, value):
 def _config():
     return __utils__['ontap_config.config']()
 
-def _call(host, certificate, key, rundir, playbook, extravars={}, descend=[]):
+def _path(volume, name):
+    return f'/vol/{volume}/{name}'
+
+def _call(host, certificate, key, rundir, playbook, extravars={}, descend=[], single_task=True):
     host, colon, port = host.rpartition(':')
     varmap = {'ontap_host': host, 'ontap_port': int(port), 'ontap_crt': certificate, 'ontap_key': key}
     if extravars:
@@ -60,40 +63,51 @@ def _call(host, certificate, key, rundir, playbook, extravars={}, descend=[]):
     if not tasks_len:
         log.error(f'ontap_ansible: play returned with no tasks')
         return False
-    if tasks_len > 0:
+    if tasks_len > 0 and single_task:
         log.warning(f'ontap_ansible: discarding {tasks_len} additional tasks')
-    task0 = tasks[0]
 
-    task = task0.get('hosts').get('localhost')
-    if task is None:
-        log.error(f'ontap_ansible: unable to parse task - ensure it executed locally')
-        return False
+    mytasks = []
+    for task in tasks:
+        mytask = task.get('hosts').get('localhost')
+        if mytask is None:
+            log.error(f'ontap_ansible: unable to parse task - ensure it executed locally')
+            return False
 
-    if descend:
-        if isinstance(descend, str):
-            descend = [descend]
-        for level in descend:
-            gain = task.get(level)
-            if gain is None:
-                break
-            if gain is not None:
-                log.debug(f'ontap_ansible: found artifact for {level}')
-                task = gain
+        if descend:
+            if isinstance(descend, str):
+                descend = [descend]
+            for level in descend:
+                gain = mytask.get(level)
+                if gain is None:
+                    break
+                if gain is not None:
+                    log.debug(f'ontap_ansible: found artifact for {level}')
+                    mytask = gain
 
-    return task
+        if single_task:
+            break
+        mytasks.append(mytask)
+
+    if single_task:
+        return mytask
+    return mytasks
 
 def _result(result):
     log.debug(f'ontap_ansible: parsing result: {result}')
 
+    if isinstance(result, bool):
+        log.error(f'ontap_ansible: result seems like a failed execution, refusing to parse')
+        return False
+
     error = result.get('error_message')
     status = result.get('status_code')
-    changed = result.get('changed')
+    records = result.get('changed')
     response = result.get('response')
     method = result.get('invocation', {}).get('module_args', {}).get('method')
     if response is not None and 'num_records' in response:
         records = response['num_records']
     elif method == 'POST':
-        # API does not return a record number for any creation calls, we cannot tell how many items changed
+        # API does not return a record number for any creation calls, we cannot tell how many items records
         records = None
     else:
         # API does not return a record number if a DELETE call did not yield any deletions
@@ -104,15 +118,17 @@ def _result(result):
     if status >= 400 and error:
         __context__["retcode"] = 2
         res = {'error': error, 'result': False}
-    if 200 <= status < 300:
+    if method in set(['DELETE', 'POST']) and 200 <= status < 300:
         res = {'result': True}
 
     if res:
         resmap = {'status': status}
         if records is not None:
-            resmap.update({'changed': records})
+            resmap.update({'records': records})
         resmap.update(res)
         return resmap
+    elif status == 200:
+        return response
 
     log.warning('ontap_ansible: dumping unknown result')
     return result
