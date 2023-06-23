@@ -133,7 +133,7 @@ def _result(result):
     log.warning('ontap_ansible: dumping unknown result')
     return result
 
-def get_lun(comment=None, uuid=None):
+def get_lun(comment=None, uuid=None, get_next_free=False):
     if (comment is not None) and (uuid is not None):
         log.error(f'Only a single filter may be specified')
         raise ValueError('Only a single filter may be specified')
@@ -155,6 +155,10 @@ def get_lun(comment=None, uuid=None):
     descend = ['response', 'records']
     varmap.update({'playbook': f'playbooks/{playbook}.yml', 'descend': descend})
 
+    if get_next_free and comment is None and uuid is None:
+        result = _call(**varmap, single_task=False)
+        next_free = result[5].get('ansible_facts', {}).get('lun_id')
+        return result[0], next_free
     result = _call(**varmap)
     return result
 
