@@ -178,3 +178,32 @@ def delete_lun_name(name, volume):
 
 def delete_lun_uuid(uuid):
     return _delete_lun(uuid=uuid)
+
+def get_lun_mapping(comment):
+    query = get_lun(comment)
+    resmap = {}
+    for lun in query:
+        log.debug(f'netapp_ontap: parsing LUN {lun}')
+        name = lun.get('name')
+        mapped = lun.get('status', {}).get('mapped')
+        resmap.update({name: mapped})
+    if None in resmap:
+        log.error('netapp_ontap: invalid LUN mapping map')
+    return resmap
+
+def _path(volume, name):
+    return f'/vol/{volume}/{name}'
+
+def map_lun(name, lunid, volume, vserver, igroup):
+    varmap = _config()
+    path = _path(volume, name)
+    varmap.update({'playbook': 'playbooks/map-lun_restit.yml', 'extravars': {'ontap_lun_id': lunid, 'ontap_lun_path': path, 'ontap_vserver': vserver, 'ontap_igroup': igroup}})
+    result = _call(**varmap)
+    return _result(result)
+
+def unmap_lun(name, volume, igroup):
+    varmap = _config()
+    path = _path(volume, name)
+    varmap.update({'playbook': 'playbooks/unmap-lun_restit.yml', 'extravars': {'ontap_lun_path': path, 'ontap_igroup': igroup}})
+    result = _call(**varmap)
+    return _result(result)
