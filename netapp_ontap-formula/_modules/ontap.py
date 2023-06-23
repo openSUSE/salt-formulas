@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import re
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +82,40 @@ def _call(host, certificate, key, rundir, playbook, extravars={}, descend=[]):
 
     return task
 
+def _result(result):
+    log.debug(f'ontap_ansible: parsing result: {result}')
+
+    error = result.get('error_message')
+    status = result.get('status_code')
+    changed = result.get('changed')
+    response = result.get('response')
+    method = result.get('invocation', {}).get('module_args', {}).get('method')
+    if response is not None and 'num_records' in response:
+        records = response['num_records']
+    elif method == 'POST':
+        # API does not return a record number for any creation calls, we cannot tell how many items changed
+        records = None
+    else:
+        # API does not return a record number if a DELETE call did not yield any deletions
+        records = 0
+
+    res = {}
+
+    if status >= 400 and error:
+        __context__["retcode"] = 2
+        res = {'error': error, 'result': False}
+    if 200 <= status < 300:
+        res = {'result': True}
+
+    if res:
+        resmap = {'status': status}
+        if records is not None:
+            resmap.update({'changed': records})
+        resmap.update(res)
+        return resmap
+
+    log.warning('ontap_ansible: dumping unknown result')
+    return result
 
 def get_lun(comment=None, uuid=None):
     if (comment is not None) and (uuid is not None):
@@ -106,3 +141,40 @@ def get_lun(comment=None, uuid=None):
 
     result = _call(**varmap)
     return result
+
+# https://stackoverflow.com/a/60708339
+# based on https://stackoverflow.com/a/42865957/2002471
+units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40}
+def _parse_size(size):
+    size = size.upper()
+    #print("parsing size ", size)
+    if not re.match(r' ', size):
+        size = re.sub(r'([KMGT]?B)', r' \1', size)
+    number, unit = [string.strip() for string in size.split()]
+    return int(float(number)*units[unit])
+
+def provision_lun(name, size, lunid, volume, vserver):
+    varmap = _config()
+    size = _parse_size(size)
+    varmap.update({'playbook': 'playbooks/deploy-lun_restit.yml', 'extravars': {'ontap_comment': name, 'ontap_lun_id': lunid, 'ontap_volume': volume, 'ontap_vserver': vserver, 'ontap_size': size}})
+    result = _call(**varmap)
+    return _result(result)
+
+def _delete_lun(name=None, volume=None, uuid=None):
+    if (name is None or volume is None) and (uuid is None):
+        log.error('Specify either name and volume or uuid')
+        raise ValueError('Specify either name and volume or uuid')
+    varmap = _config()
+    if name and volume:
+        extravars = {'ontap_volume': volume, 'ontap_lun_name': name}
+    elif uuid:
+        extravars = {'ontap_lun_uuid': uuid}
+    varmap.update({'playbook': 'playbooks/delete-lun_restit.yml', 'extravars': extravars})
+    result = _call(**varmap)
+    return _result(result)
+
+def delete_lun_name(name, volume):
+    return _delete_lun(name, volume)
+
+def delete_lun_uuid(uuid):
+    return _delete_lun(uuid=uuid)
