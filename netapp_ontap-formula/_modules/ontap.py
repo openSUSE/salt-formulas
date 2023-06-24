@@ -183,6 +183,15 @@ def provision_lun(name, size, volume, vserver, comment=None):
     result = _call(**varmap)
     return _result(result)
 
+# to-do: support property updates other than size changes
+def update_lun(name, size, volume, vserver):
+    varmap = _config()
+    size = _parse_size(size)
+    path = _path(volume, name)
+    varmap.update({'playbook': 'playbooks/patch-lun_restit.yml', 'extravars': {'ontap_lun_path': path, 'ontap_vserver': vserver, 'ontap_size': size}})
+    result = _call(**varmap)
+    return _result(result)
+
 def _delete_lun(name=None, volume=None, uuid=None):
     if (name is None or volume is None) and (uuid is None):
         log.error('Specify either name and volume or uuid')
