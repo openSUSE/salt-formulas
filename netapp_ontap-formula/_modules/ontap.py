@@ -173,10 +173,13 @@ def _parse_size(size):
     number, unit = [string.strip() for string in size.split()]
     return int(float(number)*units[unit])
 
-def provision_lun(name, size, lunid, volume, vserver):
+def provision_lun(name, size, volume, vserver, comment=None):
     varmap = _config()
     size = _parse_size(size)
-    varmap.update({'playbook': 'playbooks/deploy-lun_restit.yml', 'extravars': {'ontap_comment': name, 'ontap_lun_id': lunid, 'ontap_volume': volume, 'ontap_vserver': vserver, 'ontap_size': size}})
+    path = _path(volume, name)
+    varmap.update({'playbook': 'playbooks/deploy-lun_restit.yml', 'extravars': {'ontap_lun_path': path, 'ontap_volume': volume, 'ontap_vserver': vserver, 'ontap_size': size}})
+    if comment is not None:
+        varmap['extravars'].update({'ontap_comment': comment})
     result = _call(**varmap)
     return _result(result)
 
