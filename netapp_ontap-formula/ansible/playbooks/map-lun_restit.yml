@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  name: Create LUN
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Deploy
+      block:
+        - name: Map LUN
+          import_tasks: '../tasks/map_lun_restit.yml'

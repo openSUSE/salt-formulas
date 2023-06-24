@@ -1,0 +1,17 @@
+---
+- name: Get LUN
+  netapp.ontap.na_ontap_restit:
+    hostname: '{{ ontap_host }}'
+    cert_filepath: '{{ ontap_crt }}'
+    key_filepath: '{{ ontap_key }}'
+    http_port: '{{ ontap_port }}'
+    use_rest: always
+    validate_certs: false
+    wait_for_completion: true
+    api: 'storage/luns'
+    query:
+      comment: '{{ ontap_lun_comment }}'
+      fields: 'space,status.mapped'
+  register: lun_info
+
+- assert: { that: lun_info.status_code==200 }

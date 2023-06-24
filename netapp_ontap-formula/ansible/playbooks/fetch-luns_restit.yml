@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  name: Query LUNs
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Gather details
+      block:
+        - name: Query LUNs
+          import_tasks: '../tasks/get_luns_restit.yml'
+

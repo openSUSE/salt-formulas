@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  name: Patch LUN
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Deploy
+      block:
+        - name: Patch LUN
+          import_tasks: '../tasks/patch_lun_restit.yml'

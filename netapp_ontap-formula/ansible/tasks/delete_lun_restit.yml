@@ -1,0 +1,16 @@
+---
+- name: Delete LUN
+  netapp.ontap.na_ontap_restit:
+    hostname: '{{ ontap_host }}'
+    cert_filepath: '{{ ontap_crt }}'
+    key_filepath: '{{ ontap_key }}'
+    http_port: '{{ ontap_port }}'
+    use_rest: always
+    validate_certs: false
+    api: 'storage/luns'
+    method: DELETE
+    query:
+      uuid: '{{ ontap_lun_uuid }}'
+  register: lun_delete_info
+
+- assert: { that: lun_delete_info.status_code==200 }

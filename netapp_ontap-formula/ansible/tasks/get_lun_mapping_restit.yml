@@ -1,0 +1,18 @@
+---
+- name: Map LUN
+  netapp.ontap.na_ontap_restit:
+    hostname: '{{ ontap_host }}'
+    http_port: '{{ ontap_port }}'
+    cert_filepath: '{{ ontap_crt }}'
+    key_filepath: '{{ ontap_key }}'
+    use_rest: always
+    validate_certs: false
+    api: protocols/san/lun-maps
+    query:
+      igroup: '{{ ontap_igroup }}'
+      lun: '{{ ontap_lun_path }}'
+  register: lun_map_out
+
+- debug: var=lun_map_out
+- assert: { that: lun_map_out.status_code==200 }
+
