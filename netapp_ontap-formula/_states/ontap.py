@@ -59,7 +59,7 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
     # FIXME drop mapping logic from lun_present in favor of lun_mapped
     def _map(name, lunid, volume, vserver, igroup):
         ok = False
-        map_out = __salt__['ontap.map_lun'](name, lunid, volume, vserver, igroup)
+        map_out = __salt__['ontap_native.map_lun'](name, lunid, volume, vserver, igroup)
         if map_out.get('result', False) and map_out.get('status') == 201:
             comment = f'Mapped LUN to ID {lunid}'
             ok = True
@@ -68,9 +68,10 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
             comment = 'LUN mapping failed'
         return comment, ok
 
-    query = __salt__['ontap.get_lun'](get_next_free=True)
-    luns = query[0]
-    next_free = query[1]
+    query = __salt__['ontap_native.get_lun']()
+    #luns = query[0]
+    luns = query
+    next_free = __salt__['ontap_native.get_next_free']('wilde') # drop this
 
     for lun in luns:
         lun_path = lun.get('name')
@@ -80,10 +81,10 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
             log.debug(f'netapp_ontap: found existing LUN {name}')
             if lun_uuid is None:
                 log.error(f'netapp_ontap: found LUN with no UUID')
-            lun_details = __salt__['ontap.get_lun'](uuid=lun_uuid)
+            lun_details = __salt__['ontap_native.get_lun'](uuid=lun_uuid, human=False)
             lun_size = _size(lun_details[0], True)
             # lun_size_human = needed?
-            lun_mapping = __salt__['ontap.get_lun_mapped'](lun_result=lun_details)
+            lun_mapping = __salt__['ontap_native.get_lun_mapped'](lun_result=lun_details)
             lun_mapped = lun_mapping.get(name)
             # lun_id = needed?
             if lun_size == size:
@@ -93,8 +94,8 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
                 if __opts__['test']:
                     comment_size = f'Would resize LUN to {size}'
                 else:
-                    __salt__['ontap.update_lun'](name, size, volume, vserver)
-                    lun2_details = __salt__['ontap.get_lun'](uuid=lun_uuid)
+                    __salt__['ontap_native.update_lun'](lun_uuid, size)
+                    lun2_details = __salt__['ontap_native.get_lun'](uuid=lun_uuid, human=False)
                     lun2_size = _size(lun2_details[0], True)
                     comment_size = f'LUN from {lun_size} to {size}'
                     if lun2_size != lun_size and lun2_size == size:
@@ -117,7 +118,7 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
                     comment_mapping = map_out[0]
                     map_ok = map_out[1]
 
-                    #map_out = __salt__['ontap.map_lun'](name, lunid, volume, vserver, igroup)
+                    #map_out = __salt__['ontap_native.map_lun'](name, lunid, volume, vserver, igroup)
                     #if map_out.get('result', False) and map_out.get('status') == 201:
                     #    comment_mapping = f'Mapped LUN to ID {lunid}'
                     #    map_ok = True
@@ -141,12 +142,12 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
         ret['result'] = None
         return ret
 
-    __salt__['ontap.provision_lun'](name, size, volume, vserver, comment)
+    __salt__['ontap_native.provision_lun'](name, size, volume, vserver, comment)
     if do_map:
         map_out = _map(name, lunid, volume, vserver, igroup)
         comment_mapping = map_out[0]
         map_ok = map_out[1]
-    lun2_details = __salt__['ontap.get_lun'](comment)
+    lun2_details = __salt__['ontap_native.get_lun'](comment)[0]
     lun2_size = _size(lun2_details)
     # FIXME changes dict
 
@@ -182,7 +183,7 @@ def lun_mapped(name, lunid, volume, vserver, igroup):
     path = f'/vol/{volume}/{name}'
     ret = {'name': path, 'result': False, 'changes': {}, 'comment': ''}
 
-    mapping_out = __salt__['ontap.get_lun_mapping'](name, volume, igroup)
+    mapping_out = __salt__['ontap_native.get_lun_mapping'](name, volume, igroup)
     log.debug(f'netapp_ontap: mapping result: {mapping_out}')
     current_igroups = []
     current_svms = []
@@ -235,7 +236,7 @@ def lun_mapped(name, lunid, volume, vserver, igroup):
         ret['comment'] = comment
         return ret
 
-    map_out = __salt__['ontap.map_lun'](name, lunid, volume, vserver, igroup)
+    map_out = __salt__['ontap_native.map_lun'](name, lunid, volume, vserver, igroup)
     if map_out.get('result', False) and map_out.get('status') == 201:
         comment = f'Mapped LUN to ID {lunid} in igroup {igroup}'
         ret['result'] = True
