@@ -40,15 +40,9 @@ def _parse_size(size):
     number, unit = [string.strip() for string in size.split()]
     return int(float(number)*units[unit])
 
-def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
+def lun_present(name, comment, size, volume, vserver):
     path = f'/vol/{volume}/{name}'
     ret = {'name': path, 'result': False, 'changes': {}, 'comment': ''}
-    size_ok = False
-    map_ok = False
-    if not None in [lunid, igroup]:
-        do_map = True
-    else:
-        do_map = False
 
     def _size(details, human=False):
         size = details.get('space', {}).get('size')
@@ -56,40 +50,22 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
             return _humansize(size)
         return size
 
-    # FIXME drop mapping logic from lun_present in favor of lun_mapped
-    def _map(name, lunid, volume, vserver, igroup):
-        ok = False
-        map_out = __salt__['ontap.map_lun'](name, lunid, volume, vserver, igroup)
-        if map_out.get('result', False) and map_out.get('status') == 201:
-            comment = f'Mapped LUN to ID {lunid}'
-            ok = True
-            # consider another get_lun to validate .. given the queries being expensive in time, it should be combined with the resize validation
-        else:
-            comment = 'LUN mapping failed'
-        return comment, ok
-
-    query = __salt__['ontap.get_lun']()
-    #luns = query[0]
-    luns = query
-    next_free = __salt__['ontap.get_next_free']('wilde') # drop this
+    luns = __salt__['ontap.get_lun']()
 
     for lun in luns:
         lun_path = lun.get('name')
         lun_comment = lun.get('comment')
         lun_uuid = lun.get('uuid')
-        if lun_comment == comment or lun_path == path:
+        if lun_path == path:
             log.debug(f'netapp_ontap: found existing LUN {name}')
             if lun_uuid is None:
                 log.error(f'netapp_ontap: found LUN with no UUID')
             lun_details = __salt__['ontap.get_lun'](uuid=lun_uuid, human=False)
             lun_size = _size(lun_details[0], True)
             # lun_size_human = needed?
-            lun_mapping = __salt__['ontap.get_lun_mapped'](lun_result=lun_details)
-            lun_mapped = lun_mapping.get(name)
-            # lun_id = needed?
             if lun_size == size:
                 comment_size = f'Size {size} matches'
-                size_ok = True
+                ret['result'] = True
             elif lun_size != size:
                 if __opts__['test']:
                     comment_size = f'Would resize LUN to {size}'
@@ -100,38 +76,14 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
                     comment_size = f'LUN from {lun_size} to {size}'
                     if lun2_size != lun_size and lun2_size == size:
                         comment_size = f'Sucessfully resized {comment_size}'
-                        size_ok = True
+                        ret['result'] = True
                     elif lun2_size == lun_size:
                         comment_size = f'Failed to resize {comment_size}, it is still {lun2_size}'
                     else:
                         comment_size = f'Unexpected outcome while resizing {comment_size}'
 
-            if not do_map:
-                comment_mapping = None
-                map_ok = True
-            else:
-                if lun_mapped:
-                    comment_mapping = 'Already mapped'
-                    map_ok = True
-                else:
-                    map_out = _map(name, lunid, volume, vserver, igroup)
-                    comment_mapping = map_out[0]
-                    map_ok = map_out[1]
-
-                    #map_out = __salt__['ontap.map_lun'](name, lunid, volume, vserver, igroup)
-                    #if map_out.get('result', False) and map_out.get('status') == 201:
-                    #    comment_mapping = f'Mapped LUN to ID {lunid}'
-                    #    map_ok = True
-                    #    # consider another get_lun to validate .. given the queries being expensive in time, it should be combined with the resize validation
-                    #else:
-                    #    comment_mapping = 'LUN mapping failed'
-
             comment_base = 'LUN is already present'
-            if size_ok and map_ok:
-                ret['result'] = True
             retcomment = f'{comment_base}; {comment_size}'
-            if comment_mapping is not None:
-                retcomment = f'{retcomment}, {comment_mapping}'
             if __opts__['test']:
                 ret['result'] = None
             ret['comment'] = retcomment
@@ -143,11 +95,7 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
         return ret
 
     __salt__['ontap.provision_lun'](name, size, volume, vserver, comment)
-    if do_map:
-        map_out = _map(name, lunid, volume, vserver, igroup)
-        comment_mapping = map_out[0]
-        map_ok = map_out[1]
-    lun2_details = __salt__['ontap.get_lun'](comment)[0]
+    lun2_details = __salt__['ontap.get_lun'](path=path)[0]
     lun2_size = _size(lun2_details)
     # FIXME changes dict
 
@@ -166,15 +114,6 @@ def lun_present(name, comment, size, volume, vserver, lunid=None, igroup=None):
         comment_size = f'with mismatching size {lun2_size}'
 
     comment = f'LUN {comment_path} {comment_size}.'
-
-    if do_map:
-        if map_ok:
-            ret['result'] = True
-            comment_mapping = f'mapped to ID {lunid}'
-        else:
-            ret['result'] = False
-            comment_mapping = f'mapping to ID {lunid} failed'
-        comment = f'{comment} LUN {comment_mapping}.'
 
     ret['comment'] = comment
     return ret
