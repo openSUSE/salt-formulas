@@ -1,5 +1,5 @@
 """
-Salt execution module for maging ONTAP based NetApp storage systems using Ansible
+Salt execution module for maging ONTAP based NetApp storage systems
 Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@ def _result(result):
     Used for DELETE/PATCH/POST output, not for GET
     result = the output to parse
     """
-    log.debug(f'ontap_ansible: parsing result: {result}')
+    log.debug(f'netapp_ontap: parsing result: {result}')
 
     error = result.is_err
     status = result.http_response.status_code
@@ -71,7 +71,7 @@ def _result(result):
         resmap.update(res)
         return resmap
 
-    log.warning('ontap_ansible: dumping unknown result')
+    log.warning('netapp_ontap: dumping unknown result')
     return result
 
 def _strip(resource, inners=[]):

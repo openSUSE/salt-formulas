@@ -1,5 +1,5 @@
 """
-Salt state module for managing LUNs using the ONTAP Ansible collection
+Salt state module for maging ONTAP based NetApp storage systems
 Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
