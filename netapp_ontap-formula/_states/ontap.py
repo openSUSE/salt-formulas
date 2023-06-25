@@ -216,3 +216,28 @@ def lun_mapped(name, lunid, volume, vserver, igroup):
     ret['comment'] = comment
     return ret
 
+def lun_unmapped(name, volume, igroup):
+    path = f'/vol/{volume}/{name}'
+    ret = {'name': path, 'result': True, 'changes': {}, 'comment': ''}
+
+    if __opts__['test']:
+        result = __salt__['ontap_native.get_lun_mapping'](name, volume, igroup)
+        ret['result'] = None
+    else:
+        result = __salt__['ontap_native.unmap_lun'](name, volume, igroup)
+        rr = result.get('result', True)
+        rs = result.get('status')
+    log.debug(f'result: {result}')
+
+    if __opts__['test'] and result:
+        comment = f'Would unmap LUN'
+    elif not result:
+        comment = 'Nothing to unmap'
+    elif rr is True and rs == 200:
+        comment = f'Unmapped LUN'
+    elif rr is False or rs != 200:
+        comment = f'Unmapping failed'
+        ret['result'] = False
+
+    ret['comment'] = comment
+    return ret

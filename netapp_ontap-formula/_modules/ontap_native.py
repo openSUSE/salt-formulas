@@ -324,3 +324,18 @@ def unmap_luns(name, volume, igroup):
         results.append(_result(result))
 
     return results
+
+def unmap_lun(name, volume, igroup):
+    """
+    Remove a single LUN from an initiator group
+    Not implemented! Might unmap multiple LUNs.
+    """
+    # to-do: abort if more than one LUN is going to be affected, consider using get_lun_mapping()
+    results = unmap_luns(name, volume, igroup)
+    reslen = len(results)
+    if reslen > 1:
+        log.warning(f'Unmapped {reslen} LUNs, but expected only one')
+    if reslen == 0:
+        return {}
+
+    return results[0]
