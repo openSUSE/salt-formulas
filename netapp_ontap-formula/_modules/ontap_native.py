@@ -43,6 +43,11 @@ def _path(volume, name):
     return f'/vol/{volume}/{name}'
 
 def _result(result):
+    """
+    Transforms API results to a common format
+    Used for DELETE/PATCH/POST output, not for GET
+    result = the output to parse
+    """
     log.debug(f'ontap_ansible: parsing result: {result}')
 
     error = result.is_err
@@ -88,6 +93,9 @@ def _humansize(nbytes):
 
 # to-do: make fields adjustable
 def get_lun(comment=None, path=None, uuid=None, human=True):
+    """
+    Queries one or more LUN(s), depending on whether filters are set
+    """
     args = [comment, path, uuid]
     argcount = args.count(None)
     if 1 > argcount < 3:
@@ -121,6 +129,9 @@ def get_lun(comment=None, path=None, uuid=None, human=True):
     return result
 
 def get_next_free(igroup):
+    """
+    Returns the next free LUN ID for the specfied initiator group
+    """
     numbers = []
     for resource in LunMap.get_collection(igroup=igroup, fields="logical_unit_number"):
         numbers.append(resource.logical_unit_number)
@@ -137,6 +148,9 @@ def _parse_size(size):
     return int(float(number)*units[unit])
 
 def provision_lun(name, size, volume, vserver, comment=None):
+    """
+    Create a new LUN
+    """
     size = _parse_size(size)
     path = _path(volume, name)
 
@@ -154,6 +168,9 @@ def provision_lun(name, size, volume, vserver, comment=None):
 
 # to-do: support property updates other than size changes
 def update_lun(uuid, size):
+    """
+    Change values of an existing LUN
+    """
     size = _parse_size(size)
 
     resource = Lun(uuid=uuid)
@@ -162,6 +179,10 @@ def update_lun(uuid, size):
     return _result(result)
 
 def _delete_lun(name=None, volume=None, uuid=None):
+    """
+    Meta-function for deleting a LUN
+    Currently, the individual targeting functions need to be used
+    """
     if (name is None or volume is None) and (uuid is None):
         log.error('Specify either name and volume or uuid')
         raise ValueError('Specify either name and volume or uuid')
@@ -183,14 +204,24 @@ def _delete_lun(name=None, volume=None, uuid=None):
     return _result(result)
 
 def delete_lun_name(name, volume):
+    """
+    Delete a single LUN based on its name and volume
+    """
     return _delete_lun(name, volume)
 
 def delete_lun_uuid(uuid):
+    """
+    Delete a single LUN based on its UUID
+    """
     return _delete_lun(uuid=uuid)
 
 # to-do: allow filter by path=None and uuid
 # to-do: potentially move this to get_luns_mapped() and make a separate get_lun_mapped() returning a single entry
 def get_lun_mapped(comment=None, lun_result=None):
+    """
+    Assess whether LUNs named by a comment are mapped
+    For more efficient programmatic use, an existing get_lun() output can be fed
+    """
     if (comment is None) and (lun_result is None):
         log.error('Specify either a comment or existing LUN output')
         raise ValueError('Specify a comment')
@@ -209,12 +240,18 @@ def get_lun_mapped(comment=None, lun_result=None):
     return resmap
 
 def get_igroup_uuid(igroup):
+    """
+    Return the UUID of a single initiator group
+    """
     resource = Igroup(name=igroup)
     resource.get()
     uuid = resource.uuid
     return uuid
 
-def get_lun_mapping(name, volume, igroup):
+def get_lun_mappings(name, volume, igroup=None):
+    """
+    Return details about LUN mappings
+    """
     path = _path(volume, name)
     result = []
 
@@ -243,6 +280,9 @@ def get_lun_mapping(name, volume, igroup):
     return result
 
 def map_lun(name, lunid, volume, vserver, igroup):
+    """
+    Map a LUN to an initiator group
+    """
     path = _path(volume, name)
 
     resource = LunMap()
@@ -254,7 +294,10 @@ def map_lun(name, lunid, volume, vserver, igroup):
 
     return _result(result)
 
-def unmap_lun(name, volume, igroup):
+def unmap_luns(name, volume, igroup):
+    """
+    Remove LUNs from an initiator group
+    """
     path = _path(volume, name)
     results = []
 
