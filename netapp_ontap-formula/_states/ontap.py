@@ -185,54 +185,23 @@ def lun_mapped(name, lunid, volume, vserver, igroup):
 
     mapping_out = __salt__['ontap_native.get_lun_mapping'](name, volume, igroup)
     log.debug(f'netapp_ontap: mapping result: {mapping_out}')
-    current_igroups = []
-    current_svms = []
-    records = mapping_out.get('num_records')
-    do_igroup = True
-    do_svm = True
-    do_map = False
-    if records == 0:
-        do_map = True
+
+    comment_details = f' to igroup {igroup} in SVM {vserver}'
+    current_igroup = mapping_out.get('igroup', {}).get('name')
+    current_vserver = mapping_out.get('svm', {}).get('name')
+    if not mapping_out or igroup != current_igroup or vserver != current_vserver:
         if __opts__['test']:
-            comment = 'Would create mapping'
-    elif records is not None and records > 0:
-        for mapping in mapping_out.get('records', []):
-            this_igroup = mapping.get('igroup', {}).get('name')
-            if this_igroup is None:
-                log.error(f'netapp_ontap: unable to determine igroup in mapping result')
-            else:
-                if this_igroup not in current_igroups:
-                    current_igroups.append(this_igroup)
-            this_svm = mapping.get('svm', {}).get('name')
-            if this_svm is None:
-                log.error(f'netapp_ontap: unable to determine svm in mapping result')
-            else:
-                if this_svm not in current_svms:
-                    current_svms.append(this_svm)
-
-    comment_igroup = f' to igroup {igroup}'
-    if igroup in current_igroups:
-        do_igroup = False
-
-    comment_svm = f' in SVM {vserver}'
-    if vserver in current_svms:
-        do_svm = False
-
-    comments = f'{comment_igroup}{comment_svm}'
-    already = False
-    if do_map or do_igroup or do_svm:
-        if __opts__['test']:
-            comment = f'Would map ID {lunid}{comments}'
-    elif not do_igroup or not do_svm:
-        comment = f'Already mapped{comment_igroup}{comment_svm}'
+            comment = f'Would map ID {lunid}{comment_details}'
+    elif mapping_out and igroup == current_igroup or vserver == current_svm:
+        comment = f'Already mapped{comment_details}'
         ret['result'] = True
     else:
         log.error('Unhandled mapping state')
         comment = 'Something weird happened'
 
-    if __opts__['test']:
-        ret['result'] = None
     if __opts__['test'] or ret['result'] is True:
+        if __opts__['test']:
+            ret['result'] = None
         ret['comment'] = comment
         return ret
 
