@@ -279,6 +279,19 @@ def get_lun_mappings(name, volume, igroup=None):
 
     return result
 
+def get_lun_mapping(name, volume, igroup):
+    """
+    Return details about a single LUN mapping
+    """
+    results = get_lun_mappings(name, volume, igroup)
+    lr = len(results)
+    if lr == 1:
+        return results[0]
+    if lr > 1:
+        log.error(f'netapp_ontap: found {lr} results, but expected only one')
+        return None
+    return {}
+
 def map_lun(name, lunid, volume, vserver, igroup):
     """
     Map a LUN to an initiator group
@@ -301,7 +314,7 @@ def unmap_luns(name, volume, igroup):
     path = _path(volume, name)
     results = []
 
-    mappings = get_lun_mapping(name, volume, igroup)
+    mappings = get_lun_mappings(name, volume, igroup)
     log.debug(f'netapp_ontap: parsing mappings: {mappings}')
     for mapping in mappings:
         igroup_uuid = mapping['igroup']['uuid']
@@ -309,8 +322,5 @@ def unmap_luns(name, volume, igroup):
         resource = LunMap(**{'igroup.uuid': igroup_uuid, 'lun.uuid': lun_uuid})
         result = resource.delete()
         results.append(_result(result))
-
-    if len(mappings) == 1:
-        return results[0]
 
     return results
