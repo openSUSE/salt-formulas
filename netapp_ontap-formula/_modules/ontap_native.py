@@ -23,9 +23,6 @@ from netapp_ontap.resources import Igroup, Lun, LunMap, Svm
 
 log = logging.getLogger(__name__)
 
-def _config():
-    return __utils__['ontap_config.config']()
-
 def __virtual__():
     try:
         from netapp_ontap import config as netapp_config 
@@ -33,7 +30,7 @@ def __virtual__():
     except ImportError as err:
         return (False, 'The netapp_ontap library is not available')
 
-    config = _config()
+    config = __utils__['ontap_config.config']()
     config_host = config['host']
     verify = config.get('verify', False)
     host, colon, port = config_host.rpartition(':')
@@ -89,19 +86,21 @@ def _humansize(nbytes):
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
     return '%s%s' % (f, suffixes[i])
 
+# to-do: make fields adjustable
 def get_lun(comment=None, path=None, uuid=None, human=True):
     args = [comment, path, uuid]
     argcount = args.count(None)
     if 1 > argcount < 3:
         log.error(f'Only a single filter may be specified')
         raise ValueError('Only a single filter may be specified')
-    fields = 'space.size,status.mapped'
+    fields = 'comment,space.size,status.mapped'
     result = []
 
     def _handle(resource):
         resource.get(fields=fields)
         resource_stripped = _strip(resource)
         if human:
+            # transform LUN size to a more readable format
             resource_stripped['space']['size'] = _humansize(resource_stripped['space']['size'])
         result.append(resource_stripped)
 
@@ -115,6 +114,7 @@ def get_lun(comment=None, path=None, uuid=None, human=True):
         resource = Lun(uuid=uuid)
         _handle(resource)
     else:
+        # no filter specified, fetch all LUNs
         for resource in Lun.get_collection():
             _handle(resource)
 
@@ -188,6 +188,8 @@ def delete_lun_name(name, volume):
 def delete_lun_uuid(uuid):
     return _delete_lun(uuid=uuid)
 
+# to-do: allow filter by path=None and uuid
+# to-do: potentially move this to get_luns_mapped() and make a separate get_lun_mapped() returning a single entry
 def get_lun_mapped(comment=None, lun_result=None):
     if (comment is None) and (lun_result is None):
         log.error('Specify either a comment or existing LUN output')
@@ -216,16 +218,23 @@ def get_lun_mapping(name, volume, igroup):
     path = _path(volume, name)
     result = []
 
-    igroup_uuid = get_igroup_uuid(igroup)
+    if igroup is not None:
+        log.debug('netapp_ontap: filtering by igroup')
+        igroup_uuid = get_igroup_uuid(igroup)
     luns = get_lun(path=path)
     log.debug(f'netapp_ontap: found luns: {luns}')
     for resource in luns:
         lun_uuid = resource['uuid']
-        mapresource = LunMap(**{'igroup.uuid': igroup_uuid, 'lun.uuid': lun_uuid})
+        filterdict = {'lun.uuid': lun_uuid}
+        if igroup is not None:
+            filterdict.update({'igroup.uuid': igroup_uuid})
+        mapresource = LunMap(**filterdict)
         mrs = mapresource.get_collection(fields='logical_unit_number')
         # FIXME get() fails, saying more than one item is found, and get_collection() returns dozens of completely unrelated entries
         # the loop below is a workaround discarding all the bogus entries
-        for mr in mrs:
+        mymrs = list(mrs)
+        log.debug(f'netapp_ontap: found mappings: {mymrs}')
+        for mr in mymrs:
             mr_stripped = _strip(mr, ['igroup', 'lun', 'svm'])
             if mr_stripped['lun']['uuid'] == lun_uuid and mr_stripped['igroup']['uuid'] == igroup_uuid:
                 log.debug(f'netapp_ontap: elected {mr_stripped}')
