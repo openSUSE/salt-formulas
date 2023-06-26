@@ -84,8 +84,6 @@ def lun_present(name, comment, size, volume, vserver):
 
             comment_base = 'LUN is already present'
             retcomment = f'{comment_base}; {comment_size}'
-            if __opts__['test']:
-                ret['result'] = None
             ret['comment'] = retcomment
             return ret
 
@@ -131,6 +129,7 @@ def lun_mapped(name, lunid, volume, vserver, igroup):
     if not mapping_out or igroup != current_igroup or vserver != current_vserver:
         if __opts__['test']:
             comment = f'Would map ID {lunid}{comment_details}'
+            ret['result'] = None
     elif mapping_out and igroup == current_igroup or vserver == current_svm:
         comment = f'Already mapped{comment_details}'
         ret['result'] = True
@@ -139,8 +138,6 @@ def lun_mapped(name, lunid, volume, vserver, igroup):
         comment = 'Something weird happened'
 
     if __opts__['test'] or ret['result'] is True:
-        if __opts__['test']:
-            ret['result'] = None
         ret['comment'] = comment
         return ret
 
@@ -161,7 +158,6 @@ def lun_unmapped(name, volume, igroup):
 
     if __opts__['test']:
         result = __salt__['ontap.get_lun_mapping'](name, volume, igroup)
-        ret['result'] = None
     else:
         result = __salt__['ontap.unmap_lun'](name, volume, igroup)
         rr = result.get('result', True)
@@ -170,6 +166,7 @@ def lun_unmapped(name, volume, igroup):
 
     if __opts__['test'] and result:
         comment = f'Would unmap LUN'
+        ret['result'] = None
     elif not result:
         comment = 'Nothing to unmap'
     elif rr is True and rs == 200:
