@@ -69,13 +69,14 @@ def lun_present(name, comment, size, volume, vserver):
             elif lun_size != size:
                 if __opts__['test']:
                     comment_size = f'Would resize LUN to {size}'
+                    ret['result'] = None
                 else:
                     __salt__['ontap.update_lun'](lun_uuid, size)
                     lun2_details = __salt__['ontap.get_lun'](uuid=lun_uuid, human=False)
                     lun2_size = _size(lun2_details[0], True)
                     comment_size = f'LUN from {lun_size} to {size}'
                     if lun2_size != lun_size and lun2_size == size:
-                        comment_size = f'Sucessfully resized {comment_size}'
+                        comment_size = f'Successfully resized {comment_size}'
                         ret['result'] = True
                     elif lun2_size == lun_size:
                         comment_size = f'Failed to resize {comment_size}, it is still {lun2_size}'
