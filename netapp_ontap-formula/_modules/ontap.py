@@ -273,7 +273,10 @@ def get_lun_mappings(name, volume, igroup=None):
         log.debug(f'netapp_ontap: found mappings: {mymrs}')
         for mr in mymrs:
             mr_stripped = _strip(mr, ['igroup', 'lun', 'svm'])
-            if mr_stripped['lun']['uuid'] == lun_uuid and mr_stripped['igroup']['uuid'] == igroup_uuid:
+            if mr_stripped['lun']['uuid'] == lun_uuid:
+                if igroup is not None and mr_stripped['igroup']['uuid'] != igroup_uuid:
+                    log.debug('netapp_ontap: igroup UUID does not match')
+                    continue
                 log.debug(f'netapp_ontap: elected {mr_stripped}')
                 result.append(mr_stripped)
 
