@@ -16,21 +16,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # to-do:
-# - clean up, move expect prompts/answers to a hash or similar
-# - handle CLI prompts better, sometimes the answers don't align with the prompts
 # - read multipath devices from domain XML file
 
 use v5.26.1;
 use Archive::Tar;
 use Expect;
-use File::pushd;
 use File::Temp;
-use Getopt::Long;
+use File::pushd;
+use Getopt::Long qw(:config auto_version);
 use Sys::Virt;
 
+our $VERSION = '0.1';
 my $source;
 my $mpaths;
 my $domain;
+my $cluster;
 my $force;
 my $only_vm;
 my $address;
@@ -39,423 +39,299 @@ my $gateway;
 my $passphrase;
 my $reset;
 
-GetOptions
-	("source=s" => \$source, "mpaths=s" => \$mpaths, "domain=s", => \$domain, "force" => \$force, "only_vm" => \$only_vm,
-	 "address=s" => \$address, "netmask=s" => \$netmask, "gateway=s" => \$gateway, "passphrase=s" => \$passphrase, "reset" => \$reset
-	)
-	or die "\nFailed to set arguments";
+sub usage {
+    print <<~'EOH'
+    Please specify all of the following arguments for this script to proceed:
+    --address, --netmask, --gateway : IP details for the VM to use on the node management interface
+    --cluster                       : Name to give the cluster
+    --domain                        : Path to an existing Libvirt domain XML file the VM should be started from
+    --mpaths                        : Comma separated list of four multipath devices the individual disk images should be written to
+    --passphrase                    : Passphrase to set for the default "admin" user
+    --source                        : Path to the NetApp provided OVA image (aka tarball)
+    EOH
+    ; exit;
+}
 
-if(!$source){die "Please specify the full path to an OVA image to use using --source"}
-if(!$mpaths){die "Please specify the multipath devices to write to using --mpaths. Pass them comma separated in the order to use."}
-if(!$domain){die "Please specify the Libvirt domain XML file to use using --name"}
-if(!$address||!$netmask||!$gateway){die "Please specify --address, --netmask and --gateway"}
-if(!$passphrase){die "Please specify an admin passphrase using --passphrase"}
+GetOptions(
+    "address=s"    => \$address,
+    "cluster=s"    => \$cluster,
+    "domain=s"     => \$domain,
+    "force"        => \$force,
+    "gateway=s"    => \$gateway,
+    "mpaths=s"     => \$mpaths,
+    "netmask=s"    => \$netmask,
+    "only_vm"      => \$only_vm,
+    "passphrase=s" => \$passphrase,
+    "reset"        => \$reset,
+    "source=s"     => \$source,
+    "help" =>      sub { usage(); }
+) or exit;
+usage() unless ( $address && $netmask && $gateway && $cluster && $domain && $mpaths && $passphrase && $source );
 
+my $attempts = 1;
+my $vircon   = Sys::Virt->new( uri => 'qemu:///system' );
 my @paths;
 my @vmdks;
-my $vircon = Sys::Virt->new(uri => 'qemu:///system');
-my $attempts = 1;
 
 sub extract {
-  print("Extracting ...\n");
-  if (! -e $source) {
-    die "No OVA file at $source, aborting";
-  }
-  my $tar=Archive::Tar->new();
-  $tar->read($source);
-  $tar->extract();
+    print("Extracting ...\n");
+    if ( !-e $source ) {
+        die "No OVA file at $source, aborting";
+    }
+    my $tar = Archive::Tar->new();
+    $tar->read($source);
+    $tar->extract();
 }
 
 sub convert {
-  print("Converting ...\n");
-  while (my $vmdk = glob("*.vmdk")) {
-    system("qemu-img convert -p -fvmdk -Oraw $vmdk $vmdk.raw");
-    push @vmdks, "$vmdk.raw";
-  }
+    print("Converting ...\n");
+    while ( my $vmdk = glob("*.vmdk") ) {
+        system("qemu-img convert -p -fvmdk -Oraw $vmdk $vmdk.raw");
+        push @vmdks, "$vmdk.raw";
+    }
 }
 
 sub check {
-  print("Validating target disks ...\n");
-  foreach my $target (split(',', $mpaths)) {
-    my $path = "/dev/disk/by-id/dm-uuid-mpath-$target";
-    if (! -b $path) {
-      print("Disk at $path is not valid.\n");
-      next;
+    print("Validating target disks ...\n");
+    foreach my $target ( split( ',', $mpaths ) ) {
+        my $path = "/dev/disk/by-id/dm-uuid-mpath-$target";
+        if ( !-b $path ) {
+            print("Disk at $path is not valid.\n");
+            next;
+        }
+        my $status = system("partx -rgoNR $path >/dev/null 2>&1");
+        if ( $status != 0 || $force ) {
+            push @paths, $path;
+        }
+        else {
+            print("Disk at $path seems to contain an existing file system. Refusing destruction without --force.\n");
+        }
     }
-    my $status = system("partx -rgoNR $path >/dev/null 2>&1");
-    if ($status != 0 || $force) {
-      push @paths, $path;
-    } else {
-      print("Disk at $path seems to contain an existing file system. Refusing destruction without --force.\n");
-    }
-  }
 }
 
 sub dd {
-  print("Writing ...\n");
-  my $loop = 0;
-  foreach my $vmdk (@vmdks) {
-    system("dd if=$vmdk of=@paths[$loop] bs=16M status=progress");
-    $loop ++;
-  }
-}  
+    print("Writing ...\n");
+    my $loop = 0;
+    foreach my $vmdk (@vmdks) {
+        system("dd if=$vmdk of=@paths[$loop] bs=16M status=progress");
+        $loop++;
+    }
+}
 
 sub vm {
-  my $reinit = 0;
-  my $xml;
-  my $fh;
-  open($fh, '<', $domain) or die "Cannot open XML file $domain";
-  { local $/; $xml = <$fh> };
-  my $domain = $vircon->create_domain($xml);
-  my $domid = $domain->get_id();
-  print("\nStarted domain with ID $domid");
-  my $domvp = `virsh vncdisplay $domid`;
-  print(", VNC host is $domvp");
-  my $firstboot = Expect->spawn("virsh console $domid") or die "Unable to spawn console";
-  $firstboot->restart_timeout_upon_receive(1);
-  $firstboot->expect(10,
-    [
-      qr/Hit \[Enter\] to boot immediately, or any other key for command prompt\./,
-      sub {
-        my $ex = shift;
-	$ex->send("j");
-      }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-     qr/VLOADER>/,
-     sub {
-       my $ex = shift;
-       $ex->send("set console=comconsole\n");
-     }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-     qr/VLOADER>/,
-     sub {
-       my $ex = shift;
-       $ex->send("set comconsole_speed=115200\n");
-     }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-     qr/VLOADER>/,
-     sub {
-       my $ex = shift;
-       $ex->send("boot\n");
-     }
-    ],
-  );
-  if ($reset) {
-    $firstboot->expect(60,
-      [
-       qr/\* Press Ctrl-C for Boot Menu\. \*/,
-       sub {
-         my $ex = shift;
-         $ex->send("\cC");
-         exp_continue;
-       }
-      ],
-      [
-       qr/Selection \(1-11\)\?/,
-       sub {
-         my $ex = shift;
-         $ex->send("4\n");
-         exp_continue;
-       }
-      ],
-      [
-       qr/Zero disks, reset config and install a new file system\?:/,
-       sub {
-         my $ex = shift;
-         $ex->send("yes\n");
-         exp_continue;
-       }
-      ],
-      [
-       qr/This will erase all the data on the disks, are you sure\?:/,
-       sub {
-         my $ex = shift;
-         $ex->send("yes\n");
-         exp_continue;
-       }
-      ],
-      [
-       qr/Rebooting to finish wipeconfig request\./
-      ]
-    );
-    $firstboot->expect(30,
-      [
-        qr/Hit \[Enter\] to boot immediately, or any other key for command prompt\./,
-        sub {
-          my $ex = shift;
-          $ex->send("\n");
+    my $reinit = 0;
+    my $xml;
+    my $fh;
+
+    open( $fh, '<', $domain ) or die "Cannot open XML file $domain";
+    { local $/; $xml = <$fh> };
+    my $domain = $vircon->create_domain($xml);
+    my $domid  = $domain->get_id();
+    print("\nStarted domain with ID $domid");
+    my $domvp = `virsh vncdisplay $domid`;
+    print(", VNC host is $domvp");
+    my $console = Expect->spawn("virsh console $domid")
+      or die "Unable to spawn console";
+    $console->restart_timeout_upon_receive(1);
+
+    sub handle_boot {
+        my $prompt   = 'VLOADER>';
+        my @commands = (
+            "set console=comconsole\n",
+            "set comconsole_speed=115200\n",
+            "boot\n",
+        );
+        sub boot {
+            $console->expect(20,
+                [
+                    qr/Hit \[Enter\] to boot immediately, or any other key for command prompt\./
+                ]
+            );
+            $console->send( $_[0] );
         }
-      ]
-    );
-  }
-  $firstboot->expect(480,
-    [
-      qr/(?:System initialization has completed successfully\.|Welcome to the cluster setup wizard\.)/,
-    ],
-    [
-      qr/DUMPCORE: START/,
-      sub {
-        print("System is broken, starting from scratch...\n");
-        $reinit = 1;
-      }
-    ],
-    [
-      timeout =>
-      sub {
-        print("System did not finish booting in time.\n");
-	# what to do now ?
-      }
-    ]
-  );
-  if ($reinit)
-  {
-    $firstboot->soft_close();
-    $domain->destroy();
-    if ($attempts == 2) {
-      die("System is still broken after two attempts, giving up.\n");
+        boot('x');
+        foreach my $command (@commands) {
+            $console->expect( 10, $prompt );
+            $console->send($command);
+        }
+        if ($reset) {
+            my %dialogue = (
+                '* Press Ctrl-C for Boot Menu. *'                          => "\cC",
+                'Selection (1-11)?'                                        => "4\n",
+                'Zero disks, reset config and install a new file system?'  => "yes\n",
+                'This will erase all the data on the disks, are you sure?' => "yes\n",
+                'Rebooting to finish wipeconfig request.'                  => '',
+            );
+            my $prompts = join( '|', map { qr{\Q$_\E} } keys %dialogue );
+            $console->expect(60,
+                -re => $prompts,
+                sub {
+                    my $ex      = shift;
+                    my $matched = $ex->match;
+                    my $answer  = delete $dialogue{$matched};
+                    $ex->send($answer);
+                    exp_continue if keys %dialogue;
+                }
+            );
+            boot("\n");
+        }
+        $console->expect(480,
+            [
+                qr/(?:System initialization has completed successfully\.|Welcome to the cluster setup wizard\.)/,
+            ],
+            [
+                qr/DUMPCORE: START/,
+                sub {
+                    print("System is broken, starting from scratch...\n");
+                    $reinit = 1;
+                }
+            ],
+            [
+                timeout => sub {
+                    print("System did not finish booting in time.\n");
+                    # what to do now ?
+                }
+            ]
+        );
     }
-    if ($only_vm) {
-      die("Unsetting --only_vm in an attempt to start from scratch!\n");
-      $only_vm = 0;
-    } 
-    $force = 1;
-    $attempts ++;
-    run();
-  }
-  $firstboot->expect(10,
-    [
-      qr/Type yes to confirm and continue \{yes\}:/,
-      sub {
-        my $ex = shift;
-	$ex->send("exit\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/login:/,
-      sub {
-        my $ex = shift;
-	$ex->send("admin\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/::>/,
-      sub {
-        my $ex = shift;
-	$ex->send("network interface del -vserver Cluster -lif clus1\n");
-      }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-      qr/::>/,
-      sub {
-        my $ex = shift;
-	$ex->send("network port modify -node localhost -port e0a -ipspace Default\n");
-      }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-      qr/::>/,
-      sub {
-        my $ex = shift;
-	$ex->send("network interface create -vserver Default -lif mgmt -role node-mgmt -address $address -netmask $netmask -home-node localhost -home-port e0a\n");
-      }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-      qr/::>/,
-      sub {
-        my $ex = shift;
-	$ex->send("network route create -vserver Default -destination 0.0.0.0/0 -gateway $gateway\n");
-      }
-    ]
-  );
-  $firstboot->expect(10,
-    [
-      qr/::>/,
-      sub {
-        my $ex = shift;
-	$ex->send("cluster setup\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Press <space> to page down, <return> for next line, or 'q' to quit\.\.\./,
-      sub {
-        my $ex = shift;
-	$ex->send("q\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Type yes to confirm and continue \{yes\}:/,
-      sub {
-        my $ex = shift;
-	$ex->send("yes\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the node management interface port/,
-      sub {
-        my $ex = shift;
-	$ex->send("e0a\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the node management interface IP address \[10\.168\.0\.96\]:/,
-      sub {
-        my $ex = shift;
-	$ex->send("\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the node management interface netmask \[255\.255\.254\.0\]:/,
-      sub {
-        my $ex = shift;
-	$ex->send("\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the node management interface default gateway \[10\.168\.1\.254\]:/,
-      sub {
-        my $ex = shift;
-	$ex->send("\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Otherwise, press Enter to complete cluster setup using the command line/,
-      sub {
-        my $ex = shift;
-	$ex->send("\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Do you want to create a new cluster or join an existing cluster\? \{create, join\}:/,
-      sub {
-        my $ex = shift;
-	$ex->send("create\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Do you intend for this node to be used as a single node cluster\? \{yes, no\} \[no\]:/,
-      sub {
-        my $ex = shift;
-	$ex->send("yes\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the cluster administrator's \(username "admin"\) password:/,
-      sub {
-        my $ex = shift;
-	$ex->send("$passphrase\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Retype the password:/,
-      sub {
-        my $ex = shift;
-	$ex->send("$passphrase\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the cluster name:/,
-      sub {
-        my $ex = shift;
-	$ex->send("labA\n");
-      }
-    ],
-  );
-  $firstboot->expect(300,
-    [
-      qr/Creating cluster labA/,
-      sub {
-	exp_continue;
-      }
-    ],
-    [
-      qr/Starting cluster support services/
-    ]
-  );
-  $firstboot->expect(10,
-    [
-      qr/Enter an additional license key \[\]:/,
-      sub {
-        my $ex = shift;
-	$ex->send("\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/Enter the cluster management interface port/,
-      sub {
-        my $ex = shift;
-	$ex->send("exit\n");
-	exp_continue;
-      }
-    ],
-    [
-      qr/labA::>/,
-      sub {
-        my $ex = shift;
-	$ex->send("version\n");
-      }
-    ],
-  );
-  $firstboot->soft_close();
-  if ($reinit)
-  {
-    $domain->destroy();
-    if ($attempts == 2) {
-      die("System is still broken after two attempts, giving up.\n");
+
+    sub handle_setup {
+        $console->expect(10,
+            [
+                qr/Type yes to confirm and continue \{yes\}:/,
+                sub {
+                    my $ex = shift;
+                    $ex->send("exit\n");
+                    exp_continue;
+                }
+            ],
+            [
+                qr/login:/,
+                sub {
+                    my $ex = shift;
+                    $ex->send("admin\n");
+                    exp_continue;
+                }
+            ],
+        );
+        my $prompt   = '::>';
+        my @commands = (
+            "network interface del -vserver Cluster -lif clus1\n",
+            "network port modify -node localhost -port e0a -ipspace Default\n",
+            "network interface create -vserver Default -lif mgmt -role node-mgmt -address $address -netmask $netmask -home-node localhost -home-port e0a\n",
+            "network route create -vserver Default -destination 0.0.0.0/0 -gateway $gateway\n",
+            "cluster setup\n",
+        );
+        foreach my $command (@commands) {
+            $console->expect( 10, $prompt );
+            $console->send($command);
+        }
+        my %dialogue = (
+            "Press <space> to page down, <return> for next line, or 'q' to quit..."            => 'q',
+            'Type yes to confirm and continue {yes}:'                                          => 'yes',
+            'Enter the node management interface port'                                         => 'e0a',
+            'Enter the node management interface IP address [10.168.0.96]:'                    => '',
+            'Enter the node management interface netmask [255.255.254.0]:'                     => '',
+            'Enter the node management interface default gateway [10.168.1.254]:'              => '',
+            'Otherwise, press Enter to complete cluster setup using the command line'          => '',
+            'Do you want to create a new cluster or join an existing cluster? {create, join}:' => 'create',
+            'Do you intend for this node to be used as a single node cluster? {yes, no} [no]:' => 'yes',
+            "Enter the cluster administrator's (username \"admin\") password:"                 => "$passphrase",
+            'Retype the password:'                                                             => "$passphrase",
+            'Enter the cluster name:'                                                          => "$cluster",
+        );
+        $console->expect( 10, 'Welcome to the cluster setup wizard.' );
+        my $prompts = join( '|', map { qr {\Q$_\E} } keys %dialogue );
+        $console->expect(10,
+            -re => $prompts,
+            sub {
+                my $ex      = shift;
+                my $matched = $ex->match;
+                my $answer  = delete $dialogue{$matched};
+                if ( $answer ne 'q' ) { $answer = $answer . "\n" }
+                $ex->send($answer);
+                sleep(1);
+                exp_continue if keys %dialogue;
+            }
+        );
+        $console->expect(300,
+            [
+                qr/Creating cluster $cluster/,
+                sub {
+                    exp_continue;
+                }
+            ],
+            [
+                qr/Starting cluster support services/
+	    ]
+        );
+        $console->expect(10,
+            [
+                qr/Enter an additional license key \[\]:/,
+                sub {
+                    my $ex = shift;
+                    $ex->send("\n");
+                    exp_continue;
+                }
+            ],
+            [
+                qr/Enter the cluster management interface port/,
+                sub {
+                    my $ex = shift;
+                    $ex->send("exit\n");
+                    exp_continue;
+                }
+            ],
+            [
+                qr/${cluster}::>/,
+                sub {
+                    my $ex = shift;
+                    $ex->send("version\n");
+                }
+            ],
+        );
     }
-    if ($only_vm) {
-      die("Unsetting --only_vm in an attempt to start from scratch!\n");
-      $only_vm = 0;
-    } 
-    $force = 1;
-    $attempts ++;
-    run();
-  }
+
+    sub handle_reinit {
+        if ($reinit) {
+            $console->soft_close();
+            $domain->destroy();
+            if ( $attempts == 2 ) {
+                die("System is still broken after two attempts, giving up.\n");
+            }
+            if ($only_vm) {
+                die("Unsetting --only_vm in an attempt to start from scratch!\n"
+                );
+                $only_vm = 0;
+            }
+            $force = 1;
+            $attempts++;
+            run();
+        }
+    }
+
+    handle_boot();
+    handle_reinit();
+    handle_setup();
+    $console->soft_close();
+    handle_reinit(); #why here?
 }
 
 sub run {
-  if (!$only_vm) {
-    check();
-    my $good_paths = @paths;
-    if ($good_paths < 4) {
-      die("Not enough writeable disks, aborting.\n")
+    if ( !$only_vm ) {
+        check();
+        my $good_paths = @paths;
+        if ( $good_paths < 4 ) {
+            die("Not enough writeable disks, aborting.\n");
+        }
+        my $outdir = tempd();
+        print("Working in temporary directory $outdir\n");
+        extract();
+        convert();
+        dd();
     }
-    my $outdir = tempd();
-    print("Working in temporary directory $outdir\n");
-    extract();
-    convert();
-    dd();
-  }
-  vm();
-  print("\nDone, simulator should be reachable at $address.\n");
+    vm();
+    print("\nDone, simulator should be reachable at $address.\n");
 }
 
 run();
