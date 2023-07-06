@@ -22,7 +22,13 @@ os-update_package:
   pkg.installed:
     - name: os-update
 
-os-update_config:
+{%- if 'os-update' in pillar %}
+os-update_config_file:
+  file.managed:
+    - name: /etc/os-update.conf
+    - replace: false
+
+os-update_config_values:
   file.keyvalue:
     - name: /etc/os-update.conf
     - key_values:
@@ -36,6 +42,13 @@ os-update_config:
         {%- endfor %}
     - require:
       - pkg: os-update_package
+      - file: os-update_config_file
+
+{%- elif grains.osfullname == 'openSUSE Tumbleweed' %}
+os-update_config_file:
+  file.absent:
+    - name: /etc/os-update.conf
+{%- endif %}
 
 {%- if config.time %}
 os-update_timer_unit:
