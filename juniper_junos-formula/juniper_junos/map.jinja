@@ -1,0 +1,54 @@
+{#-
+Jinja variables file for Juniper Junos related Salt states
+Copyright (C) 2023 SUSE LLC
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- load_yaml as options_firewall -%}
+- ignore_interfaces
+- services
+- interfaces
+- subinterfaces
+- zones
+- policies
+- addresses
+- address_groups
+- sroutes
+- sroutes6
+- source_nat_pools
+- source_nat_rules
+- destination_nat_pools
+- destination_nat_rules
+- static_nat_rules
+- proxy_arp
+- syslog_servers
+- ntp_servers
+- snmp
+{%- endload -%}
+
+{%- load_yaml as options_switch -%}
+- vlans
+#- ignore_vlan_ids
+#- ignore_vlan_names
+- lacp
+- ports
+- ports_not_delete
+- syslog_servers
+- ntp_servers
+- snmp
+{%- endload -%}
+
+{%- set config = salt['pillar.get']('juniper_junos') -%}
+{%- set options = {'firewall': options_firewall, 'switch': options_switch} -%}

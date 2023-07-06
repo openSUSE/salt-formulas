@@ -1,0 +1,95 @@
+{%- for id, name in present_vlans.parsed_vlan_dict.items() %}
+{%- if id not in ignore_vlan_ids and name not in ignore_vlan_names %}
+delete vlans {{ name }}
+{%- endif %}
+{%- endfor %}
+{%- for name in present_vlans.unparsed_vlan_list %}
+{%- if name not in ignore_vlan_names %}
+delete vlans {{ name }}
+{%- endif %}
+{%- endfor %}
+{%- for vlan in vlans %}
+{%- if vlan.id not in ignore_vlan_ids and vlan.name not in ignore_vlan_names %}
+set vlans {{ vlan.name }} vlan-id {{ vlan.id }}
+set vlans {{ vlan.name }} description "{{ vlan.get('description', 'autogenVlanDescription') }}"
+{%- endif %}
+{%- endfor %}
+{%- for present_iface in present_ifaces %}
+{%- if present_iface not in ports_not_delete %}
+delete interfaces {{ present_iface }}
+{%- endif %}
+{%- endfor %}
+{%- for lacp_member, lacp_ae in lacp.items() %}
+set interfaces {{ lacp_member }} ether-options 802.3ad {{ lacp_ae.parent }}
+set interfaces {{ lacp_member }} description "{{ lacp_ae.description }}"
+{%- endfor %}
+{%- for port, portdata in ports.items() %}
+set interfaces {{ port }}
+set interfaces {{ port }} description "{{ portdata.description }}"
+set interfaces {{ port }} mtu 9216
+{%- if portdata.get('admin_up', true) != true %}
+set interfaces {{ port }} unit 0 disable
+{%- endif %}
+{%- if 'tagged' in portdata and not portdata.tagged %}
+set interfaces {{ port }} unit 0 family ethernet-switching interface-mode access
+set interfaces {{ port }} unit 0 family ethernet-switching vlan members {{ portdata.untagged }}
+{%- elif 'untagged' in portdata and not portdata.untagged %}
+set interfaces {{ port }} unit 0 family ethernet-switching interface-mode trunk
+set interfaces {{ port }} unit 0 family ethernet-switching vlan members [ {{ portdata.tagged | join(' ') }} ]
+{%- else %}
+set interfaces {{ port }} unit 0 family ethernet-switching interface-mode trunk
+set interfaces {{ port }} unit 0 family ethernet-switching vlan members [ {{ portdata.get('tagged', []) | join(' ') }} ]
+{%- if 'untagged' in portdata and portdata.untagged != None and portdata.untagged != 'None'%}
+set interfaces {{ port }} native-vlan-id {{ portdata.untagged }}
+{%- endif %}
+{%- endif %}
+{%- if 'lacp_options' in portdata %}
+{%- if 'force-up' in portdata.lacp_options and portdata.lacp_options['force-up'] %}
+set interfaces {{ port }} aggregated-ether-options lacp force-up
+{%- endif %}
+{%- if 'periodic' in portdata.lacp_options and portdata.lacp_options.periodic in ['fast', 'slow'] %}
+set interfaces {{ port }} aggregated-ether-options lacp periodic {{ portdata.lacp_options.periodic }}
+{%- endif %}
+{%- if 'mode' in portdata.lacp_options and portdata.lacp_options.mode in ['active', 'passive'] %}
+set interfaces {{ port }} aggregated-ether-options lacp {{ portdata.lacp_options.mode }}
+{%- endif %}
+{%- if 'system-id' in portdata.lacp_options and portdata.lacp_options['system-id'] != '' %}
+set interfaces {{ port }} aggregated-ether-options lacp system-id {{ portdata.lacp_options['system-id'] }}
+{%- endif %}
+{%- if 'admin-key' in portdata.lacp_options and portdata.lacp_options['admin-key'] != '' %}
+set interfaces {{ port }} aggregated-ether-options lacp admin-key {{ portdata.lacp_options['admin-key'] }}
+{%- endif %}
+{%- endif %}
+{%- if 'mclag_options' in portdata and 'enabled' in portdata.mclag_options and portdata.mclag_options['enabled'] %}
+set interfaces {{ port }} aggregated-ether-options mc-ae mc-ae-id {{ portdata.mclag_options['mc-ae-id']}}
+set interfaces {{ port }} aggregated-ether-options mc-ae redundancy-group {{ portdata.mclag_options['redundancy-group']}}
+set interfaces {{ port }} aggregated-ether-options mc-ae chassis-id {{ portdata.mclag_options['chassis-id']}}
+set interfaces {{ port }} aggregated-ether-options mc-ae mode active-active
+set interfaces {{ port }} aggregated-ether-options mc-ae status-control {{ portdata.mclag_options['status-control']}}
+{%- if 'init-delay-time' in portdata.mclag_options and portdata.mclag_options['init-delay-time'] != '' %}
+set interfaces {{ port }} aggregated-ether-options mc-ae init-delay-time {{ portdata.mclag_options['init-delay-time']}}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+set system ntp server 1.2.3.4
+delete system ntp
+{%- for ntp_s in ntp_servers %}
+set system ntp server {{ ntp_s }}
+{%- endfor %}
+set system syslog user * any emergency
+delete system syslog
+set system syslog user * any emergency
+set system syslog file messages any notice
+set system syslog file messages authorization info
+set system syslog file interactive-commands interactive-commands any
+{%- for syslog_s in syslog_servers %}
+set system syslog host {{ syslog_s }} any any
+{%- endfor %}
+set snmp community public authorization read-only
+delete snmp
+{%- for snmp_data in snmp %}
+set snmp community {{ snmp_data.com }} authorization {{ snmp_data.auth }}
+{%- for snmp_client in snmp_data.clients %}
+set snmp community {{ snmp_data.com }} clients {{ snmp_client }}
+{%- endfor %}
+{%- endfor %}
