@@ -26,7 +26,9 @@ set interfaces {{ lacp_member }} description "{{ lacp_ae.description }}"
 {%- for port, portdata in ports.items() %}
 set interfaces {{ port }}
 set interfaces {{ port }} description "{{ portdata.description }}"
+{#- FIXME, why is this hardcoded ?
 set interfaces {{ port }} mtu 9216
+#}
 {%- if portdata.get('admin_up', true) != true %}
 set interfaces {{ port }} unit 0 disable
 {%- endif %}
