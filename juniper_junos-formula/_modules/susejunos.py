@@ -86,6 +86,7 @@ def get_active_interfaces(
         include_et=True,
         include_ge=True,
         include_reth=True,
+        include_fxp=True,
         parents_only=True
 ):  # pylint: disable=unused-argument
 
@@ -149,6 +150,10 @@ def get_active_interfaces(
                 unit_filtered_output.append(unitifname)
 
             if include_ge and ifname.startswith('ge'):
+                filtered_output.append(ifname)
+                unit_filtered_output.append(unitifname)
+
+            if include_fxp and ifname.startswith('fxp'):
                 filtered_output.append(ifname)
                 unit_filtered_output.append(unitifname)
 
