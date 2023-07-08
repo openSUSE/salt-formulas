@@ -78,3 +78,4 @@ include:
   - samples.*
 EOF
 
+/vagrant/test/scripts/proxy.sh
