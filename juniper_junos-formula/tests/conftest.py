@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from jnpr.junos.utils.config import Config as JunosConfig
+from lib import junos_device
 import pytest
 
 def pytest_addoption(parser):
@@ -29,3 +31,19 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture
 def device():
     return 'vsrx-device1'
+
+@pytest.fixture
+def vlan(target):
+    with junos_device(target) as jdevice:
+        with JunosConfig(jdevice, mode='exclusive') as jconfig:
+            for cmdset in [
+                    'set vlans pytest-vlan vlan-id 99',
+                    'set vlans pytest-vlan description "VLAN fixture"'
+                    ]:
+                jconfig.load(cmdset)
+            jconfig.commit()
+
+            yield
+
+            jconfig.rollback(1)
+            jconfig.commit()
