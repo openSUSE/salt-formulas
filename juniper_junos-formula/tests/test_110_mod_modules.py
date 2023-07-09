@@ -17,14 +17,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from lib import api, salt
-import json
 import pytest
 
 @pytest.mark.parametrize('arguments', ['parents_only=False', ''])
 def test_susejunos_get_active_interfaces(host, device, arguments):
-    r = salt(host, device, f'susejunos.get_active_interfaces {arguments}')
-    rout = json.loads(r.stdout)[device]
+    rout, rerr, rc = salt(host, device, f'susejunos.get_active_interfaces {arguments}')
     print(rout)
+    assert not rerr
     if arguments == '':
         assert not len(rout)
     else:
@@ -32,9 +31,9 @@ def test_susejunos_get_active_interfaces(host, device, arguments):
         assert 'fxp0' in rout
 
 def test_susejunos_get_active_vlans(host, device, vlan):
-    r = salt(host, device, f'susejunos.get_active_vlans')
-    rout = json.loads(r.stdout)[device]
+    rout, rerr, rc = salt(host, device, f'susejunos.get_active_vlans')
     print(rout)
+    assert not rerr
     assert 'parsed_vlan_dict' in rout
     # does the VLAN ID really need to be string ?
     assert '99' in rout['parsed_vlan_dict']

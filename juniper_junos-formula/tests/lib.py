@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from jnpr.junos import Device as JunosDevice
+import json
 import requests
 
 def api(target, path, params={}):
@@ -26,5 +27,6 @@ def junos_device(target):
     return JunosDevice(host=target, user='vrnetlab', password='VR-netlab9')
 
 def salt(host, device, command):
-    return host.run(f'salt --out json {device} {command}')
-
+    result = host.run(f'salt --out json {device} {command}')
+    output = json.loads(result.stdout)[device]
+    return output, result.stderr, result.rc
