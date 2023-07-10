@@ -29,8 +29,22 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('target', [value])
 
 @pytest.fixture
-def device():
-    return 'vsrx-device1'
+def device(target):
+    with junos_device(target) as jdevice:
+        jconfig = JunosConfig(jdevice, mode='exclusive')
+        rescue = jconfig.rescue(action='get')
+        if rescue is None:
+            jconfig.rescue(action='save')
+        else:
+            print('Existing rescue configuration, test suite may not behave correctly')
+
+    yield 'vsrx-device1'
+
+    with junos_device(target) as jdevice:
+        jconfig = JunosConfig(jdevice, mode='exclusive')
+        jconfig.rescue(action='reload')
+        jconfig.commit()
+        jconfig.rescue(action='delete')
 
 @pytest.fixture
 def vlan(target):
