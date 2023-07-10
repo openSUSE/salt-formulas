@@ -30,3 +30,6 @@ def salt(host, device, command):
     result = host.run(f'salt --out json {device} {command}')
     output = json.loads(result.stdout)[device]
     return output, result.stderr, result.rc
+
+def salt_apply(host, device, state, test=False):
+    return salt(host, device, f'state.apply {state} test={test}')
