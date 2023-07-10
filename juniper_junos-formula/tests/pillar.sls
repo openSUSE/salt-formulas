@@ -6,6 +6,9 @@ proxy:
   passwd: VR-netlab9
 
 juniper_junos:
+  # ! ports_not_delete:fxp0 is needed to prevent Salt from being disconnected during a state.apply
+  ports_not_delete:
+    - fxp0
   ignore_interfaces:
     - ge-0/0/9
   lacp:
