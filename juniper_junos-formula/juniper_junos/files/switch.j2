@@ -15,7 +15,7 @@ set vlans {{ vlan.name }} description "{{ vlan.get('description', 'autogenVlanDe
 {%- endif %}
 {%- endfor %}
 {%- for present_iface in present_ifaces %}
-{%- if present_iface not in ports_not_delete %}
+{%- if present_iface not in ignore_interfaces %}
 delete interfaces {{ present_iface }}
 {%- endif %}
 {%- endfor %}
