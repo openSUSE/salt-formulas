@@ -1,0 +1,8 @@
+{%- set ntp_servers = salt['pillar.get']('juniper_junos:ntp_servers', []) -%}
+
+set system ntp
+delete system ntp
+
+{%- for server in ntp_servers %}
+set system ntp server {{ server }}
+{%- endfor %}
