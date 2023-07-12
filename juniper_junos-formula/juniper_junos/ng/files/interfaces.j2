@@ -1,0 +1,108 @@
+{#- FIXME: move these to context variables #}
+{%- set interfaces = salt['pillar.get']('juniper_junos:interfaces') -%}
+{%- set ignore = salt['pillar.get']('juniper_junos:ignore') -%}
+{%- set present_interfaces = salt['susejunos.get_active_interfaces']() -%}
+
+{%- set ignore_interfaces = ignore.get('interfaces', {}) -%}
+{%- set ignore_interface_names = ignore_interfaces.get('names', []) -%}
+
+{%- for interface in present_interfaces %}
+{%- if interface not in ignore_interface_names %}
+delete interfaces {{ interface }}
+{%- endif %}
+{%- endfor %}
+
+{%- for interface in interfaces %}
+{%- for ifname, ifconfig in interfaces.items() %}
+{%- set setif = 'set interfaces ' ~ ifname -%}
+
+{%- if 'description' in ifconfig %}
+{{ setif }} description "{{ ifconfig['description'] }}"
+{%- endif %}
+
+# to-do; ask
+{{ setif }} mtu {{ ifconfig.get('mtu', 9216) }}
+
+{%- set units = ifconfig.get('units', {}) %}
+{%- for unit, uconfig in units.items() %}
+
+{%- if 'description' in uconfig %}
+{{ setif }} unit {{ unit }} description "{{ uconfig['description'] }}"
+{%- endif %}
+
+{%- if 'inet' in uconfig %}
+{%- for address in uconfig.inet.get('addresses', []) %}
+{{ setif }} unit {{ unit }} family inet address {{ address }}
+{%- endfor %}
+{%- endif %}
+
+{%- if 'inet6' in uconfig %}
+{%- for address in uconfig.inet6.get('addresses', []) %}
+{{ setif }} unit {{ unit }} family inet6 address {{ address }}
+{%- endfor %}
+{%- endif %}
+
+{%- if 'vlan' in uconfig %}
+{%- set vtype = uconfig['vlan'].get('type', None) %}
+{%- if vtype in ['access', 'trunk'] %}
+{{ setif }} unit {{ unit }} family ethernet-switching interface-mode {{ vtype }}
+{{ setif }} unit {{ unit }} family ethernet-switching vlan members [ {{ uconfig['vlan']['ids'] }} ]
+{%- endif %}
+{%- endif %}
+
+{%- endfor %} {#- close unit loop -#}
+
+{%- if 'reth' in ifconfig %}
+{{ setif }} ether-options redundant-parent {{ ifconfig['reth'] }}
+{%- endif %}
+
+{%- if 'lacp' in ifconfig %}
+{{ setif }} ether-options 802.3ad {{ ifconfig['lacp'] }}
+{%- endif %}
+
+{%- if 'ae' in ifconfig %}
+{%- set aec = ifconfig['ae'] -%}
+{%- set setifae = setif ~ ' aggregated-ether-options ' -%}
+
+{%- if 'lacp' in aec %}
+{%- set aecl = aec['lacp'] -%}
+{%- set setifael = setifae ~ 'lacp' -%}
+
+{%- if aecl.get('force-up', False) %}
+{{ setifael }} force-up
+{%- endif %}
+
+{%- if 'periodic' in aecl and aecl.periodic in ['fast', 'slow'] %}
+{{ setifael }} periodic {{ aecl.periodic }}
+{%- endif %}
+
+{%- if 'mode' in aecl and aecl.mode in ['active', 'passive'] %}
+{{ setifael }} {{ aecl.mode }}
+{%- endif %}
+
+{%- for aestr in ['system-id', 'admin-key'] %}
+{%- if aestr in aecl and aecl[aestr] %}
+{{ setifael }} {{ aestr }} {{ aecl[aestr] }}
+{%- endif %}
+{%- endfor %}
+
+{%- endif %} {#- close lacp check -#}
+
+{%- if 'mc' in aec %}
+{%- set mclc = aec['mc'] -%}
+{%- set setifaemc = setifae ~ 'mc-ae' -%}
+{%- set mclo = ['mc-ae-id', 'redundancy-group', 'chassis-id', 'status-control', 'init-delay-time'] -%}
+
+{%- for option in mclo %}
+{%- if option in mclc and mclc[option] %}
+{{ setifaemc }} {{ option }} {{ mclc[option] }}
+{%- endif %}
+{%- endfor %}
+
+{{ setifaemc }} mode {{ mclc.get('mode', 'active-active') }}
+
+{%- endif %} {#- close mc check -#}
+{%- endif %} {#- close ae check -#}
+
+{%- endfor %} {#- close ifconfig loop -#}
+{%- endfor %} {#- close interfaces loop -#}
