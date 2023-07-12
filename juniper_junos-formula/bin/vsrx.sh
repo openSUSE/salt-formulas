@@ -45,7 +45,7 @@ pushd /tmp
 
 if [ -d vrnetlab ]
 then
-	git --git-dir=$PWD/vrnetlab pull origin "$revision"
+	git --git-dir=$PWD/vrnetlab/.git pull origin "$revision"
 else
 	git clone --no-tags --single-branch -b "$revision" "$repository"
 fi
@@ -59,6 +59,13 @@ test -f "$image" || cp "/opt/images/$image" .
 make
 
 container='vsrx-device1'
+if docker ps -a --format '{{.Names}}' | grep -q "$container"
+then
+	echo 'Removing existing container'
+	docker stop "$container"
+	docker rm -v "$container" || true
+fi
+
 # to-do: map /dev/kvm instead of --privileged
 docker run -d --privileged --name "$container" vrnetlab/vr-vsrx:vsrx3-x86
 
@@ -70,12 +77,17 @@ then
 	echo 'Failed to fetch container address, aborting.'
 	exit 1
 fi
-echo "$address" > "$container-address"
+#echo "$address" > "$container-address"
 
 popd >/dev/null
 
 if echo "$wd" | grep -Fq 'formulas'
 then
+	if [ -f ".$container-address" ]
+	then
+		echo 'Existing address file, overwriting'
+		rm ".$container-address"
+	fi
 	echo "$address" > ".$container-address"
 fi
 
