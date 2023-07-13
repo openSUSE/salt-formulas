@@ -1,0 +1,34 @@
+{%- set syslog = salt['pillar.get']('juniper_junos:syslog', []) -%}
+{%- set setsl = 'set system syslog' -%}
+
+{{ setsl }} user * any emergency
+delete system syslog
+
+{%- for user, userconfig in syslog.get('user', {}).items() %}
+{%- for facility, level in userconfig.get('facilities', {}).items() %}
+{{ setsl }} user {{ user }} {{ facility }} {{ level }}
+{%- endfor %}
+{%- endfor %}
+
+{%- for file, fileconfig in syslog.get('file', {}).items() %}
+{%- for facility, level in fileconfig.get('facilities', {}).items() %}
+{{ setsl }} file {{ file }} {{ facility }} {{ level }}
+{%- endfor %}
+{%- endfor %}
+
+{#-
+{%- for type in ['user', 'file', 'server'] %}
+
+{%- for object in syslog.get(type, {}) %}
+{%- for facility, level in object.get('facilities', {}).items() %}
+{{ setsl }} {{ type }} {{ facility }} {{ level }}
+{%- endfor %}
+{%- endfor %}
+
+{%- endfor %}
+#}
+
+{#- FIXME: allow for syslog servers which are not "any any" #}
+{%- for server in syslog.get('servers', []) %}
+{{ setsl }} host {{ server }} any any
+{%- endfor %}
