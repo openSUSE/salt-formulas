@@ -1,0 +1,14 @@
+{#- FIXME: move these to context variables #}
+{%- set routes = salt['pillar.get']('juniper_junos:routes', {}) -%}
+
+{%- set setro = 'set routing-options' %}
+
+{%- for route, rconfig in routes.items() %}
+{%- if rconfig['type'] == 'static' and 'next-hop' in rconfig %}
+{%- if route | is_ipv6 %}
+{{ setro }} rib inet6.0 static route {{ route }} next-hop {{ rconfig['next-hop'] }}
+{%- elif route | is_ipv4 %}
+{{ setro }} static route {{ route }} next-hop {{ rconfig['next-hop'] }}
+{%- endif %}
+{%- endif %}
+{%- endfor %} {#- close routes loop -#}

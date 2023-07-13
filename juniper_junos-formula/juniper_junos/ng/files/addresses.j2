@@ -1,0 +1,12 @@
+{%- set seta = 'set security address-book global address' %}
+{{ seta }} dummy 127.0.0.1/32
+delete security address-book global
+
+{%- for address, prefix in salt['pillar.get']('juniper_junos:addresses', {}).items() %}
+{{ seta }} {{ address }} {{ prefix }}
+{%- endfor %}
+{%- for addressset, addresses in salt['pillar.get']('juniper_junos:address-sets', {}).items() %}
+{%- for address in addresses %}
+{{ seta }}-set {{ addset }} address {{ addressset }} address {{ address }}
+{%- endfor %}
+{%- endfor %} {#- close address loop -#}

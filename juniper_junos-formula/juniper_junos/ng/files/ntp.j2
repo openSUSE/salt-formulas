@@ -1,4 +1,4 @@
-{%- set ntp_servers = salt['pillar.get']('juniper_junos:ntp_servers', []) -%}
+{%- set ntp_servers = salt['pillar.get']('juniper_junos:ntp_servers', []) %}
 
 set system ntp
 delete system ntp

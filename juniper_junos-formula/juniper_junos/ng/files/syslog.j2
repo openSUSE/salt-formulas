@@ -1,5 +1,5 @@
 {%- set syslog = salt['pillar.get']('juniper_junos:syslog', []) -%}
-{%- set setsl = 'set system syslog' -%}
+{%- set setsl = 'set system syslog' %}
 
 {{ setsl }} user * any emergency
 delete system syslog

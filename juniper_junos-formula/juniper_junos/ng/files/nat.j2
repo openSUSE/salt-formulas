@@ -1,0 +1,99 @@
+{#- FIXME: move these to context variables #}
+{%- set nat = salt['pillar.get']('juniper_junos:nat', {}) -%}
+
+{%- set sets = 'set security nat' -%}
+
+{%- set setsns = sets ~ ' static' %}
+{{ setsns }} rule-set dummy description dummy
+delete security nat static
+
+{%- set setsnp = sets ~ ' proxy-arp' %}
+{{ setsnp }} interface dummy address 127.0.0.99
+delete security nat proxy-arp
+
+{%- for type in ['source', 'destination', 'static'] %}
+
+{%- if type == 'source' %}
+{%- set setst = sets ~ ' source' -%}
+{%- elif type == 'destination' %}
+{%- set setst = sets ~ ' destination' -%}
+{%- endif %}
+{%- set myconfig = nat.get(type, {}) %}
+
+{%- if myconfig %}
+
+{%- for pool, pconfig in myconfig.get('pools', {}).items() %}
+
+{%- if 'address' in pconfig %}
+{{ setst }} pool {{ pool }} address {{ pconfig['address'] }}
+
+{%- if 'port' in pconfig %}
+{{ setst }} pool {{ pool }} address {{ pconfig['address'] }} port {{ pconfig['port'] }}
+{%- endif %}
+
+{%- endif %} {#- close address check -#}
+
+{%- endfor %} {#- close pools loop -#}
+
+{%- for ruleset, rsconfig in myconfig.get('rule-sets', {}).items() %}
+{%- set setstrs = setst ~ ' rule-set ' ~ ruleset %}
+
+{%- if 'description' in rsconfig %}
+{{ setstrs }} description {{ rsconfig['description'] }}
+{%- endif %}
+
+{%- for scope in ['zone', 'interface'] %}
+{%- for direction in ['from', 'to'] %}
+
+{%- if direction in rsconfig %}
+{%- if scope in rsconfig[direction] %}
+{{ setstrs }} {{ direction }} {{ scope }} {{ rsconfig[direction][scope] }}
+{%- endif %}
+{%- endif %}
+
+{%- endfor %} {#- close direction loop -#}
+{%- endfor %} {#- close scope loop -#}
+
+{%- for rule, rsrconfig in rsconfig.get('rules', {}).items() %}
+{%- set setstrsr = setstrs ~ ' rule ' ~ rule %}
+{{ setstrsr }}
+
+{%- for plural, singular in {
+	'applications': 'application',
+	'destination-addresses': 'destination-address', 'destination-address-names': 'destination-address-name',
+	'source-addresses': 'source-address', 'source-address-names': 'source-address-name',
+	'source-ports': 'source-port', 'destination-ports': 'destination-port'
+	}.items() %}
+{%- for entry in rsrconfig.get(plural, []) %}
+{{ setstrsr }} match {{ singular }} {{ entry }}
+{%- endfor %}
+{%- endfor %}
+
+{%- set then = rsconfig.get('then', {}) %}
+{%- if then %}
+
+{%- if type == 'source' %}
+{%- if 'pool' in then %}
+{{ setstrsr }} then source-nat pool {{ then['pool'] }}
+{%- elif then.get('interface', true) %}
+{{ setstrsr }} then source-nat interface
+{%- endif %}
+
+{%- elif type == 'destination' %}
+{{ setstrsr }} then destination-nat pool {{ then['pool'] }}
+
+{%- elif type == 'static' %}
+{{ setstrsr }} then static-nat prefix {{ then['prefix'] }}
+{%- endif %}
+
+{%- endif %} {#- close then check -#}
+
+{%- endfor %} {#- close rules loop -#}
+{%- endfor %} {#- close rule-sets loop -#}
+
+{%- endif %} {#- close myconfig check -#}
+{%- endfor %} {#- close type loop -#}
+
+{%- for interface, address in nat.get('proxy-arp', {}).items() %}
+{{ setsnp }} interface {{ interface }} address {{ address }}
+{%- endfor %}

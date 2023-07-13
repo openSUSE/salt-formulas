@@ -5,6 +5,7 @@
 
 {%- set ignore_interfaces = ignore.get('interfaces', {}) -%}
 {%- set ignore_interface_names = ignore_interfaces.get('names', []) -%}
+{%- set reth_ns = namespace(count=0) %}
 
 {%- for interface in present_interfaces %}
 {%- if interface not in ignore_interface_names %}
@@ -12,16 +13,23 @@ delete interfaces {{ interface }}
 {%- endif %}
 {%- endfor %}
 
-{%- for interface in interfaces %}
 {%- for ifname, ifconfig in interfaces.items() %}
 {%- set setif = 'set interfaces ' ~ ifname -%}
+
+{%- if ifname.startswith('reth') %}
+{%- set reth_ns.count = reth_ns.count + 1 %}
+{%- if 'redundancy-group' in ifconfig %}
+{{ setif }} redundant-ether-options redundancy-group {{ ifconfig['redundancy-group'] }}
+{%- endif %}
+{%- endif %}
 
 {%- if 'description' in ifconfig %}
 {{ setif }} description "{{ ifconfig['description'] }}"
 {%- endif %}
 
-# to-do; ask
+{%- if not 'lacp' in ifconfig %} {#- setting the MTU on a ae child device is not allowed #}
 {{ setif }} mtu {{ ifconfig.get('mtu', 9216) }}
+{%- endif %}
 
 {%- set units = ifconfig.get('units', {}) %}
 {%- for unit, uconfig in units.items() %}
@@ -46,7 +54,7 @@ delete interfaces {{ interface }}
 {%- set vtype = uconfig['vlan'].get('type', None) %}
 {%- if vtype in ['access', 'trunk'] %}
 {{ setif }} unit {{ unit }} family ethernet-switching interface-mode {{ vtype }}
-{{ setif }} unit {{ unit }} family ethernet-switching vlan members [ {{ uconfig['vlan']['ids'] }} ]
+{{ setif }} unit {{ unit }} family ethernet-switching vlan members [ {{ uconfig['vlan']['ids'] | join(' ') }} ]
 {%- endif %}
 {%- endif %}
 
@@ -105,4 +113,7 @@ delete interfaces {{ interface }}
 {%- endif %} {#- close ae check -#}
 
 {%- endfor %} {#- close ifconfig loop -#}
-{%- endfor %} {#- close interfaces loop -#}
+
+{%- if reth_ns.count > 0 %}
+set chassis cluster reth-count {{ reth_ns.count }}
+{%- endif %}
