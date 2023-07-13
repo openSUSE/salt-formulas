@@ -1,0 +1,20 @@
+{#- FIXME: move these to context variables #}
+{%- set policies = salt['pillar.get']('juniper_junos:policies', {}) -%}
+
+{%- set setp = 'set security policies' -%}
+
+{%- for policy, pconfig in policies.items() %}
+{%- set setpp =  setp ~ ' from-zone ' ~ pconfig['from-zone'] ~ ' to-zone ' ~ pconfig['to-zone'] ~ ' policy ' ~ policy %}
+{{ setpp }}
+
+{%- set options = {'sources': 'source-address', 'destinations': 'destination-address', 'applications': 'application'} %}
+
+{%- for option, setting in options.items() %}
+{%- for entry in pconfig.get(option, []) %}
+{{ setpp }} match {{ setting }} {{ entry }}
+{%- endfor %}
+{%- endfor %} {#- close options loop -#}
+
+{{ setpp }} then {{ pl.get('action', 'permit') }}
+
+{%- endfor %} {#- close policies loop -#}
