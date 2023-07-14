@@ -16,13 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'juniper_junos/map.jinja' import config, options -%}
+{%- from 'juniper_junos/map.jinja' import config -%}
 
 junos_firewall:
   netconfig.managed:
     - template_name: salt://{{ slspath }}/files/firewall.j2
     - debug: true
-    - present_ifaces: {{ salt['susejunos.get_active_interfaces'](include_xe=false) }}
-    {%- for option in options['firewall'] %}
-    - {{ option }}: {{ config.get(option, []) }}
-    {%- endfor %}
