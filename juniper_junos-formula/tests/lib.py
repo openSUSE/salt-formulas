@@ -27,7 +27,8 @@ def junos_device(target):
     return JunosDevice(host=target, user='vrnetlab', password='VR-netlab9')
 
 def salt(host, device, command):
-    result = host.run(f'salt --out json {device} {command}')
+    # use custom salt cli to skip deprecation warnings ...
+    result = host.run(f'/usr/local/bin/salt --out json {device} {command}')
     output = json.loads(result.stdout)[device]
     return output, result.stderr, result.rc
 

@@ -79,3 +79,4 @@ include:
 EOF
 
 /vagrant/test/scripts/proxy.sh
+/vagrant/test/scripts/warnings.sh
