@@ -17,6 +17,13 @@
 
 set -Ceu
 
+af='/vagrant/.devices'
+if [ ! -f "$af" ]
+then
+	echo 'No proxy devices, skipping ...'
+	exit 0
+fi
+
 proxyp='salt-proxy'
 rpm -q "$proxyp" >/dev/null || zypper -n in "$proxyp"
 
@@ -48,8 +55,6 @@ test -d "$proxyd" || mkdir -p "$proxyd"
 proxyl="$proxyd/_schedule.conf"
 test -L "$proxyl" || ln -s "$proxyf" "$proxyl"
 
-# to-do: scan for multiple devices
-af='/vagrant/.devices'
 if [ -f "$af" ]
 then
 	dp='/srv/pillar/devices'
