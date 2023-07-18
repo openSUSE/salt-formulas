@@ -83,10 +83,8 @@ def generate_switch_pillars(data):
 
     for device, config in switch_pillar.items():
         if device in ignore_ports:
-            switch_ignore = ignore_ports[device]
-            switch_pillar[device]['ignore_ports'] += switch_ignore
-            # why this set?
-            switch_pillar[device]['ignore_ports'] = list(set(switch_pillar[device]['ignore_ports']))
+            if ignore_ports[device] not in switch_pillar[device]['ignore_ports']:
+                switch_pillar[device]['ignore_ports'] += ignore_ports[device]
 
     ## Compatibility helper for the old, list based, input format
     data_vlans = data.get('vlans')
@@ -142,16 +140,11 @@ def generate_switch_pillars(data):
 
                         interface_description = port.get('description')
 
-                        interface_pillar = switch_pillar[group]['ports']
-                        if interface in interface_pillar:
+                        if interface in switch_pillar[group]['ports']:
                             logger.debug(f'Interface {interface} is already in pillar')
-                            interface_pillar = switch_pillar[group]['ports'][interface]
-                            tagged = interface_pillar['tagged']
+                            tagged = switch_pillar[group]['ports'][interface]['tagged']
                             if vlan_id not in tagged:
                                 tagged.append(vlan_id)
-
-                            if 'description' not in interface_pillar:
-                                interface_pillar['description'] = interface_description
 
                         else:
                             switch_pillar[group]['ports'][interface] = {

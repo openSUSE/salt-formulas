@@ -59,11 +59,14 @@ delete security nat proxy-arp
 {{ setstrsr }}
 
 {%- for plural, singular in {
-	'applications': 'application',
-	'destination-addresses': 'destination-address', 'destination-address-names': 'destination-address-name',
-	'source-addresses': 'source-address', 'source-address-names': 'source-address-name',
-	'source-ports': 'source-port', 'destination-ports': 'destination-port'
-	}.items() %}
+        'applications': 'application',
+        'destination-addresses': 'destination-address',
+        'destination-address-names': 'destination-address-name',
+        'source-addresses': 'source-address',
+        'source-address-names': 'source-address-name',
+        'source-ports': 'source-port',
+        'destination-ports': 'destination-port'
+        }.items() %}
 {%- for entry in rsrconfig.get(plural, []) %}
 {{ setstrsr }} match {{ singular }} {{ entry }}
 {%- endfor %}
