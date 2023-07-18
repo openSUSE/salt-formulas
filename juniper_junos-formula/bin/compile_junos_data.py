@@ -47,7 +47,7 @@ def generate_switch_pillars(data):
     core = []
     aggregation = []
     access = []
-    
+
     for device in data.get('switches', []):
         device_type = device.get('type')
         device_role = device.get('role')
@@ -63,7 +63,7 @@ def generate_switch_pillars(data):
     logger.debug(f'Core switches: {core}')
     logger.debug(f'Aggregation switches: {aggregation}')
     logger.debug(f'Access switches: {access}')
-    
+
     switch_pillar = {
             device: {
                 'vlans': {},
@@ -278,8 +278,8 @@ def generate_switch_pillars(data):
                     continue
                 else:
                     dpillar['ports'][member] = pconfig[member]
-                    
-    for device in lacp_switch.keys(): 
+
+    for device in lacp_switch.keys():
         for lacp, lconfig in lacp_interfaces.items():
             interface = lconfig.get('lacp_id')
             if interface in [elem.get('lacp_id') for elem in lacp_backbone.get(device, [])]:
