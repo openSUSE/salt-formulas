@@ -16,22 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- set config = salt['pillar.get']('gitea', {}) -%}
+{%- from 'gitea/map.jinja' import config %}
 
 gitea_package:
   pkg.installed:
     - name: gitea
 
-{%- if config %}
-
 gitea_configuration:
   ini.options_present:
+    - name: /etc/gitea/conf/app.ini
     - strict: True
     - sections:
       {%- for section in config.keys() %}
-        {{ section }}:
-        {%- for option, value in config[section] %}
-          {{ option }}: {{ value }}
+        {{ section | upper if section == 'default' else section }}:
+        {%- for option, value in config[section].items() %}
+          {{ option | upper }}: {{ value }}
         {%- endfor %}
       {%- endfor %}
     - require:
@@ -45,7 +44,3 @@ gitea_service:
       - pkg: gitea_package
     - watch:
       - ini: gitea_configuration
-
-{%- else %}
-{%- do salt.log.warning('gitea: no configuration found') %}
-{%- endif %}
