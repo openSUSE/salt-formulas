@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
 import logging
+import pathlib
 import sys
 import yaml
 
@@ -37,6 +38,10 @@ args = argparser.parse_args()
 infile_s = args.in_switching
 infile_b = args.in_backbone
 outdir = args.out
+
+def _fail(msg):
+    logger.error(f'{msg}, bailing out.')
+    sys.exit(1)
 
 def generate_switch_pillars(data):
     all_pillars = {}
@@ -59,6 +64,8 @@ def generate_switch_pillars(data):
                 aggregation.append(device_id)
             elif device_role == 'access':
                 access.append(device_id)
+            else:
+                _fail(f'Illegal switch role "{device_role}" in device {device}')
 
     logger.debug(f'Core switches: {core}')
     logger.debug(f'Aggregation switches: {aggregation}')
@@ -131,8 +138,7 @@ def generate_switch_pillars(data):
                         interface = port['iface']
 
                         if interface in switch_pillar[group]['ignore_ports']:
-                            logger.error(f'This should not happen?')
-                            sys.exit(1)
+                            _fail(f'Attempted to configure interface {interface}, but it is set to be ignored. This should not happen')
 
                         interface_description = port.get('description')
 
@@ -161,16 +167,14 @@ def generate_switch_pillars(data):
     for device, lacps in lacp_backbone.items():
         for lacp, lconfig in lacps.items():
             if lacp in switch_pillar[device]['ignore_ports']:
-                logger.error(f'This should not happen with LACP {lacp}?')
-                sys.exit(1)
+                _fail(f'Attempted to configure LACP interface {lacp}, but it is set to be ignored. This should not happen')
 
             for lacp_member in lconfig.get('members', []):
                 lacp_interface = lacp_member.get('interface')
                 logger.debug(f'Computing LACP member interface {lacp_interface}')
 
                 if interface in switch_pillar[device]['ignore_ports']:
-                    logger.error(f'This should not happen with LACP interface {lacp_interface}?')
-                    sys.exit(1)
+                    _fail(f'Attempted to configure LACP member interface {interface}, but it is set to be ignored. This should not happen')
 
                 if not lacp_interface in lacp_data[device]:
                     lacp_data[device] = {lacp_interface: {}}
@@ -216,6 +220,8 @@ def generate_switch_pillars(data):
             logger.debug(f'Converted legacy LACP interfaces: {lacp_interfaces}')
         elif isinstance(lacp_interfaces, dict):
             lacp_interfaces = interfaces
+        else:
+            _fail(f'Invalid LACP data structure')
 
         for ae_interface, ifconfig in lacp_interfaces.items():
             lacp_id = ifconfig.get('lacp_id')
@@ -347,6 +353,13 @@ def generate_switch_pillars(data):
 
 
 def main():
+    for file in [infile_s, infile_b]:
+        if not pathlib.Path(file).is_file():
+            _fail(f'Unable to locate "{file}"')
+
+    if not pathlib.Path(outdir).is_dir():
+        _fail(f'Directory "{outdir}" does not exist')
+
     with open(infile_s) as fh:
         data_s = yaml.safe_load(fh)
 
