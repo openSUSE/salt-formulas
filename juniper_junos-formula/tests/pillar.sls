@@ -1,17 +1,15 @@
+{%- set id = grains['id'] %}
+
+include:
+  - devices.{{ id }}
+
 proxy:
   proxytype: napalm
   driver: junos
-  host: %%DEVICE%%
   username: vrnetlab
   passwd: VR-netlab9
 
 juniper_junos:
-  redundancy_groups:
-    1:
-      nodes:
-        1:
-          priority: 10
-
   interfaces:
     ae0:
       mtu: 9100
@@ -30,21 +28,6 @@ juniper_junos:
     #      init-delay-time: 300
 
     # reth* interfaces will be counted to set the reth-count
-    reth0:
-      description: test
-      mtu: 9100
-      redundancy-group: 1
-      units:
-        0:
-          vlan:
-            type: access
-            ids:
-              - 1
-
-    ge-0/0/1:
-      mtu: 9100
-      reth: reth0
-
     ge-0/0/2:
       description: foo
       mtu: 9100
@@ -76,6 +59,30 @@ juniper_junos:
             ids:
               - 1
               - 2
+
+  {%- if 'srx' in id %}
+    reth0:
+      description: test
+      mtu: 9100
+      redundancy-group: 1
+      units:
+        0:
+          vlan:
+            type: access
+            ids:
+              - 1
+
+    ge-0/0/1:
+      mtu: 9100
+      reth: reth0
+
+  redundancy_groups:
+    1:
+      nodes:
+        1:
+          priority: 10
+  {%- endif %}
+
   vlans:
     vlan1:
       id: 1
@@ -87,9 +94,11 @@ juniper_junos:
 
   ignore:
     interfaces:
-      # fxp0 needs to be ignored to prevent Salt from being disconnected during testing
+      # these need to be ignored to prevent Salt from being disconnected during testing
       names:
         - fxp0
+        - em0
+        - em1
 
   syslog:
     user:

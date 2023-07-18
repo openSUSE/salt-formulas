@@ -21,6 +21,7 @@ from lib import junos_device
 import pytest
 
 def pytest_addoption(parser):
+    parser.addoption('--model', action='store')
     parser.addoption('--target', action='store')
 
 def pytest_generate_tests(metafunc):
@@ -29,7 +30,15 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('target', [value])
 
 @pytest.fixture
-def device(target):
+def model(request):
+    modelarg = request.config.getoption('--model')
+    if modelarg in ['srx', 'vsrx']:
+        return 'vsrx-device1'
+    if modelarg in ['qfx', 'vqfx']:
+        return 'vqfx-device1'
+
+@pytest.fixture
+def device(target, model):
     with junos_device(target) as jdevice:
         jconfig = JunosConfig(jdevice, mode='exclusive')
         rescue = jconfig.rescue(action='get')
@@ -38,7 +47,7 @@ def device(target):
         else:
             print('Existing rescue configuration, test suite may not behave correctly')
 
-    yield 'vsrx-device1'
+    yield model
 
     with junos_device(target) as jdevice:
         jconfig = JunosConfig(jdevice, mode='exclusive')
