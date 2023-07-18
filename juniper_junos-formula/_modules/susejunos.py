@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Salt execution module with Juniper Junos related utilities
 Copyright (C) 2023 SUSE LLC
@@ -51,9 +50,7 @@ unit_regex = re.compile('set interfaces \S+\s+unit\s+(\S+)')
 vlanid_regex = re.compile('set vlans (\S+)\s+vlan-id\s+(\d+)')
 vlan_regex = re.compile('set vlans (\S+)')
 
-
 # ----------------------------------------------------------------------------------------------------------------------
-
 __virtualname__ = 'susejunos'
 __proxyenabled__ = ['napalm']
 # uses NAPALM-based proxy to interact with network devices
@@ -63,7 +60,6 @@ __virtual_aliases__ = ('susejunos',)
 # property functions
 # ----------------------------------------------------------------------------------------------------------------------
 
-
 def __virtual__():
     '''
     NAPALM library must be installed for this module to work and run in a (proxy) minion.
@@ -71,13 +67,8 @@ def __virtual__():
     return salt.utils.napalm.virtual(__opts__, __virtualname__, __file__)
 
 # ----------------------------------------------------------------------------------------------------------------------
-# helper functions -- will not be exported
-# ----------------------------------------------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------------------------------------------------
 # callable functions
 # ----------------------------------------------------------------------------------------------------------------------
-
 
 @proxy_napalm_wrap
 def get_active_interfaces(
@@ -88,10 +79,8 @@ def get_active_interfaces(
         include_reth=True,
         include_fxp=True,
         parents_only=True
-):  # pylint: disable=unused-argument
-
+):
     """
-
     :param include_ae:
     :param include_xe:
     :param include_et:
@@ -164,7 +153,7 @@ def get_active_interfaces(
 
 
 @proxy_napalm_wrap
-def get_active_vlans():  # pylint: disable=unused-argument
+def get_active_vlans():
     """
     parses the configuration of juniper to retrieve vlans parsed and unparsed
 
