@@ -1,0 +1,133 @@
+---
+# yamllint disable rule:line-length
+
+# Configure the Salt proxy minion
+proxy:
+  proxytype: napalm
+  driver: junos
+  username: geeko
+  passwd: it.is.recommended.to.store.the.passphrase.as.a.pgp.encrypted.secret
+  host: firewall1.example.com
+
+# Configure the formula
+#
+# The same pillar structure is used for all available states, however some pillar options are not compatible with all device types.
+# I hope to include more thorough examples about all possible options and their respective device compatibilities in the future.
+#
+juniper_junos:
+  interfaces:
+    ae0:
+      mtu: 9100
+      description: My aggregated interface
+      ae:
+        lacp:
+          force-up: true
+          system-id: ff:ff:ff:ff:ff:ff
+          admin-key: 65535
+        mc:
+          mc-ae-id: x
+          redundancy-group: 1
+          chassis-id: 12345
+          mode: active-active
+          status-control: asdf
+          init-delay-time: 300
+
+    ge-0/0/2:
+      description: foo
+      mtu: 9100
+      # "native_vlan" cannot be combined with vlan:access, only with vlan:trunk
+      native_vlan: 2
+      units:
+        0:
+          description: bar
+          inet:
+            addresses:
+              - 192.168.99.1/32
+          inet6:
+            addresses:
+              - fd15:5695:f4b6:43d5::1/128
+
+    ge-0/0/3:
+      mtu: 9100
+      # "lacp" cannot be combined with any other interface options
+      lacp: ae0
+
+    ge-0/0/4:
+      mtu: 9000
+      units:
+        0:
+          vlan:
+            # "access" and "trunk" cannot co-exist
+            type: trunk
+            ids:
+              - 1
+              - 2
+
+    # - "reth*" interfaces will be counted to set the reth-count
+    # - "reth*" interfaces are not supported on QFX devices
+    reth0:
+      description: test
+      mtu: 9100
+      redundancy-group: 1
+      units:
+        0:
+          vlan:
+            type: access
+            ids:
+              - 1
+
+    ge-0/0/1:
+      mtu: 9100
+      # - ensure the specified reth interface exists in the pillar like in the example above
+      #   the formula currently does not validate whether dependent interfaces exist
+      # - "reth" is not supported on QFX devices
+      reth: reth0
+
+  # "redundancy_groups" are not supported on QFX devices
+  redundancy_groups:
+    1:
+      nodes:
+        1:
+          priority: 10
+
+  vlans:
+    vlan1:
+      id: 1
+    vlan2:
+      id: 2
+    vlan200:
+      id: 200
+      description: Baz
+
+  ignore:
+    interfaces:
+      # these interface names will not be touched by the automation
+      # this is useful for the management interfaces Salt is connecting to
+      names:
+        - em0
+
+  syslog:
+    user:
+      facilities:
+        any: emergency
+
+    file:
+      messages:
+        facilities:
+          any: notice
+          authorization: info
+          interactive-commands: any
+
+  zones:
+    myfirstzone:
+      interfaces:
+        ge-0/0/2:
+          protocols:
+            - ospf
+
+    mysecondzone:
+      interfaces:
+        ge-0/0/4:
+          system-services:
+            - dns
+            - ssh
