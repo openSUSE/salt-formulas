@@ -49,12 +49,23 @@ proxyl="$proxyd/_schedule.conf"
 test -L "$proxyl" || ln -s "$proxyf" "$proxyl"
 
 # to-do: scan for multiple devices
-af='/vagrant/.vsrx-device1-address'
+af='/vagrant/.devices'
 if [ -f "$af" ]
 then
-	read -r address < "$af"
-	grep -lr '%%DEVICE%%' /srv/pillar | xargs -r sed -i "s/%%DEVICE%%/$address/"
-	systemctl enable --now salt-proxy@vsrx-device1
+	dp='/srv/pillar/devices'
+	if [ ! -d "$dp" ]
+	then
+		mkdir "$dp"
+	fi
+	while read -r device address
+	do
+		if [ -f "$dp/$device.sls" ]
+		then
+			rm "$dp/$device.sls"
+		fi
+		printf 'proxy:\n  host: %s\n' "$address" > "$dp/$device.sls"
+		systemctl enable --now "salt-proxy@$device"
+	done < "$af"
 else
 	echo 'No devices'
 fi
