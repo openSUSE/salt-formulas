@@ -112,6 +112,7 @@ juniper_junos:
           authorization: info
           interactive-commands: any
 
+  {%- if 'srx' in id %}
   zones:
     myfirstzone:
       interfaces:
@@ -125,3 +126,4 @@ juniper_junos:
           system-services:
             - dns
             - ssh
+  {%- endif %}
