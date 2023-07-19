@@ -1,0 +1,8 @@
+---
+timeout: 0
+supervised: systemd
+unixsocket: /run/redis/%%INSTANCE%%.sock
+unixsocketperm: 460
+pidfile: /run/redis/%%INSTANCE%%.pid
+logfile: /var/log/redis/%%INSTANCE%%.log
+dir: /var/lib/redis/%%INSTANCE%%

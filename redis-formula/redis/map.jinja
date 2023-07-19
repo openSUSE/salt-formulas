@@ -1,0 +1,47 @@
+{#-
+Jinja variables file for the Redis Salt states
+Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- import_yaml 'redis/defaults.yaml' as instance_defaults -%}
+
+{%- set instances = salt['pillar.get']('redis', {}) -%}
+{%- set config = {} -%}
+
+{%- for instance, iconfig in instances.items() -%}
+{%- if iconfig.get('formula_defaults', True) -%}
+{%- for defkey in instance_defaults.keys() -%}
+{%- if not defkey in iconfig -%}
+{%- do iconfig.update(instance_defaults) -%}
+{%- endif -%}
+{%- endfor -%} {#- end defaults loop -#}
+{%- else -%}
+{%- do iconfig.pop('formula_defaults') -%}
+{%- endif -%} {#- close formula_defaults check -#}
+{%- do config.update({instance: iconfig}) -%}
+{%- endfor -%} {#- end instances loop -#}
+
+{%- if grains['osrelease'] | float > 15.4 -%}
+{%- set package = 'redis7' -%}
+{%- else -%}
+{%- set package = 'redis' -%}
+{%- endif -%}
+
+{%- set dirs = {
+                'config': '/etc/redis',
+                'data': '/var/lib/redis'
+        }
+-%}

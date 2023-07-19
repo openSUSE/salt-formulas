@@ -1,0 +1,21 @@
+redis:
+
+  # this example will instantiate a "redis@myapp" service
+  myapp:
+    # any available Redis settings can be defined
+    port: 0
+
+    # the following parameters will be set automatically unless they are overwritten
+    timeout: 0
+    supervised: systemd
+    unixsocket: /run/redis/myapp.sock
+    unixsocketperm: 460
+    pidfile: /run/redis/myapp.pid
+    logfile: /var/log/redis/myapp.log
+    dir: /var/lib/redis/myapp
+
+  # this example will instantiate a "redis@yourapp" service
+  yourapp:
+    # this completely disables the formula defaults for this instance
+    # if this is set (to False), other necessary parameters and dependencies need to be provided to allow the instance to start
+    formula_defaults: False
