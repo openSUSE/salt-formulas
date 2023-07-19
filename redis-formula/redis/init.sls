@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'redis/map.jinja' import config, dirs -%}
+{%- from 'redis/map.jinja' import config, dirs, package -%}
 
-include:
-  - .package
+redis_package:
+  pkg.installed:
+    - name: {{ package }}
 
 {%- for instance, settings in config.items() %}
 
