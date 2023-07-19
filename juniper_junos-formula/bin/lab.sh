@@ -24,7 +24,13 @@ revision='SUSE-master'
 docker pull registry.opensuse.org/isv/suseinfra/containers/containerfile/vrnetlab-base
 
 wd="$PWD"
-pushd /tmp
+
+if [ ! -d ~/.cache ]
+then
+	mkdir ~/.cache
+fi
+
+pushd ~/.cache
 
 if [ -d vrnetlab ]
 then
