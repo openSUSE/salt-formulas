@@ -42,7 +42,7 @@ juniper_junos:
           description: bar
           inet:
             addresses:
-              - 192.168.99.1/32
+              - 192.168.99.1/29
           inet6:
             addresses:
               - fd15:5695:f4b6:43d5::1/128
@@ -131,3 +131,11 @@ juniper_junos:
           system-services:
             - dns
             - ssh
+
+  routes:
+    192.168.100.0/24:
+      type: static
+      next-hop: 192.168.99.2
+    fd15:5695:f4b6:43d6::/64:
+      type: static
+      next-hop: fd15:5695:f4b6:43d5::1
