@@ -17,4 +17,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- import_yaml './defaults.yaml' as defaults -%}
-{%- set config = salt.pillar.get('gitea', default=defaults, merge=True) -%}
+{%- set gitea = salt.pillar.get('gitea', default=defaults, merge=True) -%}
+{%- set config = gitea.get('config', {}) -%}

@@ -1,22 +1,24 @@
 ---
-# defaults have been taken from devel:tools:scm/gitea/gitea.app.ini.patch
-default:
-  work_path: /var/lib/gitea
-  run_user: gitea
-server:
-  static_root_path: /usr/share/gitea
-  app_data_path: /var/lib/gitea/data
-  pprof_data_path: /var/lib/gitea/data/tmp/pprof
-log:
-  root_path: /var/log/gitea
-repository:
-  root: /var/lib/gitea/repositories
-repository.upload:
-  temp_path: /var/lib/gitea/data/tmp/uploads
-queue:
-  datadir: /var/lib/gitea/queues
-picture:
-  avatar_upload_path: /var/lib/gitea/data/avatars
-  repository_avatar_upload_path: /var/lib/gitea/data/repo-avatars
-attachment:
-  path: /var/lib/gitea/data/attachments
+config:
+  # config defaults have been taken from
+  # devel:tools:scm/gitea/gitea.app.ini.patch
+  default:
+    work_path: /var/lib/gitea
+    run_user: gitea
+  server:
+    static_root_path: /usr/share/gitea
+    app_data_path: /var/lib/gitea/data
+    pprof_data_path: /var/lib/gitea/data/tmp/pprof
+  log:
+    root_path: /var/log/gitea
+  repository:
+    root: /var/lib/gitea/repositories
+  repository.upload:
+    temp_path: /var/lib/gitea/data/tmp/uploads
+  queue:
+    datadir: /var/lib/gitea/queues
+  picture:
+    avatar_upload_path: /var/lib/gitea/data/avatars
+    repository_avatar_upload_path: /var/lib/gitea/data/repo-avatars
+  attachment:
+    path: /var/lib/gitea/data/attachments

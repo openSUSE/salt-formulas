@@ -4,7 +4,8 @@
 # Some defaults will be written (unless specified otherwise) to accomodate the default configuration shipped with the package.
 
 gitea:
-  default:
-    app_name: GitCoffee
-  server:
-    http_addr: 127.0.0.1
+  config:
+    default:
+      app_name: GitCoffee
+    server:
+      http_addr: 127.0.0.1
