@@ -1,0 +1,11 @@
+# The "gitea" pillar allows for all Gitea configuration options:
+# https://docs.gitea.com/administration/config-cheat-sheet
+#
+# Some defaults will be written (unless specified otherwise) to accomodate the default configuration shipped with the package.
+
+gitea:
+  config:
+    default:
+      app_name: GitCoffee
+    server:
+      http_addr: 127.0.0.1
