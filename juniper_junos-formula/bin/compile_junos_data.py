@@ -43,6 +43,7 @@ def _fail(msg):
     logger.error(f'{msg}, bailing out.')
     sys.exit(1)
 
+# TODO: split the following into smaller functions
 def generate_switch_pillars(data):
     all_pillars = {}
     global_port_groups = data.get('port_groups', {})
