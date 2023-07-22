@@ -1,0 +1,31 @@
+{#- FIXME: move these to context variables #}
+{%- set vlans = salt['pillar.get']('juniper_junos:vlans') -%}
+{%- set ignore = salt['pillar.get']('juniper_junos:ignore') -%}
+{%- set present_vlans = salt['susejunos.get_active_vlans']() -%}
+
+{%- set ignore_vlans = ignore.get('vlans', {}) %}
+{%- set ignore_vlan_ids = ignore_vlans.get('ids', []) %}
+{%- set ignore_vlan_names = ignore_vlans.get('names', []) %}
+
+{%- for id, name in present_vlans.parsed_vlan_dict.items() %}
+{%- if id not in ignore_vlan_ids and name not in ignore_vlan_names %}
+delete vlans {{ name }}
+{%- endif %}
+{%- endfor %}
+
+{#- to-do: what is this for ? #}
+{%- for name in present_vlans.unparsed_vlan_list %}
+{%- if name not in ignore_vlan_names %}
+delete vlans {{ name }}
+{%- endif %}
+{%- endfor %}
+
+{%- for vlan, vlconfig in vlans.items() %}
+{%- set vlid = vlconfig['id'] %}
+{%- if vlid not in ignore_vlan_ids and vlan not in ignore_vlan_names %}
+set vlans {{ vlan }} vlan-id {{ vlid }}
+{%- if 'description' in vlconfig %}
+set vlans {{ vlan }} description "{{ vlconfig['description'] }}"
+{%- endif %}
+{%- endif %}
+{%- endfor %}

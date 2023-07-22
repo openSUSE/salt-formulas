@@ -1,0 +1,5 @@
+---
+summary:
+  Salt states for managing Junos
+description:
+  Salt states for managing Juniper Junos based network devices using pillars.

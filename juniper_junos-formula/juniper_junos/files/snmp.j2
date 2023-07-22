@@ -1,0 +1,18 @@
+{#- FIXME: move these to context variables #}
+{%- set snmp = salt['pillar.get']('juniper_junos:snmp', {}) %}
+
+set snmp community dummy authorization read-only
+delete snmp
+
+{%- for community, cconfig in snmp.get('communities', {}).items() %}
+{%- set setsc = 'set snmp community ' ~ community %}
+
+{%- if 'authorization' in cconfig %}
+{{ setsc }} authorization {{ cconfig['authorization'] }}
+{%- endif %}
+
+{%- for client in cconfig.get('clients', []) %}
+{{ setsc }} clients {{ client }}
+{%- endfor %}
+
+{%- endfor %} {#- close communities loop -#}

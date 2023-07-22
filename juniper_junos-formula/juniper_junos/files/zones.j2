@@ -1,0 +1,30 @@
+{#- FIXME: move these to context variables #}
+{%- set zones = salt['pillar.get']('juniper_junos:zones', {}) -%}
+
+{%- set setz = 'set security zones security-zone' %}
+
+{{ setz }} dummy
+delete security zones security-zone dummy
+
+{%- for zone, zconfig in zones.items() %}
+{%- set setzz = setz ~ ' ' ~ zone %}
+{{ setzz }}
+
+{%- set options = ['protocols', 'system-services'] %}
+{%- for option in options %}
+{%- for entry in zconfig.get(option, []) %}
+{{ setzz }} host-inbound-traffic {{ option }} {{ entry }}
+{%- endfor %}
+{%- endfor %}
+
+{%- for interface, ifconfig in zconfig.get('interfaces', {}).items() %}
+{%- set setzi = setzz ~ ' interfaces ' ~ interface %}
+{{ setzi }}
+{%- for option in options %}
+{%- for entry in ifconfig.get(option, []) %}
+{{ setzi }} host-inbound-traffic {{ option }} {{ entry }}
+{%- endfor %}
+{%- endfor %}
+{%- endfor %} {#- close interfaces loop -#}
+
+{%- endfor %} {#- close zones loop -#}

@@ -26,6 +26,7 @@ for formula in $(find /vagrant -mindepth 1 -maxdepth 1 -type d -name '*-formula'
 do
   echo "$formula"
   fname="${formula%%-*}"
+  src="/vagrant/$formula"
   src_states="$formula/$fname"
   src_formula="/vagrant/$src_states"
   src_pillar="/vagrant/$formula/pillar.example"
@@ -48,6 +49,24 @@ do
   then
     cp "$src_pillar" "$dst_pillar"
   fi
+  dst_salt='/srv/salt'
+  for mod in modules states proxy
+  do
+	  mod="_$mod"
+	  src_mod="$src/$mod"
+	  dst_mod="$dst_salt/$mod"
+
+	  if [ ! -d "$dst_mod" ]
+	  then
+		mkdir "$dst_mod"
+	  fi
+
+	  if [ -d "$src_mod" ]
+	  then
+		echo "$fname: $mod"
+		cp "$src_mod/"* "$dst_mod/"
+	  fi
+  done
 done
 tee /srv/pillar/top.sls >/dev/null <<EOF
 {{ saltenv }}:
@@ -59,3 +78,5 @@ include:
   - samples.*
 EOF
 
+/vagrant/test/scripts/proxy.sh
+/vagrant/test/scripts/warnings.sh

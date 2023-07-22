@@ -1,0 +1,18 @@
+{%- set rgs = salt['pillar.get']('juniper_junos:redundancy_groups', {}) -%}
+
+{%- set setcrg = 'set chassis cluster redundancy-group' %}
+
+{%- for group, gconfig in rgs.items() %}
+{%- set setgroup = setcrg ~ ' ' ~ group %}
+
+{%- for node, nconfig in gconfig.get('nodes', {}).items() %}
+{%- set setgroup = setgroup ~ ' node ' ~ node %}
+
+{%- if 'priority' in nconfig %}
+{%- set setgroup = setgroup ~ ' priority ' ~ nconfig['priority'] %}
+{%- endif %}
+
+{{ setgroup }}
+
+{%- endfor %} {#- close nodes loop -#}
+{%- endfor %} {#- close rgs loop -#}
