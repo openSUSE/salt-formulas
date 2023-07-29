@@ -1,0 +1,6 @@
+---
+# yamllint disable rule:line-length
+jenkins:
+  controller:
+    sysconfig:
+      JENKINS_JAVA_OPTIONS: '-Djava.awt.headless=true -Xms256m -Xmx640m -Dhudson.DNSMultiCast.disabled=true -XX:+HeapDumpOnOutOfMemoryError -Dcasc.jenkins.config=/etc/jenkins'
