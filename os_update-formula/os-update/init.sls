@@ -40,6 +40,9 @@ os-update_config_values:
         {%- endif %}
         {{ option | upper }}: '"{{ value }}"'
         {%- endfor %}
+    {%- if opts['test'] %}
+    - ignore_if_missing: true
+    {%- endif %}
     - require:
       - pkg: os-update_package
       - file: os-update_config_file
