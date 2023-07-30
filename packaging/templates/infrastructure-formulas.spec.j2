@@ -60,10 +60,11 @@ mv %{_sourcedir}/salt-formulas-%{version}/* .
 %build
 
 %install
-install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states
+install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states %{buildroot}%{_bindir}
 
 dst_execumodules="%{sdir}/_modules"
 dst_statemodules="%{sdir}/_states"
+dst_bin='%{_bindir}'
 
 for formula in $(find -mindepth 1 -maxdepth 1 -type d -name '*-formula' -printf '%%P\n')
 do
@@ -78,6 +79,7 @@ do
   fi
   src_execumodules="$formula/_modules"
   src_statemodules="$formula/_states"
+  src_bin="$formula/bin"
 
   dst_metadata="%{mdir}/$fname"
   dst_states="%{sdir}/$fname"
@@ -96,8 +98,9 @@ do
     echo "Warning: $formula does not ship with any states"
   fi
 
-  for mod in execu state
+  for mod in execu state bin
   do
+    mode=0644
     case "$mod" in
       'execu' ) src="$src_execumodules"
                 dst="$dst_execumodules"
@@ -105,12 +108,17 @@ do
       'state' ) src="$src_statemodules"
                 dst="$dst_statemodules"
       ;;
+      'bin' )
+                src="$src_bin"
+                dst="$dst_bin"
+                mode=0755
+      ;;
     esac
 
     if [ -d "$src" ]
     then
       find "$src" -type f \
-        -execdir install -vm0644 {} "%{buildroot}$dst" \; \
+        -execdir install -vm "$mode" {} "%{buildroot}$dst" \; \
         -execdir sh -cx 'echo "$1/$(basename $2)" >> "$3"' prog "$dst" {} "../../$fname.files" \;
     fi
   done
