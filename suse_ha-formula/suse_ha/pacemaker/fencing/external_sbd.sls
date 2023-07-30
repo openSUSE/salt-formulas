@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/../../map.jinja' import fencing, ha_resource, ipmi_secret -%}
+{%- from slspath ~ '/../../map.jinja' import fencing -%}
 {%- from slspath ~ '/../../macros.jinja' import ha_resource -%}
 {%- set fencing_sbd = fencing.get('sbd', {}) -%}
 {%- set instance_defaults = fencing_sbd.get('defaults', {}) -%}
