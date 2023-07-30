@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import cluster -%}
+{%- from 'suse_ha/map.jinja' import cluster -%}
 
 {%- if 'name' in cluster %}
 pacemaker.service:

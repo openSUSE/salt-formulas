@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import hapillar, cluster, fencing, multicast, is_primary -%}
+{%- from 'suse_ha/map.jinja' import hapillar, cluster, fencing, multicast, is_primary -%}
 {%- if 'sbd' in fencing -%}{%- set hook_sbd = True -%}{%- else -%}{%- set hook_sbd = False %}{%- endif %}
 
 include:

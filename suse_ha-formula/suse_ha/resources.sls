@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import resources, resources_dir -%}
-{%- from slspath ~ '/macros.jinja' import ha_resource -%}
+{%- from 'suse_ha/map.jinja' import resources, resources_dir -%}
+{%- from 'suse_ha/macros.jinja' import ha_resource -%}
 
 ha_resources_directory:
   file.directory:

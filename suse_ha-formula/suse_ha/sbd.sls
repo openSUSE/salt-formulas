@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import sbd, sysconfig, is_primary -%}
+{%- from 'suse_ha/map.jinja' import sbd, sysconfig, is_primary -%}
 {%- if 'devices' in sbd %}
 include:
   - .packages
