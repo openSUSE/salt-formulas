@@ -54,7 +54,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set host = grains['host'] -%}
 {%- set id = grains['id'] -%}
 
-{%- set nodes = salt['mine.get'](cluster.name ~ '*', 'network.get_hostname') | sort -%}
+{%- set clustername = cluster.get('name') -%}
+{%- if clustername is none -%}
+{%- set nodes = [] -%}
+{%- else -%}
+{%- set nodes = salt['mine.get'](clustername ~ '*', 'network.get_hostname') | sort -%}
+{%- endif -%}
 {%- if nodes | length -%}
 {%- set primary = nodes[0] -%}
 {%- do salt.log.debug('suse_ha: elected primary node is ' ~ primary) -%}
