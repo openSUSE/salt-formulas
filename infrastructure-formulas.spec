@@ -20,15 +20,17 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        0.5
+Version:        0.6
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
 Source:         _service
+Requires:       gitea-formula
 Requires:       grains-formula
 Requires:       infrastructure-formula
+Requires:       juniper_junos-formula
 Requires:       libvirt-formula
 Requires:       lock-formula
 Requires:       lunmap-formula
@@ -36,6 +38,7 @@ Requires:       multipath-formula
 Requires:       orchestra-formula
 Requires:       os_update-formula
 Requires:       rebootmgr-formula
+Requires:       redis-formula
 Requires:       suse_ha-formula
 Requires:       zypper-formula
 BuildArch:      noarch
@@ -130,6 +133,30 @@ Requires:       %{name}-common
 %description -n lock-formula
 Salt state module allowing you to place a lock file prior to other states in order to prevent simultaneous executions.
 
+%package -n juniper_junos-formula
+Summary:        Salt states for managing Junos
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n juniper_junos-formula
+Salt states for managing Juniper Junos based network devices using pillars.
+
+%package -n gitea-formula
+Summary:        Salt states for managing Gitea
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n gitea-formula
+Salt states for managing Gitea.
+
+%package -n redis-formula
+Summary:        Salt states for managing Redis
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n redis-formula
+Salt states for managing Redis.
+
 %package -n multipath-formula
 Summary:        Salt states for managing multipath
 License:        GPL-3.0-or-later
@@ -144,10 +171,11 @@ mv %{_sourcedir}/salt-formulas-%{version}/* .
 %build
 
 %install
-install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states
+install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states %{buildroot}%{_bindir}
 
 dst_execumodules="%{sdir}/_modules"
 dst_statemodules="%{sdir}/_states"
+dst_bin='%{_bindir}'
 
 for formula in $(find -mindepth 1 -maxdepth 1 -type d -name '*-formula' -printf '%%P\n')
 do
@@ -162,6 +190,7 @@ do
   fi
   src_execumodules="$formula/_modules"
   src_statemodules="$formula/_states"
+  src_bin="$formula/bin"
 
   dst_metadata="%{mdir}/$fname"
   dst_states="%{sdir}/$fname"
@@ -180,8 +209,9 @@ do
     echo "Warning: $formula does not ship with any states"
   fi
 
-  for mod in execu state
+  for mod in execu state bin
   do
+    mode=0644
     case "$mod" in
       'execu' ) src="$src_execumodules"
                 dst="$dst_execumodules"
@@ -189,12 +219,17 @@ do
       'state' ) src="$src_statemodules"
                 dst="$dst_statemodules"
       ;;
+      'bin' )
+                src="$src_bin"
+                dst="$dst_bin"
+                mode=0755
+      ;;
     esac
 
     if [ -d "$src" ]
     then
       find "$src" -type f \
-        -execdir install -vm0644 {} "%{buildroot}$dst" \; \
+        -execdir install -vm "$mode" {} "%{buildroot}$dst" \; \
         -execdir sh -cx 'echo "$1/$(basename $2)" >> "$3"' prog "$dst" {} "../../$fname.files" \;
     fi
   done
@@ -239,6 +274,12 @@ done
 %files -n zypper-formula -f zypper.files
 
 %files -n lock-formula -f lock.files
+
+%files -n juniper_junos-formula -f juniper_junos.files
+
+%files -n gitea-formula -f gitea.files
+
+%files -n redis-formula -f redis.files
 
 %files -n multipath-formula -f multipath.files
 
