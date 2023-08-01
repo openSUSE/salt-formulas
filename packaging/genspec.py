@@ -73,6 +73,8 @@ for directory in directories:
     if any([Path.is_file(Path('{}/{}'.format(directory, file))) for file in ['COPYING', 'LICENCE', 'LICENSE']]) and lic is None:
         log.warning('Formula {} ships a custom license, but does not declare it in its metadata. Make sure to update the generated spec file!'.format(formula))
         lic = 'FIX-ME'
+    elif lic is None:
+        lic = 'GPL-3.0-or-later'
     formulas.update({formula: {'summary': summary, 'description': description, 'license': lic}})
 
 log.debug(formulas)
