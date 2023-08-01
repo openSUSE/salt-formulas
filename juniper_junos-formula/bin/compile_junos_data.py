@@ -170,12 +170,14 @@ def generate_switch_pillars(data):
                 if interface in switch_pillar[device]['ignore_ports']:
                     _fail(f'Attempted to configure LACP member interface {interface}, but it is set to be ignored. This should not happen')
 
+                if not device in lacp_data:
+                    lacp_data.update({device: {}})
                 if not lacp_interface in lacp_data[device]:
                     lacp_data[device] = {lacp_interface: {}}
 
                 lacp_data[device][lacp_interface] = {
-                        'parent': lacp_id,
-                        'description': lconfig.get('description', f'member_of_lag_{lacp_id}')
+                        'parent': interface,
+                        'description': lconfig.get('description', f'member_of_lag_{interface}')
                     }
 
     logger.debug(f'LACP backbone data: {lacp_data}')
@@ -219,7 +221,7 @@ def generate_switch_pillars(data):
 
         for ae_interface, ifconfig in lacp_interfaces.items():
             lacp_id = ifconfig.get('lacp_id')
-            if lacp_id in [elem.get('lacp_id') for elem in lacp_backbone.get(device, [])]:
+            if lacp_id in lacp_backbone.get(device, {}).keys():
                 logger.warning(f'Re-declared interface {device} {ae_interface}')
                 continue
 
@@ -281,8 +283,8 @@ def generate_switch_pillars(data):
 
     for device in lacp_switch.keys():
         for lacp, lconfig in lacp_interfaces.items():
-            interface = lconfig.get('lacp_id')
-            if interface in [elem.get('lacp_id') for elem in lacp_backbone.get(device, [])]:
+            interface = lacp
+            if interface in lacp_backbone.get(device, {}).keys():
                 logger.debug(f'Skipping LACP interface {interface}')
                 continue
 
@@ -312,7 +314,7 @@ def generate_switch_pillars(data):
 
     for device, lacps in lacp_backbone.items():
         for lacp, lconfig in lacps.items():
-            interface = lconfig.get('lacp_id')
+            interface = lacp
             lacp_options = lconfig.get('lacp', {})
             mclag_options = lconfig.get('mclag', {})
 
@@ -330,6 +332,8 @@ def generate_switch_pillars(data):
             else:
                 logger.debug(f'Unable to determine chassis-id and status-control for interface {device} {interface}')
 
+            if not interface in switch_pillar[device]['ports']:
+                switch_pillar[device]['ports'] = {interface: {}}
             interface_pillar = switch_pillar[device]['ports'][interface]
             if not 'lacp_options' in interface_pillar and 'mclag_options' in interface_pillar:
                 logger.warning(f'LACP interface {device} {interface} without switching configuration?')
