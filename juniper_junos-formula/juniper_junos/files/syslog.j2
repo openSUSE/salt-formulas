@@ -1,4 +1,4 @@
-{%- set syslog = salt['pillar.get']('juniper_junos:syslog', []) -%}
+{%- set syslog = salt['pillar.get']('juniper_junos:syslog', {}) -%}
 {%- set setsl = 'set system syslog' %}
 
 {{ setsl }} user * any emergency
