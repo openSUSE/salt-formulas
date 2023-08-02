@@ -28,7 +28,12 @@ delete interfaces {{ interface }}
 {%- endif %}
 
 {%- if not 'lacp' in ifconfig %} {#- setting the MTU on a ae child device is not allowed #}
-{{ setif }} mtu {{ ifconfig.get('mtu', 9216) }}
+{%- if pillar.get('simulation', False) %}
+{%- set default_mtu = 1500 %}
+{%- else %}
+{%- set default_mtu = 9216 %}
+{%- endif %}
+{{ setif }} mtu {{ ifconfig.get('mtu', default_mtu) }}
 {%- endif %}
 
 {%- set units = ifconfig.get('units', {}) %}
