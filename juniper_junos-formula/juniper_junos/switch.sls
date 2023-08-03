@@ -21,4 +21,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 junos_switch:
   netconfig.managed:
     - template_name: salt://{{ slspath }}/files/switch.j2
+    - saltenv: {{ saltenv }}
     - debug: true
