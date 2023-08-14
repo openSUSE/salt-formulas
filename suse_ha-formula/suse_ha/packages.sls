@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from slspath ~ '/map.jinja' import fencing -%}
+{%- from 'suse_ha/map.jinja' import fencing -%}
 
 suse_ha_packages:
   pkg.installed:
