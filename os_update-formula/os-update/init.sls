@@ -43,6 +43,7 @@ os-update_config_values:
     {%- if opts['test'] %}
     - ignore_if_missing: true
     {%- endif %}
+    - append_if_not_found: true
     - require:
       - pkg: os-update_package
       - file: os-update_config_file
