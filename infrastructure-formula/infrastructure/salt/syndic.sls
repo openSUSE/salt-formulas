@@ -18,16 +18,5 @@ run_gpg_bootstrap_script:
     - unless: gpg2 --homedir /etc/salt/gpgkeys -k salt@{{ id }} 1>/dev/null 2>/dev/null
     - require:
       - file: install_gpg_bootstrap_script
-
-/etc/salt/gpgkeys:
-  file.directory:
-    - user: salt
-    - group: salt
-    - dir_mode: '0700'
-    - file_mode: '0600'
-    - recurse:
-        - user
-        - group
-        - mode
-    - watch:
-      - cmd: run_gpg_bootstrap_script
+    - watch_in:
+      - file: /etc/salt/gpgkeys

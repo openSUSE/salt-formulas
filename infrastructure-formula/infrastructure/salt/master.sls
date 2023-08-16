@@ -32,6 +32,17 @@ salt_master_extra_packages:
       - {{ package }}
 {%- endfor %}
 
+/etc/salt/gpgkeys:
+  file.directory:
+    - user: salt
+    - group: salt
+    - dir_mode: '0700'
+    - file_mode: '0600'
+    - recurse:
+        - user
+        - group
+        - mode
+
 /srv/reactor:
   file.recurse:
     - source: salt://profile/salt/files/srv/reactor
