@@ -1,5 +1,5 @@
 {%- set domain = grains['domain'] %}
-{%- set proxydomain = salt['pillar.get']('profile:salt:proxy_domains:' ~ domain) -%}
+{%- set proxydomain = salt['pillar.get']('infrastructure:salt:proxy_domains:' ~ domain) -%}
 {%- set pkidir = '/etc/salt/pki/master/minions/' %}
 
 {%- if proxydomain | length and 'certificate' in proxydomain and 'minions' in proxydomain %}

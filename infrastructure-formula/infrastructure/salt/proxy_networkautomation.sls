@@ -1,4 +1,4 @@
-{%- set mypillar = salt['pillar.get']('profile:salt:proxy', {}) -%}
+{%- set mypillar = salt['pillar.get']('infrastructure:salt:proxy', {}) -%}
 
 {%- if mypillar %}
 salt_pod_user:
@@ -46,13 +46,13 @@ salt_podpki_files:
     - names:
       {%- for mode in ['minion', 'proxy'] %}
       - /etc/salt-pod/pki/{{ mode }}/minion_master.pub:
-        - contents_pillar: 'profile:salt:proxy:podpki:master'
+        - contents_pillar: 'infrastructure:salt:proxy:podpki:master'
         - mode: '0644'
       - /etc/salt-pod/pki/{{ mode }}/minion.pub:
-        - contents_pillar: 'profile:salt:proxy:podpki:crt'
+        - contents_pillar: 'infrastructure:salt:proxy:podpki:crt'
         - mode: '0644'
       - /etc/salt-pod/pki/{{ mode }}/minion.pem:
-        - contents_pillar: 'profile:salt:proxy:podpki:key'
+        - contents_pillar: 'infrastructure:salt:proxy:podpki:key'
         - mode: '0440'
       {%- endfor %}
       - /etc/motd:
@@ -128,5 +128,5 @@ include:
 {%- else %}
 salt_proxy_nw_autom_fail:
   test.fail_without_changes:
-    - name: profile:salt:proxy pillar is empty, refusing to configure
+    - name: infrastructure:salt:proxy pillar is empty, refusing to configure
 {%- endif %} {#- close pillar check -#}

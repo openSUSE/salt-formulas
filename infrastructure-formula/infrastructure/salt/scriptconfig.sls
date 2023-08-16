@@ -1,5 +1,5 @@
 {%- set file = '/etc/salt-scriptconfig' -%}
-{%- set mypillar = salt['pillar.get']('profile:salt:scriptconfig', {}) -%}
+{%- set mypillar = salt['pillar.get']('infrastructure:salt:scriptconfig', {}) -%}
 
 {%- if 'partner' in mypillar %}
 {{ file }}_file:

@@ -1,6 +1,6 @@
 {%- set extrascriptdir = '/usr/local/sbin/' -%}
 {%- set extrascripts = ['state-apply-super-async.sh'] -%}
-{%- set extrapackages = ['salt-keydiff'] + salt['pillar.get']('profile:salt:formulas', []) -%}
+{%- set extrapackages = ['salt-keydiff'] + salt['pillar.get']('infrastructure:salt:formulas', []) -%}
 
 include:
   - salt.master
@@ -9,12 +9,12 @@ salt_master_extra_scripts:
   file.managed:
     - names:
       - {{ extrascriptdir }}saltmaster-deploy:
-        - source: salt://profile/salt/files{{ extrascriptdir }}saltmaster-deploy.j2
+        - source: salt://infrastructure/salt/files{{ extrascriptdir }}saltmaster-deploy.j2
         - template: jinja
         - mode: '0700'
 {%- for file in extrascripts %}
       - {{ extrascriptdir }}{{ file }}:
-        - source: salt://profile/salt/files{{ extrascriptdir }}{{ file }}
+        - source: salt://infrastructure/salt/files{{ extrascriptdir }}{{ file }}
         - mode: '0755'
 {%- endfor %}
 
@@ -38,5 +38,5 @@ salt_master_extra_packages:
 
 /srv/reactor:
   file.recurse:
-    - source: salt://profile/salt/files/srv/reactor
+    - source: salt://infrastructure/salt/files/srv/reactor
     - template: jinja

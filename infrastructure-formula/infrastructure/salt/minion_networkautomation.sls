@@ -1,4 +1,4 @@
-{%- set mypillar = salt['pillar.get']('profile:salt:odd_proxy', {}) -%}
+{%- set mypillar = salt['pillar.get']('infrastructure:salt:odd_proxy', {}) -%}
 
 {%- if mypillar %}
 include:
@@ -41,5 +41,5 @@ salt_odd_proxy_config:
 {%- else %}
 salt_odd_proxy_fail:
   test.fail_without_changes:
-    - name: profile:salt:odd_proxy pillar is empty, refusing to configure
+    - name: infrastructure:salt:odd_proxy pillar is empty, refusing to configure
 {%- endif %} {#- close pillar check -#}
