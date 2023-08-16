@@ -7,7 +7,6 @@
 {%- endfor -%}
 
 include:
-  - .common
   - salt.master
 
 /usr/local/sbin/saltmaster-deploy:
