@@ -24,10 +24,8 @@ salt_odd_proxy_config:
               domain: {{ mypillar['domain'] }}
               {%- endif %}
       - /etc/salt-pod/minion_schedule.conf:
-        - contents: |
-            schedule:
-              __mine_interval: {enabled: true, function: mine.update, jid_include: true, maxrunning: 2,
-                minutes: 60, return_job: false, run_on_start: true}
+        - source: salt://{{ slspath }}/files/etc/salt/schedule.conf.j2
+        - template: jinja
     {%- if 'minions' in mypillar %}
     - watch_in:
     {%- for minion in mypillar['minions'] %}

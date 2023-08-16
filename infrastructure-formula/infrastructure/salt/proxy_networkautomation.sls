@@ -85,7 +85,10 @@ salt_pod_proxy_config:
               domain: {{ mypillar['domain'] }}
               {%- endif %}
       - /etc/salt-pod/proxy_schedule.conf:
-        - source: salt://{{ slspath }}/files/etc/salt/proxy_schedule.conf
+        - source: salt://{{ slspath }}/files/etc/salt/schedule.conf.j2
+        - template: jinja
+        - context:
+            proxy: True
     {%- if 'minions' in mypillar %}
     - watch_in:
     {%- for minion in mypillar['minions'] %}
