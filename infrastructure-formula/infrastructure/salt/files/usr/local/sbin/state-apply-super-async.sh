@@ -30,7 +30,7 @@ fi
 
 if [ -z "$input" ]
 then
-	echo 'No input file specified, reading from standard input, type done when done ...'
+	echo 'No input file specified, reading from standard input, type "done" or press Ctrl+D when done ...'
 	input='/dev/stdin'
 fi
 
