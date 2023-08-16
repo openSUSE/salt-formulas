@@ -6,10 +6,10 @@ The code under this directory is highly opinionated and specific to our infrastr
 
 ## Available states
 
-`libvirt.domains`
+`infrastructure.libvirt.domains`
 
 Writes virtual machine domain definitions.
 
-`suse_ha.resources`
+`infrastructure.suse_ha.resources`
 
 Configures virtual machine cluster resources.
