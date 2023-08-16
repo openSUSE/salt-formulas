@@ -1,0 +1,21 @@
+redmine:
+  # install additional "redmine-" packages
+  plugins:
+    - theme-opensuse
+    - openid_connect
+  # write configuration files, all fields can be used
+  config:
+    # write "configuration.yml"
+    configuration:
+      default:
+        email_delivery:
+          delivery_method: :smtp
+          smtp_settings:
+            address: mailer@example.com
+            port: 25
+    # write "database.yml"
+    database:
+      production:
+        adapter: mysql2
+        database: redmine
+        host: db.example.com
