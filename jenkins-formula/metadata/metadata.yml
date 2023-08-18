@@ -1,0 +1,5 @@
+---
+summary:
+  Salt states for managing Jenkins
+description:
+  Salt states for managing Jenkins Controller and Agent servers

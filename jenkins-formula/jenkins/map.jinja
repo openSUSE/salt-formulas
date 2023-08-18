@@ -1,0 +1,22 @@
+{#-
+Jinja variables file for the Jenkins Salt states
+Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- import_yaml './defaults.yaml' as defaults -%}
+{%- set jenkins  = salt.pillar.get('jenkins', default=defaults, merge=True, merge_nested_lists=False) -%}
+{%- set controller = jenkins.get('controller', {}) -%}
+{%- set agent = jenkins.get('agent', {}) -%}

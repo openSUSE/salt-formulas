@@ -1,0 +1,24 @@
+jenkins:
+
+  controller:
+    # JCasC configuration below
+    config:
+      jenkins:
+        systemMessage: "Deployed with Salt!"
+      unclassified:
+        location:
+          url: https://example.com
+
+    # sysconfig configuration below, mostly used to pass additional JVM options to the controller
+    sysconfig:
+      # the following is added by default - this is the packaged default plus casc.jenkins.config
+      JENKINS_JAVA_OPTIONS: '-Djava.awt.headless=true -Xms256m -Xmx640m -Dhudson.DNSMultiCast.disabled=true -XX:+HeapDumpOnOutOfMemoryError -Dcasc.jenkins.config=/etc/jenkins'
+
+  agent:
+    # sysconfig configuration below, used to configure the agent wrapper
+    sysconfig:
+      # the first two are required, the third one might be if security is enabled in Jenkins
+      JENKINS_BASE: https://example.com
+      JENKINS_AGENT_JNLP_URL: https://example.com/computer/minion1/jenkins-agent.jnlp
+      # if -secret is part of the arguments, the value should be stored PGP encrypted
+      JENKINS_AGENT_ARGUMENTS: '-secret 12345'
