@@ -1,0 +1,14 @@
+schedule:
+  __mine_interval: {enabled: true, function: mine.update, jid_include: true, maxrunning: 2,
+    minutes: 60, return_job: false, run_on_start: true}
+{%- if proxy | default(False) %}
+  __proxy_keepalive:
+    enabled: true
+    function: status.proxy_reconnect
+    jid_include: true
+    kwargs: {proxy_name: napalm}
+    maxrunning: 1
+    minutes: 1
+    return_job: false
+  enabled: true
+{%- endif %}

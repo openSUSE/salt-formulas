@@ -1,0 +1,3 @@
+include:
+  - grains
+  - salt.minion
