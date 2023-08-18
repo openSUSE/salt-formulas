@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        0.6
+Version:        0.7
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -30,6 +30,7 @@ Source:         _service
 Requires:       gitea-formula
 Requires:       grains-formula
 Requires:       infrastructure-formula
+Requires:       jenkins-formula
 Requires:       juniper_junos-formula
 Requires:       libvirt-formula
 Requires:       lock-formula
@@ -39,6 +40,7 @@ Requires:       orchestra-formula
 Requires:       os_update-formula
 Requires:       rebootmgr-formula
 Requires:       redis-formula
+Requires:       redmine-formula
 Requires:       suse_ha-formula
 Requires:       zypper-formula
 BuildArch:      noarch
@@ -165,6 +167,22 @@ Requires:       %{name}-common
 %description -n multipath-formula
 Salt states for installing multipath-tools and managing multipath/multipathd
 
+%package -n redmine-formula
+Summary:        Salt states for managing Redmine
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n redmine-formula
+Salt states for managing Redmine.
+
+%package -n jenkins-formula
+Summary:        Salt states for managing Jenkins
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n jenkins-formula
+Salt states for managing Jenkins Controller and Agent servers
+
 %prep
 mv %{_sourcedir}/salt-formulas-%{version}/* .
 
@@ -282,5 +300,9 @@ done
 %files -n redis-formula -f redis.files
 
 %files -n multipath-formula -f multipath.files
+
+%files -n redmine-formula -f redmine.files
+
+%files -n jenkins-formula -f jenkins.files
 
 %changelog
