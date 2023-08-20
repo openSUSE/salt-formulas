@@ -16,5 +16,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-{%- set deploy_password = salt['pillar.get']('infrastructure:salt:reactor:update_fileserver_deploy_password', '') %}
+{%- set deploy_password = salt['pillar.get']('infrastructure:salt:reactor:update_fileserver:deploy_password', '') %}
 salt-call event.fire_master {{ deploy_password }} salt/fileserver/gitfs/update
