@@ -3,12 +3,11 @@
 {%- set ignore = salt['pillar.get']('juniper_junos:ignore') -%}
 {%- set present_interfaces = salt['susejunos.get_active_interfaces']() -%}
 
-{%- set ignore_interfaces = ignore.get('interfaces', {}) -%}
-{%- set ignore_interface_names = ignore_interfaces.get('names', []) -%}
+{%- set ignored_interfaces = ignore.get('interfaces', []) -%}
 {%- set reth_ns = namespace(count=0) %}
 
 {%- for interface in present_interfaces %}
-{%- if interface not in ignore_interface_names %}
+{%- if interface not in ignored_interfaces %}
 delete interfaces {{ interface }}
 {%- endif %}
 {%- endfor %}

@@ -93,12 +93,11 @@ juniper_junos:
       description: baz
 
   ignore:
+    # these need to be ignored to prevent Salt from being disconnected during testing
     interfaces:
-      # these need to be ignored to prevent Salt from being disconnected during testing
-      names:
-        - fxp0
-        - em0
-        - em1
+      - fxp0
+      - em0
+      - em1
 
   syslog:
     user:

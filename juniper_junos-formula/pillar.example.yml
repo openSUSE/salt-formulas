@@ -100,11 +100,10 @@ juniper_junos:
       description: Baz
 
   ignore:
+    # these interface names will not be touched by the automation
+    # this is useful for the management interfaces Salt is connecting to
     interfaces:
-      # these interface names will not be touched by the automation
-      # this is useful for the management interfaces Salt is connecting to
-      names:
-        - em0
+      - em0
 
   syslog:
     user:
