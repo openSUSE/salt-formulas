@@ -1,4 +1,5 @@
-{%- set mypillar = salt['pillar.get']('infrastructure:salt:proxy', {}) -%}
+{%- set highpillar = salt['pillar.get']('infrastructure:salt', {}) -%}
+{%- set mypillar = highpillar.get('proxy', {}) -%}
 
 {%- if mypillar %}
 salt_pod_user:
@@ -78,7 +79,7 @@ salt_pod_proxy_config:
               {%- endfor %}
             {%- endif %}
             log_level: info
-            saltenv: production_network
+            saltenv: {{ highpillar.get('saltenv', 'production_network') }}
             grains:
               lobster: true
               {%- if 'domain' in mypillar %}
