@@ -1,4 +1,5 @@
 {%- set domain = grains['domain'] %}
+{%- set highpillar = salt['pillar.get']('infrastructure:salt', {}) -%}
 {%- set proxydomain = salt['pillar.get']('infrastructure:salt:proxy_domains:' ~ domain) -%}
 {%- set pkidir = '/etc/salt/pki/master/minions/' %}
 
@@ -18,7 +19,7 @@ salt_proxy_preseed:
 
 /srv/pillar_network/network_data/switches:
   file.directory:
-    - user: sync
+    - user: {{ highpillar.get('sync_user', 'sync') }}
     - group: salt
     - makedirs: true
 
