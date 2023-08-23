@@ -139,3 +139,6 @@ juniper_junos:
     fd15:5695:f4b6:43d6::/64:
       type: static
       next-hop: fd15:5695:f4b6:43d5::1
+
+  ntp_servers:
+    - 192.168.100.1

@@ -35,6 +35,7 @@ import os
 import re
 import time
 import ipaddress
+import xml.etree.ElementTree as et
 
 import logging
 log = logging.getLogger(__file__)
@@ -193,3 +194,33 @@ def get_active_vlans():
                 vlan_noid.add(match_vlan[1])
 
     return {'parsed_vlan_dict': parsed_vlans, 'unparsed_vlan_list': list(vlan_noid)}
+
+
+@proxy_napalm_wrap
+def get_active_ntp():
+    """
+    Parses the Junos configuration to find configured NTP servers
+
+    At the time of writing (2023/08/23), this function will not work with the latest release of Napalm (4.1.0) without this pending upstream patch:
+    https://github.com/napalm-automation/napalm/pull/1796
+    The openSUSE package has this patch applied downstream, allowing the function to operate on openSUSE Tumbleweed based Salt proxies.
+
+    :return: list of NTP servers
+    """
+
+    command = 'show configuration system ntp | display xml rpc'
+
+    ret = __salt__['net.cli'](command,
+                              inherit_napalm_device=napalm_device)  # pylint: disable=undefined-variable
+
+    log.debug(f'Return output {ret}')
+
+    out = ret['out'][command]
+    servers = []
+
+    if 'configuration' in out:
+        xml = et.fromstring(out)
+        servers = [entry.text for entry in xml.findall('configuration/system/ntp/server/name')]
+        log.debug(f'Found NTP servers: {servers}')
+
+    return servers
