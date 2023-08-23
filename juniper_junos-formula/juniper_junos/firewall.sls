@@ -21,4 +21,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 junos_firewall:
   netconfig.managed:
     - template_name: salt://{{ slspath }}/files/firewall.j2
+    - saltenv: {{ saltenv }}
     - debug: true
