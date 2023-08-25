@@ -1,8 +1,14 @@
 {%- set ntp_servers = salt['pillar.get']('juniper_junos:ntp_servers', []) %}
+{%- set present_ntp_servers = salt['susejunos.get_active_ntp']() -%}
 
-set system ntp
-delete system ntp
+{%- for server in present_ntp_servers %}
+{%- if not server in ntp_servers %}
+delete system ntp server {{ server }}
+{%- endif %}
+{%- endfor %}
 
 {%- for server in ntp_servers %}
+{%- if not server in present_ntp_servers %}
 set system ntp server {{ server }}
+{%- endif %}
 {%- endfor %}
