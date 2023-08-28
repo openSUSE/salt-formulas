@@ -26,7 +26,7 @@ delete interfaces {{ interface }}
 {{ setif }} description "{{ ifconfig['description'] }}"
 {%- endif %}
 
-{%- if not 'lacp' in ifconfig and not interface.startswith(('em', 'fxp', 'vme')) %} {#- setting the MTU on a ae children or management interfaces is not allowed #}
+{%- if not 'lacp' in ifconfig and not ifname.startswith(('em', 'fxp', 'vme')) %} {#- setting the MTU on a ae children or management interfaces is not allowed #}
 {%- if pillar.get('simulation', False) %}
 {%- set default_mtu = 1500 %}
 {%- else %}
