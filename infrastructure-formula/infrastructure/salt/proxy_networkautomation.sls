@@ -129,6 +129,11 @@ salt_proxy_config_{{ minion }}:
 include:
   - podman.containers
 
+salt_proxy_scripts:
+  file.managed:
+    - name: /usr/local/sbin/reset-proxy-containers.sh
+    - source: salt://{{ slspath }}/files/usr/local/sbin/reset-proxy-containers.sh
+
 {%- else %}
 salt_proxy_nw_autom_fail:
   test.fail_without_changes:
