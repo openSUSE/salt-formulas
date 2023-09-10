@@ -1,0 +1,27 @@
+nftables:
+  config:
+    variables:
+      priority: 01
+      variables:
+        vpn_ranges:
+          - 192.168.0.0/24
+          - 192.168.1.0/24
+        myhost: 192.168.0.1/32
+    tables:
+      priority: 02
+      tables:
+        inet:
+          type: filter
+          chains:
+            input:
+              policy: drop
+              rules:
+                'ct state established, related':
+                  priority: 201
+                  action: accept
+                'ct state invalid':
+                  priority: 202
+                  action: drop
+              meta:
+                'iif external jump input_external':
+                  priority: 101

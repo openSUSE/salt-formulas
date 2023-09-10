@@ -1,0 +1,3 @@
+{%- set mypillar = salt['pillar.get']('nftables', {}) -%}
+{%- set nft = mypillar.get('config', {}) -%}
+{%- set dir = '/etc/nftables.conf.d/salt' %}
