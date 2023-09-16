@@ -16,12 +16,6 @@ nftables:
             input:
               policy: drop
               rules:
-                'ct state established, related':
-                  priority: 201
-                  action: accept
-                'ct state invalid':
-                  priority: 202
-                  action: drop
-              meta:
-                'iif external jump input_external':
-                  priority: 101
+                - iif external jump input_external
+                - ct state established, related accept
+                - ct state invalid accept

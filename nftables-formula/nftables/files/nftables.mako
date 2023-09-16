@@ -20,16 +20,8 @@ table ${table} ${table_config['type']} {
     % if 'policy' in chain_config:
     policy ${chain_config['policy']}
     % endif
-    ## Establish correct rule order based on priority key
-    <%
-     combined_chain_config = {}
-     combined_chain_config.update(chain_config.get('rules', {}))
-     combined_chain_config.update(chain_config.get('meta', {}))
-     for entry in sorted(combined_chain_config, key=lambda lowentry: combined_chain_config[lowentry].get('priority', 100)):
-       combined_chain_config[entry] = combined_chain_config.pop(entry)
-    %>
-    % for entry, entry_config in combined_chain_config.items():
-    ${entry}${entry_config.get(' action','')}
+    % for entry in chain_config.get('rules', []):
+    ${entry}
     % endfor
   }
 % endfor
