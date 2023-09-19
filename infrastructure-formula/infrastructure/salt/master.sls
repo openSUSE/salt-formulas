@@ -40,3 +40,17 @@ salt_master_extra_packages:
   file.recurse:
     - source: salt://infrastructure/salt/files/srv/reactor
     - template: jinja
+
+{%- if salt['pillar.get']('infrastructure:salt:master:git_gc', False) %}
+salt_git_gc:
+  file.managed:
+    - names:
+    {%- for suffix in ['timer', 'service'] %}
+    {%- set unit = '/etc/systemd/system/salt-git-gc.' ~ suffix %}
+      - {{ unit }}:
+        - source: salt://{{ slspath }}/files/{{ unit }}
+    {%- endfor %}
+  service.running:
+    - name: salt-git-gc.timer
+    - enable: true
+{%- endif %}
