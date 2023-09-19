@@ -1,0 +1,15 @@
+bootloader:
+  bootloader:
+    # whether relevant configuration changes should trigger a bootloader update - this is the default
+    update: true
+    # key-value pairs written to /etc/sysconfig/bootloader, none by default
+    config:
+      secure_boot: false
+  grub:
+    # whether relevant configuration changes should trigger a rebuild of the GRUB configuration - this is the default
+    update: true
+    # location to write built GRUB configuraton to, can be a list if a copy should be stored in other locations - the following is the default:
+    grub_configuration: /boot/grub2/grub.cfg
+    # key-value pairs written to /etc/default/grub, none by default
+    config:
+      grub_terminal: console
