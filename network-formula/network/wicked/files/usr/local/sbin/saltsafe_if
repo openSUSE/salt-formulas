@@ -1,0 +1,164 @@
+#!/bin/bash
+# ifup/ifdown wrapper script ensuring safe operation if called remotely through Salt
+# Copyright (C) 2023 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+set -Cu
+
+interface="${1?Cannot operate without an interface}"
+
+base='/etc/sysconfig/network'
+base_backup="$base/salt-backup"
+
+self="$(basename $0)"
+call="${self##*_}"
+
+fail() {
+	echo "$1"
+	exit 1
+}
+
+if [ ! \( "$call" == 'ifdown' -o "$call" == 'ifup' \) ]
+then
+	fail 'Invalid action. Call this script as `saltsafe_ifup` or `saltsafe_ifdown`.'
+fi
+
+if ! command -v "$call" >/dev/null
+then
+	fail "Unable to locate $call."
+fi
+
+if [ ! -f "$base_backup/ifcfg-$interface" ]
+then
+	fail "Missing backup configuration for interface $interface, refusing to operate."
+fi
+
+logtool="$(command -v logger) -t saltsafe" || logtool=echo
+
+# Get IP addresses of the Salt minion and master
+read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk '{ split($4, con_out, ":"); split($5, con_in, ":"); print con_out[1] " " con_in[1] }')
+
+# Get network interface the minion is using to connect to the master
+out_interface="$(ip -br a sh | awk -v ip=$minion_ip '$0 ~ ip { print $1 }')"
+
+log() {
+	local msg="$2"
+	case $1 in
+		0 )
+			$logtool "$msg"
+			if [ "$logtool" != 'echo' ]
+			then
+				echo "$msg"
+			fi ;;
+		1 )
+			if [ "$logtool" == 'echo' ]
+			then
+				local msg="saltsafe: $msg"
+				>&2 $logtool "$msg"
+			else
+				$logtool -s "$msg"
+			fi ;;
+		* )
+			fail 'Invalid function call' ;;
+	esac
+
+}
+
+check() {
+	if ! ping -c3 -w5 -q "$master_ip" >/dev/null
+	then
+		return 1
+	fi
+	if ! timeout 20 salt-call -t15 --out quiet test.ping
+	then
+		return 1
+	fi
+}
+
+rollback() {
+	rollback=yes
+	cp -v "$base_backup/ifcfg-$interface" "$base/ifcfg-$interface"
+}
+
+run() {
+	timeout --preserve-status -k 60 30 "$call" "$interface"
+}
+
+backup() {
+	if command -v old >/dev/null
+	then
+		old "$base_backup/ifcfg-$interface"
+	fi
+	cp "$base/ifcfg-$interface" "$base_backup/ifcfg-$interface"
+}
+
+run_cycle() {
+	if run
+	then
+		if [ "$call" == 'ifdown' ]
+		then
+			log 0 "Brought down interface $interface."
+			exit 0
+		fi
+		if check
+		then
+			if [ "$rollback" = 'yes' ]
+			then
+				log 1 'Interface configuration rollback successful.'
+			else
+				log 0 'Operation and validation successful.'
+				backup
+			fi
+			exit 0
+		else
+			log 1 "Brought up $interface, but validation failed."
+			if [ "$rollback" = 'yes' ]
+			then
+				log 1 'Rollback was not successful. Giving up.'
+				exit 1
+			fi
+		fi
+	else
+		return "$?"
+	fi
+}
+
+danger=no
+rollback=no
+
+if [ "$out_interface" == "$interface" ]
+then
+	danger=yes
+	if [ "$call" == 'ifdown' ]
+	then
+		log 1 'Refusing to bring a potentially dangerous interface down.'
+		exit 1
+	fi
+	if ! check
+	then
+		log 1 'Failed to verify Salt master connectivity, refusing to operate on a potentially dangerous interface.'
+		exit 1
+	fi
+fi
+
+run_cycle
+if [ "$danger" = 'yes' ]
+then
+	log 1 'Rolling back ...'
+	rollback
+	run_cycle
+else
+	exit 1
+fi

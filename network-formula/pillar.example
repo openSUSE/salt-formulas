@@ -1,0 +1,21 @@
+network:
+  # each listed interface will generate an ifcfg- file
+  interfaces:
+    eth0:
+      # STARTMODE is "auto" by default, causing the interface to be started. if set to "off", it will be stopped.
+      # other startmodes will not trigger any action by Salt.
+      startmode: auto
+      # BOOTPROTO is "static" by default
+      bootproto: static
+      # string with a single address or list with multiple addresses for generation of IPADDR fields.
+      # CIDR notiation for subnet masks is recommended - the IPADDR count number is generated and may not be deterministic, making it difficult to map them to NETMASK fields.
+      addresses:
+        - 192.168.120.110/24
+      # any other keys are written without special treatment. only string and integer values are supported. see ifcfg(5) for options. case is irrelevant.
+      mtu: 9000
+      # boolean values are converted automatically
+      firewall: false
+    dummy0:
+      addresses:
+        - 192.168.101.1/24
+        - fe80::1/64
