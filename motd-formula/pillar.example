@@ -1,0 +1,7 @@
+# define /etc/motd contents using a string:
+motd: Have a lot of fun ...
+
+# or, alternatively, line by line using a list:
+motd:
+  - Welcome to this server!
+  - Have a lot of fun ...

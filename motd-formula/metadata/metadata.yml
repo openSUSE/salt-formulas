@@ -1,0 +1,5 @@
+---
+summary:
+  Salt state for managing the MOTD
+description:
+  Salt state for managing the message of the day.
