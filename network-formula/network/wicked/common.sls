@@ -1,5 +1,5 @@
 {#-
-Salt state file for managing the network using Wicked
+Salt state file for managing utilities for the Wicked Salt states
 Copyright (C) 2023 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-include:
-  - .interfaces
-  - .routes
+{%- from 'network/wicked/map.jinja' import base_backup, script -%}
+
+network_wicked_backup_directory:
+  file.directory:
+    - name: {{ base_backup }}
+    - mode: '0750'
+
+network_wicked_script:
+  file.managed:
+    - name: {{ script }}
+    - source: salt://{{ slspath }}/files{{ script }}
+    - mode: '0750'
+
+network_wicked_script_links:
+  file.symlink:
+    - names:
+      - {{ script }}up:
+        - target: {{ script }}
+      - {{ script }}down:
+        - target: {{ script }}
+      - {{ script }}routes:
+        - target: {{ script }}

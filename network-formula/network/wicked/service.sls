@@ -1,5 +1,5 @@
 {#-
-Salt state file for managing the network using Wicked
+Salt state file for managing the Wicked network service
 Copyright (C) 2023 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redistribute it and/or modify
@@ -17,5 +17,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 include:
-  - .interfaces
-  - .routes
+  - .common
+
+network_wicked_service:
+  service.running:
+    - name: wicked
+    - enable: true
+    - reload: true

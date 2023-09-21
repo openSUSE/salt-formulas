@@ -8,8 +8,12 @@ Configures all possible aspects using either the pillar specified or the default
 
 `network.wicked`
 
-Confiugres all possible aspects using Wicked.
+Configures both, interfaces and routes, using Wicked.
 
 `network.wicked.interfaces`
 
-Configures only interfaces using Wicked.
+Configures interfaces using Wicked.
+
+`network.wicked.routes`
+
+Configures routes using Wicked.

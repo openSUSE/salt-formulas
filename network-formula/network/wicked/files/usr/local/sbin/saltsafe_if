@@ -17,7 +17,6 @@
 
 set -Cu
 
-interface="${1?Cannot operate without an interface}"
 extra="${2:-none}"
 
 base='/etc/sysconfig/network'
@@ -31,25 +30,45 @@ fail() {
 	exit 1
 }
 
-if [ ! \( "$call" == 'ifdown' -o "$call" == 'ifup' \) ]
+if [ ! \( "$call" == 'ifdown' -o "$call" == 'ifup' -o "$call" == 'ifroutes' \) ]
 then
-	fail 'Invalid action. Call this script as `saltsafe_ifup` or `saltsafe_ifdown`.'
+	fail 'Invalid action. Call this script as `saltsafe_ifup` or `saltsafe_ifdown` or `saltsafe_ifroutes`.'
 fi
 
-if ! command -v "$call" >/dev/null
+if [ "$call" == 'ifroutes' ]
 then
-	fail "Unable to locate $call."
+	filename='routes'
+	if [ "$extra" == 'test' ]
+	then
+		routes="${1?Cannot test without routes}"
+	fi
+else
+	interface="${1?Cannot operate without an interface}"
+	filename="ifcfg-$interface"
+
+	if ! command -v "$call" >/dev/null
+	then
+		fail "Unable to locate $call."
+	fi
+
+	if [ ! -f "$base_backup/ifcfg-$interface" ]
+	then
+		fail "Missing backup configuration for interface $interface, refusing to operate."
+	fi
 fi
 
-if [ ! -f "$base_backup/ifcfg-$interface" ]
-then
-	fail "Missing backup configuration for interface $interface, refusing to operate."
-fi
+file="$base/$filename"
+file_backup="$base_backup/$filename"
 
 logtool="$(command -v logger) -t saltsafe" || logtool=echo
 
 # Get IP addresses of the Salt minion and master
 read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk '{ split($4, con_out, ":"); split($5, con_in, ":"); print con_out[1] " " con_in[1] }')
+
+if [ -z "$minion_ip" -o -z "$master_ip" ]
+then
+	fail 'Unable to determine Salt connection, refusing to operate.'
+fi
 
 # Get network interface the minion is using to connect to the master
 out_interface="$(ip -br a sh | awk -v ip=$minion_ip '$0 ~ ip { print $1 }')"
@@ -100,24 +119,50 @@ check() {
 
 rollback() {
 	rollback=yes
-	cp -v "$base_backup/ifcfg-$interface" "$base/ifcfg-$interface"
+	cp -v "$file_backup" "$file"
 }
 
 run() {
-	timeout --preserve-status -k 60 30 "$call" "$interface"
+	if [ "$call" == 'ifroutes' ]
+	then
+		# if possible, a call to reload only the routes would be better suited
+		local call='systemctl reload network'
+	else
+		local call="$call $interface"
+	fi
+	timeout --preserve-status -k 60 30 $call
+	echo $?
 }
 
 backup() {
 	if command -v old >/dev/null
 	then
-		old "$base_backup/ifcfg-$interface" >/dev/null
+		old "$file_backup" >/dev/null
 	fi
-	cp "$base/ifcfg-$interface" "$base_backup/ifcfg-$interface"
+	cp "$file" "$file_backup"
 }
 
 run_test() {
+	if [ "$call" == 'ifroutes' ]
+	then
+		# Get routes from the configuration - currently not used
+		#desired_routes=$(awk '{ print $1 "_" $2 | "sort -u" }' "$file")
+		# Get routes passed by Salt on the command line
+		desired_routes="$(echo $routes | tr ',' '\n' | sort)"
+		# Get active routes, exclude non-administratively configured ones
+		existing_routes=$({ ip -br -4 r; ip -br -6 r; } | sort -u | awk '!/^(fe80|::1)|scope link/{ print $1 "_" $3 }')
+		if [ "${desired_routes}" == "${existing_routes}" ]
+		then
+			result="changed=no comment='Routes are already correctly configured.'"
+		else
+			result="changed=yes comment='Would reload service to update routes.'"
+		fi
+		return
+	fi
+
 	comment1="Would have brought $interface"
 	comment2="$interface is already"
+
 	if [ "$call" == 'ifup' ]
 	then
 		if ifstatus "$interface" -o quiet
@@ -148,10 +193,16 @@ run_cycle() {
 		fi
 		if check
 		then
-			if [ "$rollback" = 'yes' ]
+			if [ "$rollback" == 'yes' ]
 			then
-				log 1 'Interface configuration rollback successful.'
-				result='changed=yes comment="Interface configuration reverted."'
+				if [ "$call" == 'ifroutes' ]
+				then
+					log 1 'Routing configuration rollback successful.'
+					result='changed=yes comment="Routing configuration reverted."'
+				else
+					log 1 'Interface configuration rollback successful.'
+					result='changed=yes comment="Interface configuration reverted."'
+				fi
 			else
 				log 0 'Operation and validation successful.'
 				result='changed=yes comment="Operation and validation successful."'
@@ -159,15 +210,28 @@ run_cycle() {
 			fi
 			quit 0
 		else
-			log 1 "Brought up $interface, but validation failed."
+			if [ "$call" == 'ifroutes' ]
+			then
+				log 1 'Reloaded service, but validation failed.'
+				result='changed=yes comment="New routing configuration applied but failed."'
+			else
+				log 1 "Brought up $interface, but validation failed."
+				result="changed=yes comment=\"New configuration for interface $interface applied but failed.\""
+			fi
 			if [ "$rollback" = 'yes' ]
 			then
 				log 1 'Rollback was not successful. Giving up.'
-				result='changed=yes comment="Failed to revert interface configuration."'
+				if [ "$call" == 'ifroutes' ]
+				then
+					result='changed=yes comment="Failed to revert routing configuration."'
+				else
+					result='changed=yes comment="Failed to revert interface configuration."'
+				fi
 				quit 1
 			fi
 		fi
 	else
+		result='changed=yes comment="Execution failed."'
 		return "$?"
 	fi
 }
@@ -175,7 +239,14 @@ run_cycle() {
 danger=no
 rollback=no
 
-if [ "$out_interface" == "$interface" ]
+if [ "$call" == 'ifroutes' ]
+then
+	# Assess whether the master is located in a remote network, requiring routing for the connection
+	if [ "$(ip -ts r g $master_ip | awk -v ip=$master_ip '$0 ~ ip { print $2 }')" == 'via' ]
+	then
+		danger=yes
+	fi
+elif [ "$out_interface" == "$interface" ]
 then
 	danger=yes
 	if [ "$call" == 'ifdown' ]
@@ -201,11 +272,11 @@ else
 	run_cycle
 fi
 
-if [ "$danger" = 'yes' ]
+if [ "$danger" == 'yes' -o "$call" == 'ifroutes' ]
 then
 	log 1 'Rolling back ...'
 	rollback
 	run_cycle
-else
-	quit 1
 fi
+
+quit 1

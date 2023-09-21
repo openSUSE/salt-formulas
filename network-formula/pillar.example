@@ -19,3 +19,9 @@ network:
       addresses:
         - 192.168.101.1/24
         - fe80::1/64
+  # each listed route will be written into /etc/sysconfig/network/routes and applied
+  routes:
+    default:
+      gateway: 192.168.120.1
+    10.0.10.10/32:
+      gateway: 192.168.120.2

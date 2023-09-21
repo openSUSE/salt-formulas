@@ -20,24 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set ifcfg_data = {} %}
 {%- set startmode_ifcfg = {'auto': [], 'off': []} %}
 
-wicked_backup_directory:
-  file.directory:
-    - name: {{ base_backup }}
-    - mode: '0750'
-
-wicked_script:
-  file.managed:
-    - name: {{ script }}
-    - source: salt://{{ slspath }}/files{{ script }}
-    - mode: '0750'
-
-wicked_script_links:
-  file.symlink:
-    - names:
-      - {{ script }}up:
-        - target: {{ script }}
-      - {{ script }}down:
-        - target: {{ script }}
+include:
+  - .common
 
 {%- for interface, config in interfaces.items() %}
 {%- do ifcfg_data.update({ interface: {'addresses': [], 'startmode': 'auto', 'bootproto': 'static'} }) %}
@@ -80,20 +64,20 @@ wicked_script_links:
 {%- endfor %}
 
 {%- if ifcfg_data %}
-wicked_interface_files_backup:
+network_wicked_ifcfg_backup:
   file.copy:
     - names:
       {%- for interface in ifcfg_data.keys() %}
       {%- set file = base ~ '/ifcfg-' ~ interface %}
       {%- if salt['file.file_exists'](file) %}
-      - {{ base }}/salt-backup/ifcfg-{{ interface }}:
+      - {{ base_backup }}/ifcfg-{{ interface }}:
         - source: {{ file }}
       {%- endif %}
       {%- endfor %}
     - require:
-      - file: wicked_backup_directory
+      - file: network_wicked_backup_directory
 
-wicked_interface_files:
+network_wicked_ifcfg_settings:
   file.managed:
     - names:
       {%- for interface, config in ifcfg_data.items() %}
@@ -112,11 +96,11 @@ wicked_interface_files:
       {%- endfor %}
     - mode: '0640'
     - require:
-      - file: wicked_interface_files_backup
+      - file: network_wicked_ifcfg_backup
 {%- endif %}
 
 {%- if startmode_ifcfg['auto'] or startmode_ifcfg['off'] %}
-wicked_interface_updown:
+network_wicked_interfaces:
   cmd.run:
     - names:
       {%- for interface in startmode_ifcfg['auto'] %}
@@ -135,7 +119,7 @@ wicked_interface_updown:
         - onlyif: ifstatus {{ interface }} -o quiet
       {%- endfor %}
     - require:
-      - file: wicked_script
-      - file: wicked_interface_files_backup
-      - file: wicked_interface_files
+      - file: network_wicked_script
+      - file: network_wicked_ifcfg_backup
+      - file: network_wicked_ifcfg_settings
 {%- endif %}
