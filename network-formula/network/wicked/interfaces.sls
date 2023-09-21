@@ -120,14 +120,18 @@ wicked_interface_updown:
   cmd.run:
     - names:
       {%- for interface in startmode_ifcfg['auto'] %}
-      - {{ script }}up {{ interface }}
-        {%- if salt['cmd.retcode'](cmd='ifstatus ' ~ interface ~ ' -o quiet', ignore_retcode=True) == 0 -%}:
+      - {{ script }}up {{ interface }}:
+        - stateful:
+          - test_name: {{ script }}up {{ interface }} test
+        {%- if salt['cmd.retcode'](cmd='ifstatus ' ~ interface ~ ' -o quiet', ignore_retcode=True) == 0 %}
         - onchanges:
           - file: {{ base }}/ifcfg-{{ interface }}
         {%- endif %}
       {%- endfor %}
       {%- for interface in startmode_ifcfg['off'] %}
       - {{ script }}down {{ interface }}:
+        - stateful:
+          - test_name: {{ script }}down {{ interface }} test
         - onlyif: ifstatus {{ interface }} -o quiet
       {%- endfor %}
     - require:

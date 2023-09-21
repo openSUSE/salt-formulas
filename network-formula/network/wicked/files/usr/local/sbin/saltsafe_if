@@ -18,6 +18,7 @@
 set -Cu
 
 interface="${1?Cannot operate without an interface}"
+extra="${2:-none}"
 
 base='/etc/sysconfig/network'
 base_backup="$base/salt-backup"
@@ -76,6 +77,16 @@ log() {
 
 }
 
+quit() {
+	case "$1" in
+		0 ) result="$result result=True" ;;
+		1 ) result="$result result=False" ;;
+	esac
+	echo
+	log 0 "$result"
+	exit "$1"
+}
+
 check() {
 	if ! ping -c3 -w5 -q "$master_ip" >/dev/null
 	then
@@ -99,9 +110,31 @@ run() {
 backup() {
 	if command -v old >/dev/null
 	then
-		old "$base_backup/ifcfg-$interface"
+		old "$base_backup/ifcfg-$interface" >/dev/null
 	fi
 	cp "$base/ifcfg-$interface" "$base_backup/ifcfg-$interface"
+}
+
+run_test() {
+	comment1="Would have brought $interface"
+	comment2="$interface is already"
+	if [ "$call" == 'ifup' ]
+	then
+		if ifstatus "$interface" -o quiet
+		then
+			result="changed=no comment=\"$comment2 up\""
+		else
+			result="changed=yes comment=\"$comment1 up\""
+		fi
+	elif [ "$call" == 'ifdown' ]
+	then
+		if ifstatus "$interface" -o quiet
+		then
+			result="changed=yes comment=\"$comment1 down\""
+		else
+			result="changed=no comment=\"$comment2 down\""
+		fi
+	fi
 }
 
 run_cycle() {
@@ -110,24 +143,28 @@ run_cycle() {
 		if [ "$call" == 'ifdown' ]
 		then
 			log 0 "Brought down interface $interface."
-			exit 0
+			result="changed=yes comment=\"Brought down $interface.\""
+			quit 0
 		fi
 		if check
 		then
 			if [ "$rollback" = 'yes' ]
 			then
 				log 1 'Interface configuration rollback successful.'
+				result='changed=yes comment="Interface configuration reverted."'
 			else
 				log 0 'Operation and validation successful.'
+				result='changed=yes comment="Operation and validation successful."'
 				backup
 			fi
-			exit 0
+			quit 0
 		else
 			log 1 "Brought up $interface, but validation failed."
 			if [ "$rollback" = 'yes' ]
 			then
 				log 1 'Rollback was not successful. Giving up.'
-				exit 1
+				result='changed=yes comment="Failed to revert interface configuration."'
+				quit 1
 			fi
 		fi
 	else
@@ -144,21 +181,31 @@ then
 	if [ "$call" == 'ifdown' ]
 	then
 		log 1 'Refusing to bring a potentially dangerous interface down.'
-		exit 1
+		result='changed=no comment="Interface is used for Salt connectivity, refusing to bring it down."'
+		quit 1
 	fi
 	if ! check
 	then
 		log 1 'Failed to verify Salt master connectivity, refusing to operate on a potentially dangerous interface.'
-		exit 1
+		result='changed=no comment="Interface is used for Salt connectivity, but functionality could not be validated. Refusing to bring it down."'
+		quit 1
 	fi
 fi
 
-run_cycle
+if [ "$extra" == 'test' ]
+then
+	run_test
+	result="$result result=None"
+	quit 0
+else
+	run_cycle
+fi
+
 if [ "$danger" = 'yes' ]
 then
 	log 1 'Rolling back ...'
 	rollback
 	run_cycle
 else
-	exit 1
+	quit 1
 fi
