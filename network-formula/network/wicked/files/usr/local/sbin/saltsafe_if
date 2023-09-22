@@ -25,6 +25,9 @@ base_backup="$base/salt-backup"
 self="$(basename $0)"
 call="${self##*_}"
 
+logtool="$(command -v logger) -t saltsafe" || logtool=echo
+
+
 fail() {
 	echo "$1"
 	exit 1
@@ -35,43 +38,10 @@ then
 	fail 'Invalid action. Call this script as `saltsafe_ifup` or `saltsafe_ifdown` or `saltsafe_ifroutes`.'
 fi
 
-if [ "$call" == 'ifroutes' ]
+if ! command -v wicked >/dev/null
 then
-	filename='routes'
-	if [ "$extra" == 'test' ]
-	then
-		routes="${1?Cannot test without routes}"
-	fi
-else
-	interface="${1?Cannot operate without an interface}"
-	filename="ifcfg-$interface"
-
-	if ! command -v "$call" >/dev/null
-	then
-		fail "Unable to locate $call."
-	fi
-
-	if [ ! -f "$base_backup/ifcfg-$interface" ]
-	then
-		fail "Missing backup configuration for interface $interface, refusing to operate."
-	fi
+	fail 'Tool requires wicked.'
 fi
-
-file="$base/$filename"
-file_backup="$base_backup/$filename"
-
-logtool="$(command -v logger) -t saltsafe" || logtool=echo
-
-# Get IP addresses of the Salt minion and master
-read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk '{ split($4, con_out, ":"); split($5, con_in, ":"); print con_out[1] " " con_in[1] }')
-
-if [ -z "$minion_ip" -o -z "$master_ip" ]
-then
-	fail 'Unable to determine Salt connection, refusing to operate.'
-fi
-
-# Get network interface the minion is using to connect to the master
-out_interface="$(ip -br a sh | awk -v ip=$minion_ip '$0 ~ ip { print $1 }')"
 
 log() {
 	local msg="$2"
@@ -131,11 +101,10 @@ run() {
 		local call="$call $interface"
 	fi
 	timeout --preserve-status -k 60 30 $call
-	echo $?
 }
 
 backup() {
-	if command -v old >/dev/null
+	if [ -f "$file_backup" ] && command -v old >/dev/null
 	then
 		old "$file_backup" >/dev/null
 	fi
@@ -235,6 +204,46 @@ run_cycle() {
 		return "$?"
 	fi
 }
+
+if [ "$call" == 'ifroutes' ]
+then
+	filename='routes'
+	if [ "$extra" == 'test' ]
+	then
+		routes="${1?Cannot test without routes}"
+	fi
+else
+	interface="${1?Cannot operate without an interface}"
+	filename="ifcfg-$interface"
+
+	if ! command -v "$call" >/dev/null
+	then
+		fail "Unable to locate $call."
+	fi
+
+	if [ ! -f "$base_backup/ifcfg-$interface" ]
+	then
+		if [ "$extra" != 'test' ]
+		then
+			#fail "Missing backup configuration for interface $interface, refusing to operate."
+			backup
+		fi
+	fi
+fi
+
+file="$base/$filename"
+file_backup="$base_backup/$filename"
+
+# Get IP addresses of the Salt minion and master
+read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk '{ split($4, con_out, ":"); split($5, con_in, ":"); print con_out[1] " " con_in[1] }')
+
+if [ -z "$minion_ip" -o -z "$master_ip" ]
+then
+	fail 'Unable to determine Salt connection, refusing to operate.'
+fi
+
+# Get network interface the minion is using to connect to the master
+out_interface="$(ip -br a sh | awk -v ip=$minion_ip '$0 ~ ip { print $1 }')"
 
 danger=no
 rollback=no

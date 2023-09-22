@@ -18,13 +18,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 {%- from 'network/wicked/map.jinja' import base, base_backup, ifcfg_defaults, interfaces, script -%}
 {%- set ifcfg_data = {} %}
+{%- set enslaved = [] %}
 {%- set startmode_ifcfg = {'auto': [], 'off': []} %}
 
 include:
   - .common
 
 {%- for interface, config in interfaces.items() %}
-{%- do ifcfg_data.update({ interface: {'addresses': [], 'startmode': 'auto', 'bootproto': 'static'} }) %}
+{%- do ifcfg_data.update({ interface: {'addresses': [], 'startmode': 'auto'} }) %}
 
 {%- if 'address' in config %}
 {%- set addr = config['address'] %}
@@ -52,6 +53,7 @@ include:
 {%- else %}
 {%- set value = value | lower %}
 {%- endif %}
+{%- set option = option | lower %}
 {%- if not option in ['address', 'addresses'] %}
 {%- do ifcfg_data[interface].update({option: value}) %}
 {%- endif %}
@@ -59,6 +61,25 @@ include:
 
 {%- if ifcfg_data[interface]['startmode'] in startmode_ifcfg.keys() %}
 {%- do startmode_ifcfg[ifcfg_data[interface]['startmode']].append(interface) %}
+{%- endif %}
+
+{%- if interface.startswith('br') and 'bridge_ports' in config %}
+{%- if not 'bridge' in config %}
+{%- do ifcfg_data[interface].update({'bridge': 'yes'}) %}
+{%- endif %}
+{%- do enslaved.extend(config['bridge_ports'].split()) %}
+{%- endif %}
+
+{%- endfor %}
+
+{%- for interface, config in interfaces.items() %}
+{%- if not 'bootproto' in config %}
+{%- if interface in enslaved %}
+{%- set bootproto = 'none' %}
+{%- else %}
+{%- set bootproto = 'static' %}
+{%- endif %}
+{%- do ifcfg_data[interface].update({'bootproto': bootproto}) %}
 {%- endif %}
 
 {%- endfor %}

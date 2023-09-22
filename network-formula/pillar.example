@@ -5,7 +5,7 @@ network:
       # STARTMODE is "auto" by default, causing the interface to be started. if set to "off", it will be stopped.
       # other startmodes will not trigger any action by Salt.
       startmode: auto
-      # BOOTPROTO is "static" by default
+      # BOOTPROTO is "static" by default, unless the interfaces is enslaved in a bridge interface, then "none" is.
       bootproto: static
       # string with a single address or list with multiple addresses for generation of IPADDR fields.
       # CIDR notiation for subnet masks is recommended - the IPADDR count number is generated and may not be deterministic, making it difficult to map them to NETMASK fields.
