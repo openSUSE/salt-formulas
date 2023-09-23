@@ -104,6 +104,7 @@ network_wicked_ifcfg_settings:
       {%- for interface, config in ifcfg_data.items() %}
       - {{ base }}/ifcfg-{{ interface }}:
         - contents:
+            - {{ pillar.get('managed_by_salt_formula', '# Managed by the network formula') | yaml_encode }}
           {%- for address in config.pop('addresses') %}
             - IPADDR_{{ loop.index }}='{{ address }}'
           {%- endfor %}

@@ -38,6 +38,7 @@ network_wicked_routes:
   file.managed:
     - name: {{ file }}
     - contents:
+        - {{ pillar.get('managed_by_salt_formula', '# Managed by the network formula') | yaml_encode }}
       {%- for route, config in routes.items() %}
       {%- do shell_routes.append(route ~ '_' ~ config.get('gateway', '')) %}
         -  {{ route }} {{ config.get('gateway', '-') }} {{ config.get('netmask', '-') }} {{ config.get('interface', '-') }} {{ ' '.join(config.get('options', [])) }}
