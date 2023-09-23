@@ -37,7 +37,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set domainpillar = lowpillar['domains'][domain] -%}
 {%- set clusterpillar = domainpillar['clusters'] -%}
 {%- set machinepillar = domainpillar['machines'] -%}
-{%- set basepath = '/kvm/vm/' -%}
+{%- set basepath = lowpillar.get('libvirt_domaindir', '/kvm/vm') -%}
 
 {%- if not salt['file.file_exists']('/etc/uuidmap') %}
 /etc/uuidmap:
@@ -53,7 +53,7 @@ write_domainfile_{{ machine }}:
   file.managed:
     - template: jinja
     - names:
-      - {{ basepath }}{{ machine }}.xml:
+      - {{ basepath }}/{{ machine }}.xml:
         - source: salt://files/libvirt/domains/{{ cluster }}.xml.j2
         - context:
             vm_name: {{ machine }}
