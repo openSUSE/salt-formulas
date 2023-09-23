@@ -50,13 +50,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- for machine, config in machinepillar.items() %}
 {%- set machine = machine ~ '.' ~ domain %}
 {%- if config['cluster'] == cluster %}
+{%- set domainxml = domaindir ~ '/' ~ machine ~ '.xml' %}
+{%- if salt['cmd.retcode']('grep -q uuid ' ~ domainxml) == 0 %}
+{%- set uuid = salt['cmd.run']('grep -oP "(?<=<uuid>).*(?=</uuid>)" ' ~ domainxml) %}
+{%- do salt.log.debug('infrastructure.libvirt: found existing uuid') %}
+{%- else %}
+{%- set uuid = salt['cmd.run']('uuidgen') %}
+{%- do salt.log.debug('infrastructure.libvirt: generated new uuid') %}
+{%- endif %}
+{%- do salt.log.debug('infrastructure.libvirt: uuid set to ' ~ uuid) %}
 write_domainfile_{{ machine }}:
   file.managed:
     - template: jinja
     - names:
-      - {{ domaindir }}/{{ machine }}.xml:
+      - {{ domainxml }}:
         - source: salt://files/libvirt/domains/{{ cluster }}.xml.j2
         - context:
+            vm_uuid: {{ uuid }}
             vm_name: {{ machine }}
             vm_memory: {{ config['ram'] }}
             vm_cores: {{ config['vcpu'] }}
@@ -66,10 +76,17 @@ write_domainfile_{{ machine }}:
 vm_uuid_map_{{ machine }}:
   file.append:
   - name: /etc/uuidmap
-  - text: '{{ machine }}: {{ salt['cmd.run']('uuidgen') }}'
+  - text: '{{ machine }}: {{ uuid }}'
   - unless: 'grep -q {{ machine }} /etc/uuidmap'
 
 {%- if clusterpillar[cluster].get('storage') == 'local' and 'image' in config %}
+define_domain_{{ machine }}:
+  module.run: {#- virt state does not support defining domains from custom XML files #}
+    - virt.define_xml_path:
+        - path: {{ domainxml }}
+    - onchanges:
+      - file: write_domainfile_{{ machine }}
+
 {%- if 'root' in config['disks'] %}
 {%- set root_disk = topdir ~ '/disks/' ~ machine ~ '_root.qcow2' %}
 {%- set image = topdir ~ '/os-images/' ~ config['image'] %}
@@ -117,6 +134,18 @@ resize_vmdisk_{{ machine }}_root:
 {%- endif %} {#- close converted/image size comparison check #}
 {%- endif %} {#- close converted size check #}
 {%- endif %} {#- close root disk check #}
+
+start_domain_{{ machine }}:
+  {%- if opts['test'] %} {#- ugly workaround to virt.running failing if the VM is not yet defined #}
+  test.succeed_without_changes:
+    - name: Will start {{ machine }} if it is not running already
+  {%- else %}
+  virt.running:
+    - name: {{ machine }}
+    - require:
+      - file: write_domainfile_{{ machine }}
+      - module: define_domain_{{ machine }}
+  {%- endif %}
 {%- endif %} {#- close storage/image check #}
 
 {%- endif %}
