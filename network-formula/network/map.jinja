@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 {%- set network = salt.pillar.get('network', {}) -%}
 {%- set backend = network.get('backend', 'wicked') -%}
+{%- set config = network.get('config', {}) %}
 {%- set routes = network.get('routes', {}) -%}
 {%- set interfaces = network.get('interfaces', {}) -%}
 

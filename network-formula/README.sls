@@ -17,3 +17,7 @@ Configures interfaces using Wicked.
 `network.wicked.routes`
 
 Configures routes using Wicked.
+
+`network.wicked.netconfig`
+
+Configures netconfig.

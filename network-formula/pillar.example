@@ -1,4 +1,15 @@
 network:
+  # settings written into /etc/sysconfig/network/config
+  config:
+    # keys/values are written as-is, but keys are uppercased and booleans values are converted automatically.
+    netconfig_dns_forwarder: resolver
+    # values provided in a list will be joined together.
+    netconfig_dns_static_servers:
+      - 192.168.120.1
+      - 192.168.120.2
+    netconfig_dns_resolver_options:
+      - attempts:1
+      - timeout:1
   # each listed interface will generate an ifcfg- file
   interfaces:
     eth0:

@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'network/map.jinja' import interfaces, routes -%}
+{%- from 'network/map.jinja' import config, interfaces, routes -%}
+{%- set config = config -%}
 {%- set interfaces = interfaces -%}
 {%- set routes = routes -%}
 
