@@ -24,8 +24,3 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set base = '/etc/sysconfig/network' -%}
 {%- set base_backup = base ~ '/salt-backup' %}
 {%- set script = '/usr/local/sbin/saltsafe_if' %}
-{%- set ifcfg_defaults = {
-	'addresses': [],
-	'bootproto': 'static',
-	'startmode': 'auto',
-} %}
