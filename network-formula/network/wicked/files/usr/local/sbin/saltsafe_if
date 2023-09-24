@@ -1,0 +1,291 @@
+#!/bin/bash
+# ifup/ifdown wrapper script ensuring safe operation if called remotely through Salt
+# Copyright (C) 2023 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+set -Cu
+
+extra="${2:-none}"
+
+base='/etc/sysconfig/network'
+base_backup="$base/salt-backup"
+
+self="$(basename $0)"
+call="${self##*_}"
+
+logtool="$(command -v logger) -t saltsafe" || logtool=echo
+
+
+fail() {
+	echo "$1"
+	exit 1
+}
+
+if [ ! \( "$call" == 'ifdown' -o "$call" == 'ifup' -o "$call" == 'ifroutes' \) ]
+then
+	fail 'Invalid action. Call this script as `saltsafe_ifup` or `saltsafe_ifdown` or `saltsafe_ifroutes`.'
+fi
+
+if ! command -v wicked >/dev/null
+then
+	fail 'Tool requires wicked.'
+fi
+
+log() {
+	local msg="$2"
+	case $1 in
+		0 )
+			$logtool "$msg"
+			if [ "$logtool" != 'echo' ]
+			then
+				echo "$msg"
+			fi ;;
+		1 )
+			if [ "$logtool" == 'echo' ]
+			then
+				local msg="saltsafe: $msg"
+				>&2 $logtool "$msg"
+			else
+				$logtool -s "$msg"
+			fi ;;
+		* )
+			fail 'Invalid function call' ;;
+	esac
+
+}
+
+quit() {
+	case "$1" in
+		0 ) result="$result result=True" ;;
+		1 ) result="$result result=False" ;;
+	esac
+	echo
+	log 0 "$result"
+	exit "$1"
+}
+
+check() {
+	if ! ping -c3 -w5 -q "$master_ip" >/dev/null
+	then
+		return 1
+	fi
+	if ! timeout 20 salt-call -t15 --out quiet test.ping
+	then
+		return 1
+	fi
+}
+
+rollback() {
+	rollback=yes
+	cp -v "$file_backup" "$file"
+}
+
+run() {
+	if [ "$call" == 'ifroutes' ]
+	then
+		# if possible, a call to reload only the routes would be better suited
+		local call='systemctl reload network'
+	else
+		local call="$call $interface"
+	fi
+	timeout --preserve-status -k 60 30 $call
+}
+
+backup() {
+	if [ -f "$file_backup" ] && command -v old >/dev/null
+	then
+		old "$file_backup" >/dev/null
+	fi
+	cp "$file" "$file_backup"
+}
+
+run_test() {
+	if [ "$call" == 'ifroutes' ]
+	then
+		# Get routes from the configuration - currently not used
+		#desired_routes=$(awk '{ print $1 "_" $2 | "sort -u" }' "$file")
+		# Get routes passed by Salt on the command line
+		desired_routes="$(echo $routes | tr ',' '\n' | sort)"
+		# Get active routes, exclude non-administratively configured ones
+		existing_routes=$({ ip -br -4 r; ip -br -6 r; } | sort -u | awk '!/^(fe80|::1)|scope link/{ print $1 "_" $3 }')
+		if [ "${desired_routes}" == "${existing_routes}" ]
+		then
+			result="changed=no comment='Routes are already correctly configured.'"
+		else
+			result="changed=yes comment='Would reload service to update routes.'"
+		fi
+		return
+	fi
+
+	comment1="Would have brought $interface"
+	comment2="$interface is already"
+
+	if [ "$call" == 'ifup' ]
+	then
+		if ifstatus "$interface" -o quiet
+		then
+			result="changed=no comment=\"$comment2 up\""
+		else
+			result="changed=yes comment=\"$comment1 up\""
+		fi
+	elif [ "$call" == 'ifdown' ]
+	then
+		if ifstatus "$interface" -o quiet
+		then
+			result="changed=yes comment=\"$comment1 down\""
+		else
+			result="changed=no comment=\"$comment2 down\""
+		fi
+	fi
+}
+
+run_cycle() {
+	if run
+	then
+		if [ "$call" == 'ifdown' ]
+		then
+			log 0 "Brought down interface $interface."
+			result="changed=yes comment=\"Brought down $interface.\""
+			quit 0
+		fi
+		if check
+		then
+			if [ "$rollback" == 'yes' ]
+			then
+				if [ "$call" == 'ifroutes' ]
+				then
+					log 1 'Routing configuration rollback successful.'
+					result='changed=yes comment="Routing configuration reverted."'
+				else
+					log 1 'Interface configuration rollback successful.'
+					result='changed=yes comment="Interface configuration reverted."'
+				fi
+			else
+				log 0 'Operation and validation successful.'
+				result='changed=yes comment="Operation and validation successful."'
+				backup
+			fi
+			quit 0
+		else
+			if [ "$call" == 'ifroutes' ]
+			then
+				log 1 'Reloaded service, but validation failed.'
+				result='changed=yes comment="New routing configuration applied but failed."'
+			else
+				log 1 "Brought up $interface, but validation failed."
+				result="changed=yes comment=\"New configuration for interface $interface applied but failed.\""
+			fi
+			if [ "$rollback" = 'yes' ]
+			then
+				log 1 'Rollback was not successful. Giving up.'
+				if [ "$call" == 'ifroutes' ]
+				then
+					result='changed=yes comment="Failed to revert routing configuration."'
+				else
+					result='changed=yes comment="Failed to revert interface configuration."'
+				fi
+				quit 1
+			fi
+		fi
+	else
+		result='changed=yes comment="Execution failed."'
+		return "$?"
+	fi
+}
+
+if [ "$call" == 'ifroutes' ]
+then
+	filename='routes'
+	if [ "$extra" == 'test' ]
+	then
+		routes="${1?Cannot test without routes}"
+	fi
+else
+	interface="${1?Cannot operate without an interface}"
+	filename="ifcfg-$interface"
+
+	if ! command -v "$call" >/dev/null
+	then
+		fail "Unable to locate $call."
+	fi
+
+	if [ ! -f "$base_backup/ifcfg-$interface" ]
+	then
+		if [ "$extra" != 'test' ]
+		then
+			#fail "Missing backup configuration for interface $interface, refusing to operate."
+			backup
+		fi
+	fi
+fi
+
+file="$base/$filename"
+file_backup="$base_backup/$filename"
+
+# Get IP addresses of the Salt minion and master
+read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk '{ split($4, con_out, ":"); split($5, con_in, ":"); print con_out[1] " " con_in[1] }')
+
+if [ -z "$minion_ip" -o -z "$master_ip" ]
+then
+	fail 'Unable to determine Salt connection, refusing to operate.'
+fi
+
+# Get network interface the minion is using to connect to the master
+out_interface="$(ip -br a sh | awk -v ip=$minion_ip '$0 ~ ip { print $1 }')"
+
+danger=no
+rollback=no
+
+if [ "$call" == 'ifroutes' ]
+then
+	# Assess whether the master is located in a remote network, requiring routing for the connection
+	if [ "$(ip -ts r g $master_ip | awk -v ip=$master_ip '$0 ~ ip { print $2 }')" == 'via' ]
+	then
+		danger=yes
+	fi
+elif [ "$out_interface" == "$interface" ]
+then
+	danger=yes
+	if [ "$call" == 'ifdown' ]
+	then
+		log 1 'Refusing to bring a potentially dangerous interface down.'
+		result='changed=no comment="Interface is used for Salt connectivity, refusing to bring it down."'
+		quit 1
+	fi
+	if ! check
+	then
+		log 1 'Failed to verify Salt master connectivity, refusing to operate on a potentially dangerous interface.'
+		result='changed=no comment="Interface is used for Salt connectivity, but functionality could not be validated. Refusing to bring it down."'
+		quit 1
+	fi
+fi
+
+if [ "$extra" == 'test' ]
+then
+	run_test
+	result="$result result=None"
+	quit 0
+else
+	run_cycle
+fi
+
+if [ "$danger" == 'yes' -o "$call" == 'ifroutes' ]
+then
+	log 1 'Rolling back ...'
+	rollback
+	run_cycle
+fi
+
+quit 1
