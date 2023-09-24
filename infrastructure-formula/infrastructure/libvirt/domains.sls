@@ -72,6 +72,7 @@ write_domainfile_{{ machine }}:
             vm_cores: {{ config['vcpu'] }}
             vm_disks: {{ config['disks'] }}
             vm_interfaces: {{ config['interfaces'] }}
+            letters: abcdefghijklmnopqrstuvwxyz
 
 vm_uuid_map_{{ machine }}:
   file.append:
