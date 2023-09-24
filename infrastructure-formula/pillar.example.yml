@@ -1,20 +1,32 @@
 ---
+# yamllint disable rule:line-length
 infrastructure:
+  # base directory for various VM related data, default is "/kvm"
+  kvm_topdir: /data/kvm
+  # directory for Libvirt VM definitions (XML files), default is "/kvm/vm"
+  libvirt_domaindir: /data/kvm/domains
   domains:
     example.com:
       clusters:
         examplecluster:
+          # noop?
           external: false
+          # in multi-node clusters with shared storage, VM operations will only be executed on the primary node - this needs to match its minion ID
           primary: examplenode1
           netapp:
             host: 192.0.2.1:8080
             vs_primary: examplessdvs
             vs_secondary: examplehddvs
             igroup_primary: exampleigroup
+          # *RT
           city: Vienna
+          # "local" storage will cause VMs to use local qcow images for storage. otherwise FC (NetApp) storage is assumed.
+          storage: local
       machines:
         examplevm:
+          # *RT
           usage: Testing
+          # cluster this VM should run on, needs to match one of the keys underneath "clusters"
           cluster: examplecluster
           interfaces:
             eth0:
@@ -22,6 +34,15 @@ infrastructure:
               ip6: '2001:DB8:2:10::'
               mac: '00:00:5E:00:53:00'
               bridge: examplebridge
-          ram: 512MB
+          disks:
+            # disk sizes need to end with "G"
+            # one disk named "root" is mandatory, others can use arbitrary names
+            root: 15G
+            data0: 20G
+          # memory size is currently only passed to downstream Libvirt domain templates
+          ram: 1024MB
           vcpu: 1
+          # reference to a file or symlink in $kvm_topdir/os-images.
           image: example.raw
+
+# *RT: attribute is only used for updating RackTables
