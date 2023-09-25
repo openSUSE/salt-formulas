@@ -40,6 +40,9 @@ network_wicked_routes:
     - contents:
         - {{ pillar.get('managed_by_salt_formula', '# Managed by the network formula') | yaml_encode }}
       {%- for route, config in routes.items() %}
+      {%- if route in ['default4', 'default6'] %}
+      {%- set route = 'default' %}
+      {%- endif %}
       {%- do shell_routes.append(route ~ '_' ~ config.get('gateway', '')) %}
         -  {{ route }} {{ config.get('gateway', '-') }} {{ config.get('netmask', '-') }} {{ config.get('interface', '-') }} {{ ' '.join(config.get('options', [])) }}
       {%- endfor %}

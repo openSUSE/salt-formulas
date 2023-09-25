@@ -119,7 +119,7 @@ run_test() {
 		# Get routes passed by Salt on the command line
 		desired_routes="$(echo $routes | tr ',' '\n' | sort)"
 		# Get active routes, exclude non-administratively configured ones
-		existing_routes=$({ ip -br -4 r; ip -br -6 r; } | sort -u | awk '!/^(fe80|::1)|scope link/{ print $1 "_" $3 }')
+		existing_routes=$({ ip -br -4 r; ip -br -6 r; } | sort -u | awk '!/^(fe80::\/|::1)|scope link/{ print $1 "_" $3 }')
 		if [ "${desired_routes}" == "${existing_routes}" ]
 		then
 			result="changed=no comment='Routes are already correctly configured.'"
