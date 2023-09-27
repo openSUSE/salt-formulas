@@ -1,0 +1,5 @@
+---
+summary:
+  Salt states for managing the bootloader
+description:
+  Salt states for managing the bootloader setup and GRUB configuration.
