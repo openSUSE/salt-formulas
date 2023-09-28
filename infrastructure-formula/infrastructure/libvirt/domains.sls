@@ -37,7 +37,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set domainpillar = lowpillar['domains'][domain] -%}
 {%- set clusterpillar = domainpillar['clusters'] -%}
 {%- set machinepillar = domainpillar['machines'] -%}
-{%- set basepath = lowpillar.get('libvirt_domaindir', '/kvm/vm') -%}
+{%- set topdir = lowpillar.get('kvm_topdir', '/kvm') -%}
+{%- set domaindir = lowpillar.get('libvirt_domaindir', topdir ~ '/vm') -%}
 
 {%- if not salt['file.file_exists']('/etc/uuidmap') %}
 /etc/uuidmap:
@@ -53,7 +54,7 @@ write_domainfile_{{ machine }}:
   file.managed:
     - template: jinja
     - names:
-      - {{ basepath }}/{{ machine }}.xml:
+      - {{ domaindir }}/{{ machine }}.xml:
         - source: salt://files/libvirt/domains/{{ cluster }}.xml.j2
         - context:
             vm_name: {{ machine }}
@@ -67,6 +68,57 @@ vm_uuid_map_{{ machine }}:
   - name: /etc/uuidmap
   - text: '{{ machine }}: {{ salt['cmd.run']('uuidgen') }}'
   - unless: 'grep -q {{ machine }} /etc/uuidmap'
+
+{%- if clusterpillar[cluster].get('storage') == 'local' and 'image' in config %}
+{%- if 'root' in config['disks'] %}
+{%- set root_disk = topdir ~ '/disks/' ~ machine ~ '_root.qcow2' %}
+{%- set image = topdir ~ '/os-images/' ~ config['image'] %}
+{%- set reinit = config.get('irreversibly_wipe_and_overwrite_vm_disk', False) %}
+
+write_vmdisk_{{ machine }}_root:
+  file.copy:
+    - name: {{ root_disk }}
+    - source: {{ image }}
+    {%- if reinit is sameas true %}
+    - force: true
+    {%- endif %}
+
+{%- set disk_size = config['disks']['root'] %}
+{%- set image_info = salt['cmd.run']('qemu-img info --out json ' ~ image) | load_json %}
+{%- set image_size = image_info['virtual-size'] %}
+
+{%- if disk_size.endswith('G') %}
+{%- set converted_size = ( disk_size.rstrip('G') | int * 1073741824 ) | int %}
+{%- else %}
+{%- do salt.log.error('infrastructure.libvirt: sizes need to end with "G", illegal disk size ' ~ disk_size ~ ' for machine ' ~ machine) %}
+{%- set converted_size = None %}
+{%- endif %} {#- close suffix check #}
+
+{%- if converted_size %}
+{%- do salt.log.debug('infrastructure.libvirt: converted size is ' ~ converted_size) %}
+
+{%- if converted_size > image_size %}
+{%- set disk_info = salt['cmd.run']('qemu-img info --out json -U ' ~ root_disk) | load_json %}
+{%- set current_size = disk_info['virtual-size'] %}
+{%- do salt.log.debug('infrastructure.libvirt: current disk size is ' ~ current_size) %}
+
+{%- if current_size < converted_size %}
+resize_vmdisk_{{ machine }}_root:
+  cmd.run:
+    - name: |
+      {%- if machine in salt['virt.list_active_vms']() %}
+        virsh blockresize {{ machine }} {{ root_disk }} {{ disk_size }}
+      {%- else %}
+        qemu-img resize {{ root_disk }} {{ disk_size }}
+      {%- endif %}
+    - require:
+      - file: write_vmdisk_{{ machine }}_root
+{%- endif %} {#- close current/converted size comparison check #}
+{%- endif %} {#- close converted/image size comparison check #}
+{%- endif %} {#- close converted size check #}
+{%- endif %} {#- close root disk check #}
+{%- endif %} {#- close storage/image check #}
+
 {%- endif %}
 {%- endfor %}
 {%- endif %}
