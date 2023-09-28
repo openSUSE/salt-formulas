@@ -93,6 +93,12 @@ define_domain_{{ machine }}:
 {%- set image = topdir ~ '/os-images/' ~ config['image'] %}
 {%- set reinit = config.get('irreversibly_wipe_and_overwrite_vm_disk', False) %}
 
+{%- if reinit is sameas true %}
+destroy_machine_{{ machine }}:
+  virt.powered_off:
+    - name: {{ machine }}
+{%- endif %}
+
 write_vmdisk_{{ machine }}_root:
   file.copy:
     - name: {{ root_disk }}
