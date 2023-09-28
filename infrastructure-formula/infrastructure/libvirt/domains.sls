@@ -45,11 +45,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   file.touch
 {%- endif %}
 
-{%- if cluster in clusterpillar and myid == clusterpillar[cluster]['primary'] %}
+{%- if cluster in clusterpillar and ( not 'primary' in clusterpillar[cluster] or myid == clusterpillar[cluster]['primary'] ) %}
 {%- if machinepillar is not none %}
 {%- for machine, config in machinepillar.items() %}
 {%- set machine = machine ~ '.' ~ domain %}
-{%- if config['cluster'] == cluster %}
+{%- if config['cluster'] == cluster and ( not 'node' in config or config['node'] == myid ) %}
 {%- set domainxml = domaindir ~ '/' ~ machine ~ '.xml' %}
 {%- if salt['cmd.retcode']('grep -q uuid ' ~ domainxml) == 0 %}
 {%- set uuid = salt['cmd.run']('grep -oP "(?<=<uuid>).*(?=</uuid>)" ' ~ domainxml) %}
