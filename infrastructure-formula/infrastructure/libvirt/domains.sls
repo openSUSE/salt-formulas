@@ -51,13 +51,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set machine = machine ~ '.' ~ domain %}
 {%- if config['cluster'] == cluster and ( not 'node' in config or config['node'] == myid ) %}
 {%- set domainxml = domaindir ~ '/' ~ machine ~ '.xml' %}
-{%- if salt['cmd.retcode']('grep -q uuid ' ~ domainxml) == 0 %}
-{%- set uuid = salt['cmd.run']('grep -oP "(?<=<uuid>).*(?=</uuid>)" ' ~ domainxml) %}
-{%- do salt.log.debug('infrastructure.libvirt: found existing uuid') %}
+{%- if opts['test'] %}
+{%- set alt_uuid = 'echo will-generate-a-new-uuid' %}
 {%- else %}
-{%- set uuid = salt['cmd.run']('uuidgen') %}
-{%- do salt.log.debug('infrastructure.libvirt: generated new uuid') %}
+{%- set alt_uuid = 'uuidgen' %}
 {%- endif %}
+{%- set uuid = salt['cmd.shell']('grep -oP "(?<=<uuid>).*(?=</uuid>)" ' ~ domainxml ~ ' 2>/dev/null ' ~ ' || ' ~ alt_uuid) %}
 {%- do salt.log.debug('infrastructure.libvirt: uuid set to ' ~ uuid) %}
 write_domainfile_{{ machine }}:
   file.managed:
