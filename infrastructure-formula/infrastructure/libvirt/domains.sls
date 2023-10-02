@@ -121,8 +121,12 @@ write_vmdisk_{{ machine }}_root:
 {%- do salt.log.debug('infrastructure.libvirt: converted size is ' ~ converted_size) %}
 
 {%- if converted_size > image_size %}
+{%- if salt['file.file_exists'](root_disk) %}
 {%- set disk_info = salt['cmd.run']('qemu-img info --out json -U ' ~ root_disk) | load_json %}
 {%- set current_size = disk_info['virtual-size'] %}
+{%- else %}
+{%- set current_size = image_size %}
+{%- endif %}
 {%- do salt.log.debug('infrastructure.libvirt: current disk size is ' ~ current_size) %}
 
 {%- if current_size < converted_size %}
