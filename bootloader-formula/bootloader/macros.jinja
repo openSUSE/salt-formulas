@@ -21,13 +21,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- macro kvconfig(name, type, config) -%}
 {%- if type == 'sysconfig' %}
 {%- set file = '/etc/sysconfig/' ~ name %}
-{{ name }}_sysconfig:
+{%- set sid = name ~ '_sysconfig' %}
 {%- elif type == 'default' %}
 {%- set file = '/etc/default/' ~ name %}
-{{ name }}_default:
+{%- set sid = name ~ '_default' %}
 {%- else %}
 {%- do salt.log.error('bootloader: kvconfig() called with illegal type. this will fail.') %}
 {%- endif %}
+
+{{ sid }}_header:
+  file.prepend:
+    - name: {{ file }}
+    - text: {{ pillar.get('managed_by_salt_formula', '# Managed by the bootloader formula') | yaml_encode }}
+
+{{ sid }}:
   file.keyvalue:
     - name: {{ file }}
     - key_values:
