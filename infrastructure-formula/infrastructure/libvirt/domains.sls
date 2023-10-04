@@ -45,35 +45,58 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   file.touch
 {%- endif %}
 
-{%- if cluster in clusterpillar and myid == clusterpillar[cluster]['primary'] %}
+{%- if cluster in clusterpillar and ( not 'primary' in clusterpillar[cluster] or myid == clusterpillar[cluster]['primary'] ) %}
 {%- if machinepillar is not none %}
 {%- for machine, config in machinepillar.items() %}
 {%- set machine = machine ~ '.' ~ domain %}
-{%- if config['cluster'] == cluster %}
+{%- if config['cluster'] == cluster and ( not 'node' in config or config['node'] == myid ) %}
+{%- set domainxml = domaindir ~ '/' ~ machine ~ '.xml' %}
+{%- if opts['test'] %}
+{%- set alt_uuid = 'echo will-generate-a-new-uuid' %}
+{%- else %}
+{%- set alt_uuid = 'uuidgen' %}
+{%- endif %}
+{%- set uuid = salt['cmd.shell']('grep -oP "(?<=<uuid>).*(?=</uuid>)" ' ~ domainxml ~ ' 2>/dev/null ' ~ ' || ' ~ alt_uuid) %}
+{%- do salt.log.debug('infrastructure.libvirt: uuid set to ' ~ uuid) %}
 write_domainfile_{{ machine }}:
   file.managed:
     - template: jinja
     - names:
-      - {{ domaindir }}/{{ machine }}.xml:
+      - {{ domainxml }}:
         - source: salt://files/libvirt/domains/{{ cluster }}.xml.j2
         - context:
+            vm_uuid: {{ uuid }}
             vm_name: {{ machine }}
             vm_memory: {{ config['ram'] }}
             vm_cores: {{ config['vcpu'] }}
             vm_disks: {{ config['disks'] }}
             vm_interfaces: {{ config['interfaces'] }}
+            letters: abcdefghijklmnopqrstuvwxyz
 
 vm_uuid_map_{{ machine }}:
   file.append:
   - name: /etc/uuidmap
-  - text: '{{ machine }}: {{ salt['cmd.run']('uuidgen') }}'
+  - text: '{{ machine }}: {{ uuid }}'
   - unless: 'grep -q {{ machine }} /etc/uuidmap'
 
 {%- if clusterpillar[cluster].get('storage') == 'local' and 'image' in config %}
+define_domain_{{ machine }}:
+  module.run: {#- virt state does not support defining domains from custom XML files #}
+    - virt.define_xml_path:
+        - path: {{ domainxml }}
+    - onchanges:
+      - file: write_domainfile_{{ machine }}
+
 {%- if 'root' in config['disks'] %}
 {%- set root_disk = topdir ~ '/disks/' ~ machine ~ '_root.qcow2' %}
 {%- set image = topdir ~ '/os-images/' ~ config['image'] %}
 {%- set reinit = config.get('irreversibly_wipe_and_overwrite_vm_disk', False) %}
+
+{%- if reinit is sameas true %}
+destroy_machine_{{ machine }}:
+  virt.powered_off:
+    - name: {{ machine }}
+{%- endif %}
 
 write_vmdisk_{{ machine }}_root:
   file.copy:
@@ -98,8 +121,12 @@ write_vmdisk_{{ machine }}_root:
 {%- do salt.log.debug('infrastructure.libvirt: converted size is ' ~ converted_size) %}
 
 {%- if converted_size > image_size %}
+{%- if salt['file.file_exists'](root_disk) %}
 {%- set disk_info = salt['cmd.run']('qemu-img info --out json -U ' ~ root_disk) | load_json %}
 {%- set current_size = disk_info['virtual-size'] %}
+{%- else %}
+{%- set current_size = image_size %}
+{%- endif %}
 {%- do salt.log.debug('infrastructure.libvirt: current disk size is ' ~ current_size) %}
 
 {%- if current_size < converted_size %}
@@ -117,6 +144,18 @@ resize_vmdisk_{{ machine }}_root:
 {%- endif %} {#- close converted/image size comparison check #}
 {%- endif %} {#- close converted size check #}
 {%- endif %} {#- close root disk check #}
+
+start_domain_{{ machine }}:
+  {%- if opts['test'] %} {#- ugly workaround to virt.running failing if the VM is not yet defined #}
+  test.succeed_without_changes:
+    - name: Will start {{ machine }} if it is not running already
+  {%- else %}
+  virt.running:
+    - name: {{ machine }}
+    - require:
+      - file: write_domainfile_{{ machine }}
+      - module: define_domain_{{ machine }}
+  {%- endif %}
 {%- endif %} {#- close storage/image check #}
 
 {%- endif %}
