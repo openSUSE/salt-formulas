@@ -1,5 +1,13 @@
 nftables:
   config:
+    testchain:
+      # passive configurations will not be included in the top nftables.conf and can be referenced in lower "includes"
+      mode: passive
+      chains:
+        forward:
+          type: filter
+          rules:
+            - ct state established, related accept
     sets:
       mode: passive
       sets:
@@ -22,11 +30,15 @@ nftables:
       tables:
         nat:
           type: filter
-          include: ../passive/sets.conf
+          # if the include string matches the name of a passive configuration, it will be expanded to its path
+          include: sets
         inet:
           type: filter
           chains:
             input:
+              type: filter
+              hook: input
+              priority: 0
               policy: drop
               rules:
                 - iif external jump input_external
