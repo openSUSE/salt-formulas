@@ -1,5 +1,15 @@
 nftables:
   config:
+    sets:
+      mode: passive
+      sets:
+        myv6net:
+          type: ipv6_addr
+          flags: interval
+          auto-merge: true
+          elements:
+          - 127.0.0.1/128
+          - $mylan
     variables:
       priority: 01
       variables:
@@ -10,6 +20,9 @@ nftables:
     tables:
       priority: 02
       tables:
+        nat:
+          type: filter
+          include: ../passive/sets.conf
         inet:
           type: filter
           chains:

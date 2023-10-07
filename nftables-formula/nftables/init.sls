@@ -7,7 +7,9 @@
 
 nftables_directory:
   file.directory:
-    - name: {{ dir }}
+    - names:
+        - {{ dir }}/active
+        - {{ dir }}/passive
     - makedirs: true
 
 nftables_config_base:
@@ -15,7 +17,7 @@ nftables_config_base:
     - name: /etc/nftables.conf
     - contents: |
         #!/usr/sbin/nft -f
-        include "{{ dir }}/*.conf"
+        include "{{ dir }}/active/*.conf"
 
 {%- for category, config in nft.items() %}
 
@@ -26,9 +28,9 @@ nftables_config_{{ category }}:
     {%- if 'priority' in config -%}
     {%- set file = config['priority'] ~ '_' ~ file -%}
     {%- endif -%}
-    {{ ' ' ~ dir }}/{{ file }}
-    - template: mako
-    - source: salt://{{ slspath }}/files/nftables.mako
+    {{ ' ' ~ dir }}/{{ config.get('mode', 'active') }}/{{ file }}
+    - template: jinja
+    - source: salt://{{ slspath }}/files/nftables.j2
     - context:
         config: {{ config }}
 {%- endfor %}
