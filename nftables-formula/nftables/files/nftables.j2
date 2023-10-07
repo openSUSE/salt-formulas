@@ -1,4 +1,4 @@
-{%- from 'nftables/map.jinja' import dir, nft, nft_chains, nft_variables, nft_sets -%}
+{%- from 'nftables/map.jinja' import dir, nft, nft_chains, nft_variables, nft_sets, nft_vmaps -%}
 {{ pillar.get('managed_by_salt_formula', '# Managed by the nftables formula') }}
 
 {#- Write simple variables -#}
@@ -7,9 +7,14 @@
 {#- Write sets -#}
 {{ nft_sets(config.get('sets', {})) }}
 
-{#- Write chains -#}
-{%- if 'chains' in config and config.get('mode', 'active') == 'passive' %}
+{#- Write data which only makes sense in a passive context -#}
+{%- if config.get('mode', 'active') == 'passive' %}
+{%- if 'chains' in config %}
 {{ nft_chains(config['chains']) }}
+{%- endif %}
+{%- if 'vmaps' in config %}
+{{ nft_vmaps(config['vmaps']) }}
+{%- endif %}
 {%- endif %}
 
 {#- Write tables -#}

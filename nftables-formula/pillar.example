@@ -40,6 +40,9 @@ nftables:
               hook: input
               priority: 0
               policy: drop
+              vmaps:
+                iif:
+                  eth0: jump testchain              
               rules:
                 - iif external jump input_external
                 - ct state established, related accept

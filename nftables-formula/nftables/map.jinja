@@ -1,7 +1,8 @@
 {%- set mypillar = salt['pillar.get']('nftables', {}) -%}
 {%- set nft = mypillar.get('config', {}) -%}
 {%- set dir = '/etc/nftables.conf.d/salt' -%}
-{%- from 'nftables/macros.jinja' import nft_chains, nft_variables, nft_sets -%}
+{%- from 'nftables/macros.jinja' import nft_chains, nft_variables, nft_sets, nft_vmaps -%}
 {%- set nft_chains = nft_chains -%}
 {%- set nft_sets = nft_sets -%}
 {%- set nft_variables = nft_variables -%}
+{%- set nft_vmaps = nft_vmaps -%}

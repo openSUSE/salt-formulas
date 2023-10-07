@@ -60,9 +60,22 @@ chain {{ chain }} {
   {%- if 'jump' in chain_config %}
   jump {{ chain_config['jump'] }}
   {%- endif %}
+  {%- if 'vmaps' in chain_config %}
+  {{ nft_vmaps(chain_config['vmaps']) | indent(2) }}
+  {%- endif %}
   {%- for entry in chain_config.get('rules', []) %}
   {{ entry }}
   {%- endfor %}
 }
 {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro nft_vmaps(vmaps) -%}
+{%- for vmap, vmap_config in vmaps.items() %}
+{{ vmap }} vmap {
+  {%- for map_from, map_to in vmap_config.items() %}
+  {{ map_from }} : {{ map_to }}
+  {%- endfor %}
+}
+{%- endfor %}
 {%- endmacro -%}
