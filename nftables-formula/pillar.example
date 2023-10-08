@@ -29,7 +29,6 @@ nftables:
       priority: 02
       tables:
         nat:
-          type: filter
           # if the include matches the name of a passive configuration, it will be expanded to its path
           # multiple includes can be passed using a list
           include: sets
@@ -41,6 +40,10 @@ nftables:
               hook: input
               priority: 0
               policy: drop
+              counter: true
+              log:
+                prefix: Denied Inbound
+                flags: all
               maps:
                 dport:
                   80: 127.0.0.1

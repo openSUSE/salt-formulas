@@ -4,9 +4,7 @@ set {{ set }} =
   {%- if 'type' in set_config %}
   type {{ set_config['type'] }}
   {%- endif %}
-  {%- if 'flags' in set_config %}
-  flags {{ set_config['flags'] if set_config['flags'] is string else ' '.join(set_config['flags']) }}
-  {%- endif %}
+  {{ nft_flags(set_config.get('flags', none)) }}
   {%- if set_config.get('auto-merge', False) %}
   auto-merge
   {%- endif %}
@@ -78,8 +76,25 @@ chain {{ chain }} {
   {%- for entry in chain_config.get('rules', []) %}
   {{ entry }}
   {%- endfor %}
+  {%- if chain_config.get('counter', False) %}
+  counter
+  {%- endif %}
+  {%- if 'log' in chain_config %}
+  {%- set log_config = chain_config['log'] %}
+  log{{ ' prefix "' ~ log_config['prefix'] ~ '"' if 'prefix' in log_config else '' }}{{ nft_flags(log_config.get('flags', none), ' ') }}
+  {%- endif %}
 }
 {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro nft_flags(flags, prefix='') -%}
+{%- if flags is not none -%}
+{%- if flags is string or ( flags is iterable and flags is not mapping ) -%}
+{{ prefix }}flags {{ flags if flags is string else ' '.join(flags) }}
+{%- else -%}
+{%- do salt.log.error('nftables: illegal flags') -%}
+{%- endif -%}
+{%- endif %}
 {%- endmacro -%}
 
 {%- macro _nft_maps(maps, type) -%}
