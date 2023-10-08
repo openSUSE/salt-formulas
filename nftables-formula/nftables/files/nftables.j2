@@ -22,7 +22,7 @@
 
 {#- -#}
 {%- for table, table_config in config.get('tables', {}).items() %}
-table {{ table }} {{ table_config['type'] }} {
+table {{ table }}{{ ' ' ~ table_config['type'] if 'type' in table_config else '' }} {
   {%- if 'include' in table_config %}
   {%- if table_config['include'] is string %}
   {%- set table_includes = [table_config['include']] %}
