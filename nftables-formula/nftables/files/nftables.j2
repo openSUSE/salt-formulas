@@ -24,12 +24,21 @@
 {%- for table, table_config in config.get('tables', {}).items() %}
 table {{ table }} {{ table_config['type'] }} {
   {%- if 'include' in table_config %}
-  {%- if table_config['include'] in nft and nft[table_config['include']].get('mode') == 'passive' %}
-  {%- set lowinclude = dir ~ '/passive/' ~ table_config['include'] ~ '.conf' -%}
+  {%- if table_config['include'] is string %}
+  {%- set table_includes = [table_config['include']] %}
+  {%- elif table_config['include'] is iterable and table_config['include'] is not mapping %}
+  {%- set table_includes = table_config['include'] %}
   {%- else %}
-  {%- set lowinclude = table_config['include'] -%}
+  {%- do salt.log.error('nftables: illegal value for include in table ' ~ table) %}
+  {%- endif %}
+  {%- for table_include in table_includes %}
+  {%- if table_include in nft and nft[table_include].get('mode') == 'passive' %}
+  {%- set lowinclude = dir ~ '/passive/' ~ table_include ~ '.conf' -%}
+  {%- else %}
+  {%- set lowinclude = table_include -%}
   {%- endif %}
   include "{{ lowinclude }}"
+  {%- endfor %}
   {%- endif -%}
   {{ nft_chains(table_config.get('chains', {})) | indent(2) }}
 }

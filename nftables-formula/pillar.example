@@ -30,7 +30,8 @@ nftables:
       tables:
         nat:
           type: filter
-          # if the include string matches the name of a passive configuration, it will be expanded to its path
+          # if the include matches the name of a passive configuration, it will be expanded to its path
+          # multiple includes can be passed using a list
           include: sets
         inet:
           type: filter
