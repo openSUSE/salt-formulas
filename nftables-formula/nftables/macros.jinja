@@ -60,6 +60,9 @@ chain {{ chain }} {
   {%- if 'jump' in chain_config %}
   jump {{ chain_config['jump'] }}
   {%- endif %}
+  {%- if 'maps' in chain_config %}
+  {{ nft_maps(chain_config['maps']) | indent(2) }}
+  {%- endif -%}
   {%- if 'vmaps' in chain_config %}
   {{ nft_vmaps(chain_config['vmaps']) | indent(2) }}
   {%- endif %}
@@ -70,12 +73,20 @@ chain {{ chain }} {
 {%- endfor -%}
 {%- endmacro -%}
 
-{%- macro nft_vmaps(vmaps) -%}
-{%- for vmap, vmap_config in vmaps.items() %}
-{{ vmap }} vmap {
-  {%- for map_from, map_to in vmap_config.items() %}
+{%- macro _nft_maps(maps, type) -%}
+{%- for map, map_config in maps.items() %}
+{{ map }} {{ type }} {
+  {%- for map_from, map_to in map_config.items() %}
   {{ map_from }} : {{ map_to }}
   {%- endfor %}
 }
 {%- endfor %}
+{%- endmacro -%}
+
+{%- macro nft_maps(maps) -%}
+{{ _nft_maps(maps, 'map') }}
+{%- endmacro -%}
+
+{%- macro nft_vmaps(vmaps) -%}
+{{ _nft_maps(vmaps, 'vmap') }}
 {%- endmacro -%}
