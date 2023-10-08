@@ -58,7 +58,16 @@ chain {{ chain }} {
   policy {{ chain_config['policy'] }}
   {%- endif %}
   {%- if 'jump' in chain_config %}
-  jump {{ chain_config['jump'] }}
+  {%- if chain_config['jump'] is string %}
+  {%- set chain_jumps = [chain_config['jump']] %}
+  {%- elif chain_config['jump'] is iterable and chain_config['jump'] is not mapping %}
+  {%- set chain_jumps = chain_config['jump'] %}
+  {%- else %}
+  {%- do salt.log.error('nftables: illegal value for jump in chain ' ~ chain) %}
+  {%- endif %}
+  {%- for chain_jump in chain_jumps %}
+  jump {{ chain_jump }}
+  {%- endfor %}
   {%- endif %}
   {%- if 'maps' in chain_config %}
   {{ nft_maps(chain_config['maps']) | indent(2) }}
