@@ -235,7 +235,7 @@ file="$base/$filename"
 file_backup="$base_backup/$filename"
 
 # Get IP addresses of the Salt minion and master
-read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk '{ split($4, con_out, ":"); split($5, con_in, ":"); print con_out[1] " " con_in[1] }')
+read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk 'END { gsub(/\[|\]/,""); split($4, con_out, /:[[:digit:]]{4,5}$/); split($5, con_in, /:[[:digit:]]{4,5}$/); print con_out[1] " " con_in[1] }')
 
 if [ -z "$minion_ip" -o -z "$master_ip" ]
 then
