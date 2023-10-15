@@ -108,7 +108,10 @@ backup() {
 	then
 		old "$file_backup" >/dev/null
 	fi
-	cp "$file" "$file_backup"
+	if [ -f "$file" ]
+	then
+		cp "$file" "$file_backup"
+	fi
 }
 
 run_test() {
@@ -221,18 +224,18 @@ else
 		fail "Unable to locate $call."
 	fi
 
-	if [ ! -f "$base_backup/ifcfg-$interface" ]
-	then
-		if [ "$extra" != 'test' ]
-		then
-			#fail "Missing backup configuration for interface $interface, refusing to operate."
-			backup
-		fi
-	fi
 fi
 
 file="$base/$filename"
 file_backup="$base_backup/$filename"
+
+if [ ! -f "$file_backup" ]
+then
+	if [ "$extra" != 'test' ]
+	then
+		backup
+	fi
+fi
 
 # Get IP addresses of the Salt minion and master
 read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk 'END { gsub(/\[|\]/,""); split($4, con_out, /:[[:digit:]]{4,5}$/); split($5, con_in, /:[[:digit:]]{4,5}$/); print con_out[1] " " con_in[1] }')
