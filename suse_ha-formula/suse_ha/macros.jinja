@@ -42,11 +42,13 @@ ha_resource_file_{{ resource }}:
             operations: {{ operations }}
             meta_attributes: {{ meta_attributes }}
             provider: {{ provider }}
+    {%- if requires is not none %}
     - require:
       - file: ha_resources_directory
       {%- for require in requires %}
       - {{ require }}
       {%- endfor %}
+    {%- endif %}
 
 ha_resource_update_{{ resource }}:
   cmd.run:
