@@ -57,6 +57,30 @@ License:        GPL-3.0-or-later
 %description common
 Files and directories shared by openSUSE/SUSE infrastructure formuas.
 
+%package -n bootloader-formula
+Summary:        Salt states for managing the bootloader
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n bootloader-formula
+Salt states for managing the bootloader setup and GRUB configuration.
+
+%package -n gitea-formula
+Summary:        Salt states for managing Gitea
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n gitea-formula
+Salt states for managing Gitea.
+
+%package -n grains-formula
+Summary:        Salt state for managing grains
+License:        Apache-2.0
+Requires:       %{name}-common
+
+%description -n grains-formula
+Salt state for managing grains.
+
 %package -n infrastructure-formula
 Summary:        Salt states specific to the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -64,6 +88,22 @@ Requires:       %{name}-common
 
 %description -n infrastructure-formula
 Custom Salt states specific to the openSUSE/SUSE infrastructures.
+
+%package -n jenkins-formula
+Summary:        Salt states for managing Jenkins
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n jenkins-formula
+Salt states for managing Jenkins Controller and Agent servers
+
+%package -n juniper_junos-formula
+Summary:        Salt states for managing Junos
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n juniper_junos-formula
+Salt states for managing Juniper Junos based network devices using pillars.
 
 %package -n libvirt-formula
 Summary:        Salt states for managing libvirt
@@ -73,6 +113,14 @@ Requires:       %{name}-common
 %description -n libvirt-formula
 Salt states for managing libvirt servers.
 
+%package -n lock-formula
+Summary:        Salt state module for managing lockfiles
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n lock-formula
+Salt state module allowing you to place a lock file prior to other states in order to prevent simultaneous executions.
+
 %package -n lunmap-formula
 Summary:        Salt states for managing lunmap
 License:        GPL-3.0-or-later
@@ -81,6 +129,22 @@ Requires:       %{name}-common
 %description -n lunmap-formula
 Salt states for managing LUN mappings.
 
+%package -n multipath-formula
+Summary:        Salt states for managing multipath
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n multipath-formula
+Salt states for installing multipath-tools and managing multipath/multipathd
+
+%package -n network-formula
+Summary:        Salt states for managing the network
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n network-formula
+Salt states for managing the network configuration using backends like Wicked.
+
 %package -n orchestra-formula
 Summary:        Salt orchestration helper states
 License:        GPL-3.0-or-later
@@ -88,22 +152,6 @@ Requires:       %{name}-common
 
 %description -n orchestra-formula
 Salt helper states for the openSUSE/SUSE infrastructure orchestration states.
-
-%package -n suse_ha-formula
-Summary:        Salt states for managing SLE HA clusters
-License:        GPL-3.0-or-later
-Requires:       %{name}-common
-
-%description -n suse_ha-formula
-Salt states for managing SUSE Linux Enterprise HA clusters.
-
-%package -n grains-formula
-Summary:        Salt state for managing grains
-License:        Apache-2.0
-Requires:       %{name}-common
-
-%description -n grains-formula
-Salt state for managing grains.
 
 %package -n os_update-formula
 Summary:        Salt states for managing os-update
@@ -121,38 +169,6 @@ Requires:       %{name}-common
 %description -n rebootmgr-formula
 Salt states for managing rebootmgr.
 
-%package -n zypper-formula
-Summary:        Salt states for managing zypper
-License:        Apache-2.0
-Requires:       %{name}-common
-
-%description -n zypper-formula
-Salt states for configuring packages, repositories, and zypper itself.
-
-%package -n lock-formula
-Summary:        Salt state module for managing lockfiles
-License:        GPL-3.0-or-later
-Requires:       %{name}-common
-
-%description -n lock-formula
-Salt state module allowing you to place a lock file prior to other states in order to prevent simultaneous executions.
-
-%package -n juniper_junos-formula
-Summary:        Salt states for managing Junos
-License:        GPL-3.0-or-later
-Requires:       %{name}-common
-
-%description -n juniper_junos-formula
-Salt states for managing Juniper Junos based network devices using pillars.
-
-%package -n gitea-formula
-Summary:        Salt states for managing Gitea
-License:        GPL-3.0-or-later
-Requires:       %{name}-common
-
-%description -n gitea-formula
-Salt states for managing Gitea.
-
 %package -n redis-formula
 Summary:        Salt states for managing Redis
 License:        GPL-3.0-or-later
@@ -169,37 +185,21 @@ Requires:       %{name}-common
 %description -n redmine-formula
 Salt states for managing Redmine.
 
-%package -n jenkins-formula
-Summary:        Salt states for managing Jenkins
+%package -n suse_ha-formula
+Summary:        Salt states for managing SLE HA clusters
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
 
-%description -n jenkins-formula
-Salt states for managing Jenkins Controller and Agent servers
+%description -n suse_ha-formula
+Salt states for managing SUSE Linux Enterprise HA clusters.
 
-%package -n multipath-formula
-Summary:        Salt states for managing multipath
-License:        GPL-3.0-or-later
+%package -n zypper-formula
+Summary:        Salt states for managing zypper
+License:        Apache-2.0
 Requires:       %{name}-common
 
-%description -n multipath-formula
-Salt states for installing multipath-tools and managing multipath/multipathd
-
-%package -n bootloader-formula
-Summary:        Salt states for managing the bootloader
-License:        GPL-3.0-or-later
-Requires:       %{name}-common
-
-%description -n bootloader-formula
-Salt states for managing the bootloader setup and GRUB configuration.
-
-%package -n network-formula
-Summary:        Salt states for managing the network
-License:        GPL-3.0-or-later
-Requires:       %{name}-common
-
-%description -n network-formula
-Salt states for managing the network configuration using backends like Wicked.
+%description -n zypper-formula
+Salt states for configuring packages, repositories, and zypper itself.
 
 %prep
 mv %{_sourcedir}/salt-formulas-%{version}/* .
@@ -291,40 +291,40 @@ done
 %dir %{sdir}
 %dir %{sdir}/_{modules,states}
 
+%files -n bootloader-formula -f bootloader.files
+
+%files -n gitea-formula -f gitea.files
+
+%files -n grains-formula -f grains.files
+
 %files -n infrastructure-formula -f infrastructure.files
+
+%files -n jenkins-formula -f jenkins.files
+
+%files -n juniper_junos-formula -f juniper_junos.files
 
 %files -n libvirt-formula -f libvirt.files
 
+%files -n lock-formula -f lock.files
+
 %files -n lunmap-formula -f lunmap.files
 
+%files -n multipath-formula -f multipath.files
+
+%files -n network-formula -f network.files
+
 %files -n orchestra-formula -f orchestra.files
-
-%files -n suse_ha-formula -f suse_ha.files
-
-%files -n grains-formula -f grains.files
 
 %files -n os_update-formula -f os_update.files
 
 %files -n rebootmgr-formula -f rebootmgr.files
 
-%files -n zypper-formula -f zypper.files
-
-%files -n lock-formula -f lock.files
-
-%files -n juniper_junos-formula -f juniper_junos.files
-
-%files -n gitea-formula -f gitea.files
-
 %files -n redis-formula -f redis.files
 
 %files -n redmine-formula -f redmine.files
 
-%files -n jenkins-formula -f jenkins.files
+%files -n suse_ha-formula -f suse_ha.files
 
-%files -n multipath-formula -f multipath.files
-
-%files -n bootloader-formula -f bootloader.files
-
-%files -n network-formula -f network.files
+%files -n zypper-formula -f zypper.files
 
 %changelog
