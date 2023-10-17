@@ -48,7 +48,7 @@ import yaml
 if not Path.is_dir(Path('packaging')):
     abort('Please call this program from the repository root')
 
-directories = Path('.').glob('*{}/'.format(pattern))
+directories = sorted(Path('.').glob('*{}/'.format(pattern)))
 
 formulas = {}
 for directory in directories:
