@@ -1,0 +1,5 @@
+---
+summary:
+  Salt states for managing TAYGA
+description:
+  Salt states for managing the TAYGA NAT64 daemon

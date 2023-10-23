@@ -1,0 +1,12 @@
+tayga:
+  # Mandatory settings (if not set, the shown default will be written)
+  tun-device: nat64
+
+  # Optional settings (if not set, the lines will be omitted)
+  ipv4-addr: 192.168.255.1
+  ipv6-addr: 2001:db8:1::2
+  prefix: 64:ff9b::/96
+  dynamic-pool: 192.168.255.0/24
+  maps:
+    192.168.255.10: 2001:db8:1::10
+    192.168.255.15: 2001:db8:1::a
