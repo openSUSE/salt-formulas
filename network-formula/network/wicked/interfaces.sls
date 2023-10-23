@@ -85,18 +85,26 @@ include:
 {%- endfor %}
 
 {%- if ifcfg_data %}
+
+{%- set interface_files = {} %}
+{%- for interface in ifcfg_data.keys() %}
+{%- set file = base ~ '/ifcfg-' ~ interface %}
+{%- if salt['file.file_exists'](file) %}
+{%- do interface_files.update({interface: file}) %}
+{%- endif %}
+{%- endfor %} {#- close interface loop #}
+
+{%- if interface_files %}
 network_wicked_ifcfg_backup:
   file.copy:
     - names:
-      {%- for interface in ifcfg_data.keys() %}
-      {%- set file = base ~ '/ifcfg-' ~ interface %}
-      {%- if salt['file.file_exists'](file) %}
+      {%- for interface, file in interface_files.items() %}
       - {{ base_backup }}/ifcfg-{{ interface }}:
         - source: {{ file }}
-      {%- endif %}
       {%- endfor %}
     - require:
       - file: network_wicked_backup_directory
+{%- endif %} {#- close interface_files check #}
 
 network_wicked_ifcfg_settings:
   file.managed:
