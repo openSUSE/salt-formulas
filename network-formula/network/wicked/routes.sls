@@ -44,7 +44,8 @@ network_wicked_routes:
       {%- set route = 'default' %}
       {%- endif %}
       {%- do shell_routes.append(route ~ '_' ~ config.get('gateway', '')) %}
-        -  {{ route }} {{ config.get('gateway', '-') }} {{ config.get('netmask', '-') }} {{ config.get('interface', '-') }} {{ ' '.join(config.get('options', [])) }}
+      {%- set options = config.get('options', []) %}
+        - '{{ route }} {{ config.get('gateway', '-') }} {{ config.get('netmask', '-') }} {{ config.get('interface', '-') }}{{ ' ' ~ ' '.join(options) if options else '' }}'
       {%- endfor %}
     - mode: '0640'
 
