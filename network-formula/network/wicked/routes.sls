@@ -24,11 +24,14 @@ include:
 
 {%- set file = base ~ '/routes' %}
 {%- if salt['file.file_exists'](file) %}
+{%- set backup = True %}
 network_wicked_routes_backup:
   file.copy:
     - names:
       - {{ base_backup }}/routes:
         - source: {{ file }}
+{%- else %}
+{%- set backup = False %}
 {%- endif %}
 
 {%- if routes %}
@@ -61,7 +64,9 @@ network_wicked_routes_reload:
     - require:
       - file: network_wicked_script
       - file: network_wicked_script_links
-      - file: network_wicked_ifcfg_backup
+      {%- if backup %}
+      - file: network_wicked_routes_backup
+      {%- endif %}
       - file: network_wicked_ifcfg_settings
     - onchanges:
       - file: network_wicked_routes
