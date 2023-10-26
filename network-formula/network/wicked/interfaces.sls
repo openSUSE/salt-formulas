@@ -125,8 +125,10 @@ network_wicked_ifcfg_settings:
           {%- endfor %}
       {%- endfor %}
     - mode: '0640'
+    {%- if interface_files %}
     - require:
       - file: network_wicked_ifcfg_backup
+    {%- endif %}
 {%- endif %}
 
 {%- if startmode_ifcfg['auto'] or startmode_ifcfg['off'] %}
@@ -150,6 +152,8 @@ network_wicked_interfaces:
       {%- endfor %}
     - require:
       - file: network_wicked_script
+      {%- if interface_files %}
       - file: network_wicked_ifcfg_backup
+      {%- endif %}
       - file: network_wicked_ifcfg_settings
 {%- endif %}
