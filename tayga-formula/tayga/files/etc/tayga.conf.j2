@@ -1,0 +1,29 @@
+{{ pillar.get('managed_by_salt_formula', '# Managed by the TAYGA formula') }}
+
+{#- SUSE default settings #}
+data-dir /var/lib/tayga
+
+{#- Mandatory settings #}
+tun-device {{ tayga.get('tun-device', 'nat64') }}
+
+{#- Optional settings #}
+{%- if 'ipv4-addr' in tayga %}
+ipv4-addr {{ tayga['ipv4-addr'] }}
+{%- endif %}
+{%- if 'ipv6-addr' in tayga %}
+ipv6-addr {{ tayga['ipv6-addr'] }}
+{%- endif %}
+
+{%- if 'prefix' in tayga %}
+prefix {{ tayga['prefix'] }}
+{%- endif %}
+
+{%- if 'dynamic-pool' in tayga %}
+dynamic-pool {{ tayga['dynamic-pool'] }}
+{%- endif %}
+
+{%- if 'maps' in tayga and tayga['maps'] is mapping %}
+{%- for map_from, map_to in tayga['maps'].items() %}
+map {{ map_from }} {{ map_to }}
+{%- endfor %}
+{%- endif %}
