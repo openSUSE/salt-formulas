@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'network/wicked/map.jinja' import base, base_backup, interfaces, script -%}
+{%- from 'network/wicked/map.jinja' import base, base_backup, interfaces, script, do_apply -%}
 {%- set ifcfg_data = {} %}
 {%- set enslaved = [] %}
 {%- set startmode_ifcfg = {'auto': [], 'off': []} %}
@@ -131,7 +131,7 @@ network_wicked_ifcfg_settings:
     {%- endif %}
 {%- endif %}
 
-{%- if startmode_ifcfg['auto'] or startmode_ifcfg['off'] %}
+{%- if do_apply and ( startmode_ifcfg['auto'] or startmode_ifcfg['off'] ) %}
 network_wicked_interfaces:
   cmd.run:
     - names:

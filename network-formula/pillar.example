@@ -1,4 +1,9 @@
 network:
+  control:
+    # by default, changes will be applied after configuration files have been written
+    # this can be set to False if it's desired for no reload operations to be performed
+    apply: True
+
   # settings written into /etc/sysconfig/network/config
   config:
     # keys/values are written as-is, but keys are uppercased and booleans values are converted automatically.
