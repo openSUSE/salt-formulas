@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'network/wicked/map.jinja' import base, config -%}
+{%- from 'network/wicked/map.jinja' import base, config, do_apply -%}
 
 network_wicked_config_header:
   file.prepend:
@@ -44,9 +44,11 @@ network_wicked_config:
     - require:
       - file: network_wicked_config_header
 
+{%- if do_apply %}
 network_wicked_netconfig_update:
   cmd.run:
     - name: netconfig update
     - onchanges:
       - file: network_wicked_config
+{%- endif %} {#- close do_apply check #}
 {%- endif %}

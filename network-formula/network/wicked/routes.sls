@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'network/wicked/map.jinja' import base, base_backup, routes, script -%}
+{%- from 'network/wicked/map.jinja' import base, base_backup, routes, script, do_apply -%}
 
 include:
   - .common
@@ -52,6 +52,7 @@ network_wicked_routes:
       {%- endfor %}
     - mode: '0640'
 
+{%- if do_apply %}
 network_wicked_routes_reload:
   cmd.run:
     - name: {{ script }}routes
@@ -70,4 +71,5 @@ network_wicked_routes_reload:
       - file: network_wicked_ifcfg_settings
     - onchanges:
       - file: network_wicked_routes
+{%- endif %} {#- close do_apply check #}
 {%- endif %}
