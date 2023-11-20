@@ -29,6 +29,7 @@ rebootmgr_config:
         {%- for option in options %}
         {{ option }}: '"{{ config[option] }}"'
         {%- endfor %}
+    - ignore_if_missing: {{ opts['test'] }}
     - require:
       - pkg: rebootmgr_package
 
