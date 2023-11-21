@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        0.9.1
+Version:        1.0
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -44,6 +44,7 @@ Requires:       rebootmgr-formula
 Requires:       redis-formula
 Requires:       redmine-formula
 Requires:       suse_ha-formula
+Requires:       tayga-formula
 Requires:       zypper-formula
 BuildArch:      noarch
 
@@ -193,6 +194,14 @@ Requires:       %{name}-common
 %description -n suse_ha-formula
 Salt states for managing SUSE Linux Enterprise HA clusters.
 
+%package -n tayga-formula
+Summary:        Salt states for managing TAYGA
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n tayga-formula
+Salt states for managing the TAYGA NAT64 daemon
+
 %package -n zypper-formula
 Summary:        Salt states for managing zypper
 License:        Apache-2.0
@@ -324,6 +333,8 @@ done
 %files -n redmine-formula -f redmine.files
 
 %files -n suse_ha-formula -f suse_ha.files
+
+%files -n tayga-formula -f tayga.files
 
 %files -n zypper-formula -f zypper.files
 
