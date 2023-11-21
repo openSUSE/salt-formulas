@@ -24,3 +24,13 @@ libvirt:
     tcp: true
     # admin -> libvirtd-admin.socket, ro -> libvirtd-ro.socket
     # libvirtd -> libvirtd.socket (will not get 'libvirtd-' prepended, unlike the other examples)
+
+  # contrary the examples above, the following does not reflect the formula defaults.
+  # everything under "guests" will be set in /etc/sysconfig/libvirt-guests - except for "enable", which defines whether the service should be enabled.
+  guests:
+    # "enable" is true by default - set to "false" if libvirt-guests should be disabled
+    enable: true
+    on_boot: ignore
+    on_shutdown: shutdown
+    parallel_shutdown: 2
+    start_delay: 5
