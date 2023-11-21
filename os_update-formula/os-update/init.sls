@@ -48,6 +48,11 @@ os-update_config_values:
       - pkg: os-update_package
       - file: os-update_config_file
 
+os-update_config_header:
+  file.prepend:
+    - name: /etc/os-update.conf
+    - text: {{ pillar.get('managed_by_salt_formula', '# Managed by the os_update formula') | yaml_encode }}
+
 {%- elif grains.osfullname == 'openSUSE Tumbleweed' %}
 os-update_config_file:
   file.absent:
@@ -59,10 +64,11 @@ os-update_timer_unit:
   file.managed:
     - name: /etc/systemd/system/os-update.timer.d/override.conf
     - makedirs: True
-    - contents: |
-        [Timer]
-        OnCalendar=
-        OnCalendar={{ config.time }}
+    - contents:
+        - {{ pillar.get('managed_by_salt_formula', '# Managed by the os_update formula') | yaml_encode }}
+        - '[Timer]'
+        - 'OnCalendar='
+        - 'OnCalendar={{ config.time }}'
 {%- endif %}
 
 os-update_timer_service:
