@@ -16,11 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from './map.jinja' import options, config -%}
+{%- from './map.jinja' import options, config, os -%}
 
 rebootmgr_package:
   pkg.installed:
     - name: rebootmgr
+
+{%- if 'rebootmgr' in pillar %}
+{%- if os == 'openSUSE Tumbleweed' %}
+rebootmgr_config_file:
+  file.managed:
+    - name: /etc/rebootmgr.conf
+    - replace: false
+{%- endif %}
 
 rebootmgr_config:
   file.keyvalue:
@@ -29,8 +37,22 @@ rebootmgr_config:
         {%- for option in options %}
         {{ option }}: '"{{ config[option] }}"'
         {%- endfor %}
+    - ignore_if_missing: {{ opts['test'] }}
+    {%- if os == 'openSUSE Tumbleweed' %}
+    - append_if_not_found: true
+    {%- endif %}
     - require:
+      {%- if os == 'openSUSE Tumbleweed' %}
+      - file: rebootmgr_config_file
+      {%- else %}
       - pkg: rebootmgr_package
+      {%- endif %}
+
+{%- elif os == 'openSUSE Tumbleweed' %}
+rebootmgr_config_file:
+  file.absent:
+    - name: /etc/rebootmgr.conf
+{%- endif %}
 
 rebootmgr_service:
   service.running:

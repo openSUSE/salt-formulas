@@ -24,3 +24,4 @@ strategy: 'best-effort'
 
 {%- set config  = salt.pillar.get('rebootmgr', default=defaults, merge=True) -%}
 {%- set options = defaults.keys() -%}
+{%- set os = grains.get('osfullname') %}
