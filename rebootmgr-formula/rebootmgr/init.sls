@@ -30,6 +30,11 @@ rebootmgr_config_file:
     - replace: false
 {%- endif %}
 
+rebootmgr_config_header:
+  file.prepend:
+    - name: /etc/rebootmgr.conf
+    - text: {{ pillar.get('managed_by_salt_formula', '# Managed by the rebootmgr formula') | yaml_encode }}
+
 rebootmgr_config:
   file.keyvalue:
     - name: /etc/rebootmgr.conf
