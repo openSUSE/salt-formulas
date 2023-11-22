@@ -63,7 +63,9 @@ rebootmgr_service:
   service.running:
     - name: rebootmgr
     - enable: {{ config.get('enable', True) }}
+    {%- if 'rebootmgr' in pillar %}
     - watch:
       - file: rebootmgr_config
+    {%- endif %}
     - require:
       - pkg: rebootmgr_package
