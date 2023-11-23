@@ -14,5 +14,6 @@ os-update:
   restart_services: 'yes'
   ignore_services_from_restart:
     - dbus
+    - virtlockd
   services_triggering_reboot:
     - dbus
