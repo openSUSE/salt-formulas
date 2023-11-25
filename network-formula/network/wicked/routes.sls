@@ -68,7 +68,6 @@ network_wicked_routes_reload:
       {%- if backup %}
       - file: network_wicked_routes_backup
       {%- endif %}
-      - file: network_wicked_ifcfg_settings
     - onchanges:
       - file: network_wicked_routes
 {%- endif %} {#- close do_apply check #}
