@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 suse_ha_packages:
   pkg.installed:
     - pkgs:
-      - chrony
       - conntrack-tools
       - corosync
       - crmsh
