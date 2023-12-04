@@ -1,0 +1,33 @@
+rsync:
+
+  # global section in rsyncd.conf
+  # defaults below will be written as shown unless overwritten using the pillar
+  defaults:
+    address: '::'
+    gid: users
+    log format: '%h %o %f %l %b'
+    secrets file: /etc/rsyncd.secrets
+    transfer logging: true
+    use chroot: true
+
+  # module sections in rsyncd.conf
+  # no module sections will be written by default, the below is an example
+  modules:
+    mymodule:
+      path: /srv/data
+      comment: Example rsync push target
+      list: false
+      uid: geeko
+      gid: users
+      auth users: syncgeeko
+      read only: false
+      # lists are supported
+      hosts allow:
+        - 2001:db8::1/128
+        - 2001:db8:a::/64
+
+  # rsyncd.secrets file
+  # no users will be written by default, the below is an example
+  # data should be stored in an encrypted pillar; users can be referenced using "auth users" in modules
+  users:
+    syncgeeko: supersecretpassphrase
