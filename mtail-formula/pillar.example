@@ -1,0 +1,19 @@
+mtail:
+  sysconfig:
+    # startup parameters - if not set, the following defaults will apply
+    # these defaults are not the same as the ones shipped with the mtail package!
+    args:
+      logs: /var/log/syslog
+      logtostderr: true
+      port: 3903
+      progs: /etc/mtail
+      syslog_use_current_year: true
+
+  # which program files to install
+  # - custom programs can be provided in salt://files/mtail/, those will be attempted first
+  # - if no matching custom program is available, formula provided ones (salt://mtail/programs/) will be attempted
+  # - the .mtail suffix is implied
+  # - the mtail service will only be enabled if programs are listed in the pillar
+  # - by default, no programs will be installed - the following are the available formula provided ones
+  programs:
+    - postfix

@@ -1,0 +1,7 @@
+sysconfig:
+  args:
+    logs: /var/log/syslog
+    logtostderr: true
+    port: 3903
+    progs: /etc/mtail
+    syslog_use_current_year: true
