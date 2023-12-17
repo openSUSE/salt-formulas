@@ -133,6 +133,7 @@ salt_proxy_scripts:
   file.managed:
     - name: /usr/local/sbin/reset-proxy-containers.sh
     - source: salt://{{ slspath }}/files/usr/local/sbin/reset-proxy-containers.sh
+    - mode: '0750'
 
 {%- else %}
 salt_proxy_nw_autom_fail:
