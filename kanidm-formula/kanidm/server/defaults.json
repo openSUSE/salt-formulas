@@ -1,0 +1,13 @@
+{
+	"version": "2",
+	"bindaddress": "[::]:443",
+	"ldapbindaddress": "[::]:636",
+	"db_path": "/var/lib/private/kanidm/kanidm.db",
+	"tls_chain": "/etc/kanidm/chain.pem",
+	"tls_key": "/var/lib/private/kanidm/key.pem",
+	"log_level": "info",
+	"online_backup": {
+		"path": "/var/lib/private/kanidm/backups/",
+		"schedule": "00 22 * * *"
+	}
+}

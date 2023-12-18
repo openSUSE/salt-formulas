@@ -1,0 +1,53 @@
+"""
+Copyright (C) 2025-2026 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+
+This program is free software: you can redminetribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+from utils import salt
+import pytest
+
+@pytest.mark.parametrize(
+        'name, success', [
+            ('idm_admin', True),
+            ('boobaz', False),
+        ],
+)
+def test_kanim_client_local_login(host, name, success, idm_admin):
+    if name == 'idm_admin':
+        password = idm_admin
+    else:
+        password = 'garbage'
+    out, err, rc = salt(host, f'kanidm_client.local_login {name} {password}')
+    if success:
+        assert rc == 0
+    else:
+        assert rc == 1
+    assert out == success
+
+@pytest.mark.parametrize(
+        'name, displayname, success', [
+            ('testperson1', 'Test Person 1', True),
+            ('testperson1', 'Test Person 2', False),
+        ],
+)
+
+def test_kanim_client_person_create(host, idm_admin, name, displayname, success):
+    out, err, rc = salt(host, f'kanidm_client.person_account_create {name} "{displayname}"')
+    if success:
+        assert rc == 0
+        assert out == True
+    else:
+        assert rc == 0 ## TODO
+        assert out == False
