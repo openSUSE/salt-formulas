@@ -2,7 +2,7 @@
 # This creates a single async state.apply job for each given host.
 # Prevents congested jobs when targeting too many hosts. If that does not convince you, it makes it easier to look up results for a specific host.
 #
-# Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+# Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

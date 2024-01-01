@@ -1,6 +1,6 @@
 """
 Test suite for assessing the Jenkins Controller configuration results
-Copyright (C) 2023 Georg Pfuetzenreuter <georg.pfuetzenreuter@suse.com>
+Copyright (C) 2023-2024 Georg Pfuetzenreuter <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can jenkinstribute it and/or modify
 it under the terms of the GNU General Public License as published by

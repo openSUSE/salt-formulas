@@ -1,7 +1,7 @@
 #!/bin/sh
 # Sets up a `salt` wrapper with no Python deprecation warnings
 # This is a hack to ensure test suites assessing the stderr output of Salt produce consistent results
-# Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+# Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

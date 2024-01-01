@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Script to create a private GPG key for use with Salt
-# Copyright (C) 2023 SUSE LLC <ignacio.torres@suse.com>
+# Copyright (C) 2023-2024 SUSE LLC <ignacio.torres@suse.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
