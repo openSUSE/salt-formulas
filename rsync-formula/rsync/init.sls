@@ -1,6 +1,6 @@
 {#-
 Salt state file for managing rsync
-Copyright (C) 2023 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+Copyright (C) 2023-2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 Copyright (C) 2023 SUSE LLC
 
 This program is free software: you can redistribute it and/or modify

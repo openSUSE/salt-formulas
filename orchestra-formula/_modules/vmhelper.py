@@ -1,6 +1,6 @@
 """
 Salt execution module for fetching LUN information related to virtual machines
-Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 """
 Test suite for assessing the Redmine formula configuration results
-Copyright (C) 2023 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+Copyright (C) 2023-2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redminetribute it and/or modify
 it under the terms of the GNU General Public License as published by

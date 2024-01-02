@@ -1,6 +1,6 @@
 {#-
 Salt state file for managing Juniper Junos based network switches
-Copyright (C) 2023 SUSE LLC
+Copyright (C) 2023-2024 SUSE LLC
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

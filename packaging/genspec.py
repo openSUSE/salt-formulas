@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # Tool to generate an infrastructure-formulas.spec file
-# Copyright (C) 2023 Georg Pfuetzenreuter <mail+rpm@georg-pfuetzenreuter.net>
+# Copyright (C) 2023-2024 Georg Pfuetzenreuter <mail+rpm@georg-pfuetzenreuter.net>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
