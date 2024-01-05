@@ -63,6 +63,22 @@ suse_ha:
     # native Corosync only requires the nodeid for IPv6 based operation - this formula always requires it
     nodeid: 1
 
+  # the management settings will be written to the cluster options or the resource defaults
+  # for compatibility reasons, the keys can use underscores in place of hyphens
+  management:
+    # the following are not set by default, and will be removed if configured but not defined in the pillar
+    no-quorum-policy: stop
+    allow-migrate: true
+    batch-limit: 30
+    migration-limit: 10
+
+    # if fencing and STONITH are enabled, this will default to true, otherwise to false
+    stonith-enabled: true
+
+    # the following are not set by default and will only be considered if fencing and STONITH are enabled
+    migration-threshold: 2
+    failure-timeout: 60s
+
   multicast:
     # configure the bind address in a node-specific pillar and have it merged
     bind_address: '192.168.121.55'

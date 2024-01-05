@@ -68,11 +68,19 @@ ha_resource_start_{{ resource }}:
        - cmd: ha_resource_update_{{ resource }}
 {%- endmacro %}
 
-{%- macro property(option, value) -%}
+{%- macro property(option, value=None) -%}
+{%- if value is none %}
+{%- set value = management.get(option, management.get(option.replace('-', '_'))) %}
+{%- endif %}
 ha_property_{{ option }}:
   cmd.run:
+{%- if value is none %}
+    - name: 'crm attribute -D -n {{ option }}'
+    - onlyif: 'crm_attribute -G -n {{ option }}'
+{%- else %}
     - name: 'crm configure property {{ option }}={{ value }}'
     - unless: 'test $(crm configure get_property {{ option }}) == {{ value }}'
+{%- endif %}
     - require:
       - pacemaker.service
 {%- endmacro -%}
