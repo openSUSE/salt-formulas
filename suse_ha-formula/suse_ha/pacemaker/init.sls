@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'suse_ha/map.jinja' import cluster, fencing, management, sysconfig -%}
+{%- from 'suse_ha/map.jinja' import cluster, fencing, sysconfig -%}
 {%- from 'suse_ha/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
@@ -40,9 +40,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {% endif %}
 
 {%- if fencing.enable and fencing['stonith_enabled'], False == True %}
-{%- if 'no_quorum_policy' in management %}
-{{ property('no-quorum-policy', management.no_quorum_policy) }}
-{%- endif %}
+{{ property('no-quorum-policy') }}
 
 {#-
 optional resource meta configuration
@@ -53,6 +51,8 @@ https://clusterlabs.org/pacemaker/doc/deprecated/en-US/Pacemaker/1.1/html/Pacema
 
 {%- endif -%}
 
+{{ property('batch-limit') }}
+{{ property('migration-limit') }}
 {{ rsc_default('allow-migrate') }}
 
 {#-
