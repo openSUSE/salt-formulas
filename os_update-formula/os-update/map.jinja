@@ -38,3 +38,4 @@ services_triggering_reboot:
 
 {%- set config  = salt.pillar.get('os-update', default=defaults, merge=True, merge_nested_lists=False) -%}
 {%- set options = defaults_config.keys() -%}
+{%- set config_sm = salt.pillar.get('status-mail', {}) -%}

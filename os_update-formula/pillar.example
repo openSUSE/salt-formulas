@@ -17,3 +17,16 @@ os-update:
     - virtlockd
   services_triggering_reboot:
     - dbus
+
+status-mail:
+  # options written to /etc/default/systemd-status-mail
+  # the packaged defaults apply, the following are just examples
+  config:
+    address: root@localhost
+    from: root@example
+    mailer: sendmail
+    # see https://github.com/openSUSE/os-update/blob/main/src/systemd-status-mail.8.md#configuration-options
+  # the following lists systemd services systemd-status-mail should be enabled for
+  # none by default
+  services:
+    - os-update
