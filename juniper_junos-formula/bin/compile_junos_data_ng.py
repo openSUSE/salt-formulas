@@ -23,6 +23,7 @@ import logging
 import pathlib
 import sys
 import yaml
+import re
 
 log = logging.getLogger(__name__)
 log_choices_converter = {
@@ -243,6 +244,19 @@ def generate(data, devices):
                 elif not v_config_ids:
                     log.debug(f'Purging VLAN ID\'s from interface {interface}')
                     del small_pillar[device]['interfaces'][interface]['units'][0]['vlan']['ids']
+                elif v_config_ids:
+                    found_vids = []
+                    for vid in v_config_ids:
+                        if isinstance(vid, int):
+                            found_vids.append(vid)
+                        elif match := re.match('^vlan_?(\d+)$', vid):
+                            found_vids.append(int(match.group(1)))
+                        elif '-' in vid or re.match('^\w+$', vid):
+                            continue
+                        else:
+                            log.error(f'Unable to handle {device} -> {interface} -> {vid}')
+                    new_vids = list(set(found_vids))
+                    small_pillar[device]['interfaces'][interface]['units'][0]['vlan']['ids'] = new_vids
                 if not any([k in u_config for k in ['description', 'inet', 'inet6', 'vlan']]):
                     log.debug(f'Purging unit from interface {interface}')
                     del small_pillar[device]['interfaces'][interface]['units']
