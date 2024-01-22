@@ -51,7 +51,10 @@ def gather(devices):
     access = []
 
     for switch, config in devices.get('switches', {}).items():
-        role = config.get('role')
+        if isinstance(config, dict):
+            role = config.get('role')
+        else:
+            role = 'access'
         if role == 'core':
             core.append(switch)
         elif role == 'aggregation':
