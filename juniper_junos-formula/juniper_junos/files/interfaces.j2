@@ -106,7 +106,7 @@ delete interfaces {{ interface }}
 {%- set mclo = ['mc-ae-id', 'redundancy-group', 'chassis-id', 'status-control', 'init-delay-time'] -%}
 
 {%- for option in mclo %}
-{%- if option in mclc and mclc[option] %}
+{%- if option in mclc %}
 {{ setifaemc }} {{ option }} {{ mclc[option] }}
 {%- endif %}
 {%- endfor %}
