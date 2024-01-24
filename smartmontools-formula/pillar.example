@@ -1,0 +1,8 @@
+smartmontools:
+  smartd:
+    # configuration written to /etc/smartd.conf
+    # by default, the following defaults, originating from the SUSE packaged defaults,
+    # will be applied. defining the "config" pillar will omit the defaults!
+    config:
+      - DEFAULT -d removable -s (S/../.././03|L/../(01|02|03|04|05|06|07)/7/01)
+      - DEVICESCAN
