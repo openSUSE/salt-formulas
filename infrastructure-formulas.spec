@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        1.3
+Version:        1.4
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -44,6 +44,7 @@ Requires:       rebootmgr-formula
 Requires:       redis-formula
 Requires:       redmine-formula
 Requires:       rsync-formula
+Requires:       status_mail-formula
 Requires:       suse_ha-formula
 Requires:       tayga-formula
 Requires:       zypper-formula
@@ -195,6 +196,14 @@ Requires:       %{name}-common
 %description -n rsync-formula
 Salt states for managing rsyncd.
 
+%package -n status_mail-formula
+Summary:        Salt states for managing systemd-status-mail
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n status_mail-formula
+Salt states for managing systemd-status-mail.
+
 %package -n suse_ha-formula
 Summary:        Salt states for managing SLE HA clusters
 License:        GPL-3.0-or-later
@@ -342,6 +351,8 @@ done
 %files -n redmine-formula -f redmine.files
 
 %files -n rsync-formula -f rsync.files
+
+%files -n status_mail-formula -f status_mail.files
 
 %files -n suse_ha-formula -f suse_ha.files
 
