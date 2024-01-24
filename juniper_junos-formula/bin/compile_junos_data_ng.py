@@ -143,9 +143,8 @@ def generate(data, devices):
                         if not 'ae' in small_if:
                             small_if['ae'] = {}
 
-                        small_ae = small_if['ae']
-
                         for ae in ['lacp', 'mc']:
+                            small_ae = small_if['ae']
                             if ae in ae_config:
                                 log.debug(f'Processing {ae} on interface {interface}')
                                 if not ae in small_ae:
@@ -250,7 +249,10 @@ def generate(data, devices):
                 elif v_config_ids:
                     found_vids = []
                     for vid in v_config_ids:
-                        if isinstance(vid, int):
+                        if vid == 'all':
+                            found_vids = [vid]
+                            break
+                        elif isinstance(vid, int):
                             found_vids.append(vid)
                         elif match := re.match('^vlan_?(\d+)$', vid):
                             found_vids.append(int(match.group(1)))
