@@ -17,6 +17,9 @@ libvirt:
     lock_manager: lockd
     set_process_name: 1
 
+  # additionally, the keys "virtlockd" and "virtlogd" are supported to write their respective .conf files
+  # those do not have any defaults
+
   # this defines which systemd sockets to enable (true) or disable (false)
   # undefined sockets will not be changed (except tcp)
   sockets:
