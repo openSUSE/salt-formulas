@@ -1,3 +1,4 @@
+{{ pillar.get('managed_by_salt_formula', '# Managed by the libvirt formula') }}
 {%- for option, value in config.items() %}
 {%- if value is not number %}
 {%- set value = '"' ~ value ~ '"' %}

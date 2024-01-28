@@ -1,5 +1,6 @@
 {#-
 Salt state file for managing libvirt
+Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
@@ -18,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 {%- set libvirt_configs = ['network'] -%}
 {%- set libvirt_drivers = ['network', 'qemu', 'storage-disk', 'storage-mpath'] -%}
+{%- set libvirt_components = ['libvirt', 'libvirtd', 'qemu', 'qemu-lockd', 'virtlockd', 'virtlogd'] -%}
 {%- set libvirt_configpath = '/etc/libvirt/' -%}
 {%- from 'libvirt/map.jinja' import config -%}
 
@@ -39,7 +41,7 @@ libvirt_files:
     - template: jinja
     - source: salt://{{ slspath }}/files{{ libvirt_configpath }}config.jinja
     - names:
-      {%- for file in ['libvirt', 'libvirtd', 'qemu'] %}
+      {%- for file in libvirt_components %}
       - {{ libvirt_configpath }}{{ file ~ '.conf' }}:
         - context:
             config: {{ config.get(file, {}) }}
