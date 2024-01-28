@@ -1,5 +1,6 @@
 {#-
 Salt state file for managing multipath
+Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
@@ -27,11 +28,15 @@ multipath_config:
     - require:
       - pkg: multipath_packages
 
-multipath_service:
-  service.dead:
-    - name: multipathd.service
+multipath_service_reload:
+  module.run:
+    - name: service.reload
+    - m_name: multipathd
     - onchanges:
       - file: multipath_config
+    - onlyif:
+      - fun: service.status
+        name: multipathd
     - require:
       - pkg: multipath_packages
 

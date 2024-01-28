@@ -1,5 +1,6 @@
 {%- from 'multipath/macros.jinja' import device -%}
 {%- from 'multipath/map.jinja' import config -%}
+{{ pillar.get('managed_by_salt_formula', '# Managed by the multipath formula') }}
 
 {%- for section in config.keys() %}
 {%- if config[section] %}
