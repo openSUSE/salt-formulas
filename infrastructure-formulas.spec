@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        1.4
+Version:        1.5
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -33,6 +33,7 @@ Requires:       grains-formula
 Requires:       infrastructure-formula
 Requires:       jenkins-formula
 Requires:       juniper_junos-formula
+Requires:       kexec-formula
 Requires:       libvirt-formula
 Requires:       lock-formula
 Requires:       lunmap-formula
@@ -44,6 +45,7 @@ Requires:       rebootmgr-formula
 Requires:       redis-formula
 Requires:       redmine-formula
 Requires:       rsync-formula
+Requires:       smartmontools-formula
 Requires:       status_mail-formula
 Requires:       suse_ha-formula
 Requires:       tayga-formula
@@ -107,6 +109,14 @@ Requires:       %{name}-common
 
 %description -n juniper_junos-formula
 Salt states for managing Juniper Junos based network devices using pillars.
+
+%package -n kexec-formula
+Summary:        Salt states for managing Kexec
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n kexec-formula
+Salt states for managing Kexec using the kexec-load service
 
 %package -n libvirt-formula
 Summary:        Salt states for managing libvirt
@@ -195,6 +205,14 @@ Requires:       %{name}-common
 
 %description -n rsync-formula
 Salt states for managing rsyncd.
+
+%package -n smartmontools-formula
+Summary:        Salt states for managing smartmontools
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n smartmontools-formula
+Salt states for installing smartmontools and configuring smartd
 
 %package -n status_mail-formula
 Summary:        Salt states for managing systemd-status-mail
@@ -330,6 +348,8 @@ done
 
 %files -n juniper_junos-formula -f juniper_junos.files
 
+%files -n kexec-formula -f kexec.files
+
 %files -n libvirt-formula -f libvirt.files
 
 %files -n lock-formula -f lock.files
@@ -351,6 +371,8 @@ done
 %files -n redmine-formula -f redmine.files
 
 %files -n rsync-formula -f rsync.files
+
+%files -n smartmontools-formula -f smartmontools.files
 
 %files -n status_mail-formula -f status_mail.files
 
