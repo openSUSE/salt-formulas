@@ -27,9 +27,12 @@ kexec_service_enable:
         - pkg: kexec_package
 
 kexec_service_run:
-  service.running:
-    - name: kexec-load
-    - unless: kexec -S
+  module.run:
+    - name: service.start
+    - m_name: kexec-load
+    - unless:
+        - fun: sysfs.read
+          key: kernel/kexec_loaded
     - require:
         - pkg: kexec_package
         - service: kexec_service_enable
