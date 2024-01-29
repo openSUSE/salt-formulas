@@ -219,9 +219,10 @@ def generate(data, devices):
 
                         if not vlan in small_vlans:
                             small_vlans[vlan] = {
-                                    'description': v_description,
                                     'id': v_id
                                 }
+                            if v_description is not None:
+                                small_vlans[vlan]['description'] = v_description
 
                         for interface in d_members:
                             if interface in small_ignores:
