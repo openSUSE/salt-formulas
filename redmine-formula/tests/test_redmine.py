@@ -65,3 +65,4 @@ def test_redmine_config_file_permissions(host):
 
 def test_redmine_service(host):
     assert host.service('redmine').is_enabled
+    assert host.service('redmine-sidekiq').is_enabled
