@@ -51,7 +51,9 @@ redmine_file_{{ file }}:
 
 redmine_service:
   service.running:
-    - name: redmine
+    - names:
+      - redmine
+      - redmine-sidekiq
     - enable: True
     - require:
       - pkg: redmine_packages
