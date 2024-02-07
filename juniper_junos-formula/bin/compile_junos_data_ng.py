@@ -254,6 +254,8 @@ def generate(data, devices):
                 elif not v_config_ids:
                     log.debug(f'Purging VLAN ID\'s from interface {interface}')
                     del small_pillar[device]['interfaces'][interface]['units'][0]['vlan']['ids']
+                    if len(small_pillar[device]['interfaces'][interface]['units'][0]['vlan'].keys()) == 1:
+                        del small_pillar[device]['interfaces'][interface]['units'][0]['vlan']
                 elif v_config_ids:
                     found_vids = []
                     for vid in v_config_ids:
