@@ -103,6 +103,7 @@ def generate(data, devices):
 
     def compile_devices():
         for device, d_config in data.get('devices', {}).items():
+            log.debug(f'Processing device {device}')
 
             if device in small_pillar:
                 log.debug(f'Processing device {device}')
@@ -134,6 +135,7 @@ def generate(data, devices):
                         port_groups[group][device] = []
 
                     port_groups[group][device].append(interface)
+                    log.debug(f'Appended interface {interface} to port group {group} -> device {device}')
 
                 if 'ae' in i_config:
                     if interface.startswith('ae'):
@@ -196,6 +198,8 @@ def generate(data, devices):
                             case ipaddress.IPv6Address:
                                 small_u0['inet6']['addresses'].append(address)
 
+            log.debug(f'port groups after {device}: {port_groups}')
+
     def compile_vlans():
         for vlan, vlan_config in data.get('vlans', {}).items():
             v_id = vlan_config.get('id')
@@ -233,6 +237,9 @@ def generate(data, devices):
                             tagged = small_pillar[device]['interfaces'][interface]['units'][0]['vlan']['ids']
                             if v_id not in tagged:
                                 tagged.append(v_id)
+                else:
+                    # used to be warning, but very noisy after vlanify-ng
+                    log.debug(f'Group {group} is not in port_groups')
 
     def cleanup():
         for device, d_config in small_pillar.items():
