@@ -126,3 +126,18 @@ juniper_junos:
             - dns
             - ssh
   {%- endif %}
+
+  protocols:
+    iccp:
+      local-ip-addr: 192.168.1.1
+      peers:
+        192.168.1.2:
+          session-establishment-hold-time: 340
+          redundancy-group-id-list: 1
+          backup-liveness-detection:
+            backup-peer-ip: 192.168.1.3
+          liveness-detection:
+            version: automatic
+            minimum-interval: 5000
+            transmit-interval:
+              minimum-interval: 1000
