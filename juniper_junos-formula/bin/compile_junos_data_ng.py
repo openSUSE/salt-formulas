@@ -1,7 +1,7 @@
 #!/usr/bin/python3.11
 """
 Juniper Junos Salt pillar generator
-Copyright (C) 2023 SUSE LLC <georg.pfuetzenreuter@suse.com>
+Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -212,10 +212,6 @@ def generate(data, devices):
 
                 if group in port_groups:
                     for device, d_members in port_groups[group].items():
-                        #g_description = group_config.get('description')
-
-                        #if v_id in small_pillar[group]
-
                         small_device = small_pillar[device]
                         small_vlans = small_device['vlans']
                         small_ignores = small_device['ignore']['interfaces']
@@ -302,14 +298,9 @@ def main():
 
     log.info('ok')
 
-#with open('sample-input.yaml', 'r') as fh:
-#    data = yaml.safe_load(fh)
-
 if __name__ == '__main__':
     log = logging.getLogger()
     log.setLevel(log_choices_converter[args.log])
     log.addHandler(logging.StreamHandler(sys.stdout))
     log.debug(args)
-    #out = generate(data, {'switches': {'prg2-ibs-tor2-h02': {'role': 'access'}, 'FOO': {'role': 'access'}}})
-    #print(out)
     main()
