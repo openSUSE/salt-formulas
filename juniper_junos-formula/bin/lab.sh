@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-set -Ceux
+set -Ceu #x
 
 # Git repository to fetch vrnetlab from ; to-do -> extract the needed files instead of cloning the whole tree
 repository='https://github.com/tacerus/vrnetlab.git'
