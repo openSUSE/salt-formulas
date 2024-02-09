@@ -44,8 +44,9 @@ def test_apply(host, device, state, test):
         assert 'Configuration changed!\n' == stateout['comment']
         assert stateout['changes']['loaded_config']
     diffs_firewall = [
-            '-     any any;',
-            '+     any notice;',
+            '+           any notice;',
+            '+           authorization info;',
+            '+           interactive-commands any;',
             '+  vlans {',
             '+  chassis {',
             '+      cluster {',
@@ -68,6 +69,11 @@ def test_apply(host, device, state, test):
             '+                   members 1;'
         ]
     diffs_switch = [
+            '-    user \* {',
+            '-        any emergency;',
+            '\[edit system syslog file messages\]\n\+     interactive-commands any;',
+            '-    file interactive-commands {',
+            '-        interactive-commands any;',
             '-   default {',
             '-       vlan-id 1;',
             '\[edit protocols\]\n\+   iccp {',
@@ -90,11 +96,6 @@ def test_apply(host, device, state, test):
             '+   }',
         ]
     diffs_shared = [
-            '-    user \* {',
-            '-        any emergency;',
-            '+     interactive-commands any;',
-            '-    file interactive-commands {',
-            '-        interactive-commands any;',
             '+   ge-0/0/2 {',
             '+       description foo;',
             '+       mtu 9100;',
