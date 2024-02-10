@@ -28,6 +28,8 @@ def test_apply(host, device, state, test):
     """
     if state == 'firewall' and 'qfx' in device:
         pytest.skip('Skipping firewall test on switch')
+    if state == 'switch' and 'srx' in device:
+        pytest.skip('Skipping switch test on firewall')
     rout, rerr, rc = salt_apply(host, device, f'juniper_junos.{state}', test)
     assert not rerr
     stateout = rout[f'netconfig_|-junos_{state}_|-junos_{state}_|-managed']
@@ -42,8 +44,9 @@ def test_apply(host, device, state, test):
         assert 'Configuration changed!\n' == stateout['comment']
         assert stateout['changes']['loaded_config']
     diffs_firewall = [
-            '-     any any;',
-            '+     any notice;',
+            '+           any notice;',
+            '+           authorization info;',
+            '+           interactive-commands any;',
             '+  vlans {',
             '+  chassis {',
             '+      cluster {',
@@ -66,15 +69,33 @@ def test_apply(host, device, state, test):
             '+                   members 1;'
         ]
     diffs_switch = [
-            '-   default {',
-            '-       vlan-id 1;'
-        ]
-    diffs_shared = [
             '-    user \* {',
             '-        any emergency;',
-            '+     interactive-commands any;',
+            '\[edit system syslog file messages\]\n\+     interactive-commands any;',
             '-    file interactive-commands {',
             '-        interactive-commands any;',
+            '-   default {',
+            '-       vlan-id 1;',
+            '\[edit protocols\]\n\+   iccp {',
+            '+       local-ip-addr 192.168.1.1;',
+            '+       local-ip-addr 192.168.1.1;',
+            '+       peer 192.168.1.2 {',
+            '+           session-establishment-hold-time 340;',
+            '+           redundancy-group-id-list 1;',
+            '+           backup-liveness-detection {',
+            '+               backup-peer-ip 192.168.1.3;',
+            '+           }',
+            '+           liveness-detection {',
+            '+               version automatic;',
+            '+               minimum-interval 5000;',
+            '+               transmit-interval {',
+            '+                   minimum-interval 1000;',
+            '+               }',
+            '+           }',
+            '+       }',
+            '+   }',
+        ]
+    diffs_shared = [
             '+   ge-0/0/2 {',
             '+       description foo;',
             '+       mtu 9100;',

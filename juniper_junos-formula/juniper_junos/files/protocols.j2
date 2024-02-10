@@ -1,0 +1,60 @@
+{%- set protocols = salt['pillar.get']('juniper_junos:protocols', {}) -%}
+
+{%- for protocol, pconfig in protocols.items() %}
+{%- set setprotocol = 'set protocols ' ~ protocol %}
+
+{%- if protocol in ['router-advertisement', 'lldp', 'lldp-med'] %}
+
+{%- if 'interface' in pconfig %}
+{%- set pinterfaces = pconfig['interface'] %}
+{%- else %}
+{%- set pinterfaces = pconfig.get('interfaces', []) %}
+{%- endif %}
+
+{%- if pinterfaces is string %}
+{%- set pinterfaces = [pinterfaces] %}
+{%- endif %}
+
+{%- for pinterface in pinterfaces %}
+{{ setprotocol }} interface {{ pinterface }}
+{%- endfor %} {#- close interfaces loop #}
+
+{%- elif protocol == 'iccp' %}
+{%- for iccp_key, iccp_value in pconfig.items() %}
+{%- if iccp_value is string %}
+{{ setprotocol }} {{ iccp_key }} {{ iccp_value }}
+
+{%- elif iccp_key == 'peers' %}
+{%- for peer, peer_config in iccp_value.items() %}
+{%- set seticcpp =  setprotocol ~ ' peer ' ~ peer %}
+
+{%- for peer_key, peer_value in peer_config.items() %}
+{%- if peer_value is number or peer_value is string %}
+{{ seticcpp }} {{ peer_key }} {{ peer_value }}
+
+{%- elif peer_value is mapping %}
+{%- for peer_key_low, peer_value_low in peer_value.items() %}
+{%- set seticcplow = seticcpp ~ ' ' ~ peer_key ~ ' ' ~ peer_key_low %}
+
+{%- if peer_value_low is number or peer_value_low is string %}
+{{ seticcplow }} {{ peer_value_low }}
+
+{%- elif peer_value_low is mapping %}
+{%- for peer_key_very_low, peer_value_very_low in peer_value_low.items() %}
+{{ seticcplow }} {{ peer_key_very_low }} {{ peer_value_very_low }}
+{%- endfor %} {#- close very low peer_value loop #}
+
+{%- endif %} {#- close peer_value_low check #}
+{%- endfor %} {#- close low peer_value loop #}
+
+{%- endif %} {#- close peer_value check #}
+{%- endfor %} {#- close peer_config loop #}
+
+{%- endfor %} {#- close iccp peers (iccp_value) loop #}
+
+{%- endif %} {#- close iccp_key/value check #}
+{%- endfor %} {#- close pconfig loop #}
+
+{%- endif %} {#- close protocol check #}
+
+{%- endfor %} {#- close protocols loop #}
