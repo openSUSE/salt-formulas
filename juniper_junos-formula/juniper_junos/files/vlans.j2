@@ -1,9 +1,8 @@
 {#- FIXME: move these to context variables #}
 {%- set vlans = salt['pillar.get']('juniper_junos:vlans') -%}
-{%- set ignore = salt['pillar.get']('juniper_junos:ignore') -%}
 {%- set present_vlans = salt['susejunos.get_active_vlans']() -%}
 
-{%- set ignore_vlans = ignore.get('vlans', {}) %}
+{%- set ignore_vlans = salt['pillar.get']('juniper_junos:ignore', {}).get('vlans', {}) %}
 {%- set ignore_vlan_ids = ignore_vlans.get('ids', []) %}
 {%- set ignore_vlan_names = ignore_vlans.get('names', []) %}
 
