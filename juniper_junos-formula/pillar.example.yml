@@ -98,6 +98,9 @@ juniper_junos:
     vlan200:
       id: 200
       description: Baz
+    iccp:
+      id: 900
+      l3-interface: irb
 
   ignore:
     # these interface names will not be touched by the automation
