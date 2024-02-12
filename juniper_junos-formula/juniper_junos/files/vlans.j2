@@ -21,10 +21,14 @@ delete vlans {{ name }}
 
 {%- for vlan, vlconfig in vlans.items() %}
 {%- set vlid = vlconfig['id'] %}
+{%- set setvlan = 'set vlans ' ~ vlan %}
 {%- if vlid not in ignore_vlan_ids and vlan not in ignore_vlan_names %}
-set vlans {{ vlan }} vlan-id {{ vlid }}
+{{ setvlan }} vlan-id {{ vlid }}
 {%- if 'description' in vlconfig %}
-set vlans {{ vlan }} description "{{ vlconfig['description'] }}"
+{{ setvlan }} description "{{ vlconfig['description'] }}"
+{%- endif %}
+{%- if 'l3-interface' in vlconfig %}
+{{ setvlan }} l3-interface {{ vlconfig['l3-interface'] }}
 {%- endif %}
 {%- endif %}
 {%- endfor %}

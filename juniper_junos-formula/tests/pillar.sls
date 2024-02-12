@@ -27,6 +27,15 @@ juniper_junos:
     #      status-control: asdf
     #      init-delay-time: 300
 
+    irb:
+      # formula default MTU (9216) works in vQFX, but fails in vSRX (capped to 9192?)
+      mtu: 1500
+      units:
+        900:
+          inet:
+            addresses:
+              - 192.168.98.1/30
+
     # reth* interfaces will be counted to set the reth-count
     ge-0/0/2:
       description: foo
@@ -88,6 +97,7 @@ juniper_junos:
       id: 1
     vlan2:
       id: 2
+      l3-interface: irb.900
     vlan200:
       id: 200
       description: baz
