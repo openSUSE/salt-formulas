@@ -27,6 +27,40 @@ The test suite currently only validates whether the configuration is applied as 
 
 To run the test suite, a lab environment can be set up if the proprietary vSRX and vQFX images are provided in `/opt/images`.
 
+### Remote / using Docker
+
+This process is still a work in progress, the steps below still need to be simplified.
+The idea is to run the very resource heavy simulation devices on a powerful remote computer whilst executing the test suite from the local workstation out of the local development environment.
+
+#### Test dependencies
+
+On the local system:
+
+- Pytest + Testinfra
+
+On the remote system:
+
+- Docker
+- Libvirt + QEMU
+
+#### Test steps
+
+On the remote system:
+
+1. `./juniper_junos-formula/bin/lab.sh`
+2. `docker run --pull=always --name=dev0 -eSSH_KEY='<your public SSH key>' -p <port>:22 --rm -d --privileged registry.opensuse.org/isv/suseinfra/containers/next/containerfile/suseinfra/salt-development-heavy`
+3. `docker cp .devices dev0:/etc/`
+
+On the local system:
+
+4. `rsync --rsh='ssh -p<port>' -lr . geeko@<remote machine>:/srv/opensuse-salt-formulas`
+5. `ssh -p<port> geeko@<remote machine>`
+6. `sudo /srv/opensuse-salt-formulas/test/bootstrap-salt-roots-container.sh`
+7. `cd /etc`
+8. `sudo /usr/local/sbin/proxy_setup`
+
+### Local / using Vagrant
+
 #### Test dependencies
 
 - Docker
