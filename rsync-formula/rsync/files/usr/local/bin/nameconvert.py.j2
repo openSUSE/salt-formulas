@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+
+"""
+{{ pillar.get('managed_by_salt_formula', 'Managed by the rsync formula') }}
+
+Source: https://git.samba.org/?p=rsync.git;a=blob;f=support/nameconvert;h=ecfe28d9ba72c310c92c18cba79160905b69ab72;hb=HEAD
+Added further error handling and graceful exit, Georg Pfuetzenreuter <georg.pfuetzenreuter@suse.com>
+
+This implements a simple protocol to do user & group conversions between
+names & ids.  All input and output consists of simple strings with a
+terminating newline.
+
+The requests can be:
+
+  uid ID_NUM\n  ->  NAME\n
+  gid ID_NUM\n  ->  NAME\n
+  usr NAME\n    ->  ID_NUM\n
+  grp NAME\n    ->  ID_NUM\n
+
+An unknown ID_NUM or NAME results in an empty return value.
+"""
+
+import sys, argparse, pwd, grp
+
+def main():
+    for line in sys.stdin:
+        try:
+            req, arg = line.rstrip().split(' ', 1)
+        except:
+            req = None
+        try:
+            if req in ['uid', 'gid'] and not arg.isdigit():
+                ans = ''
+            elif req == 'uid':
+                ans = pwd.getpwuid(int(arg)).pw_name
+            elif req == 'gid':
+                ans = grp.getgrgid(int(arg)).gr_name
+            elif req == 'usr':
+                ans = pwd.getpwnam(arg).pw_uid
+            elif req == 'grp':
+                ans = grp.getgrnam(arg).gr_gid
+            else:
+                print('Invalid request', file=sys.stderr)
+                sys.exit(1)
+        except KeyError:
+            ans = ''
+        # for debugging :)
+        #with open('/dev/shm/nameconvert.out', 'a') as fh:
+        #    fh.write(f'{req} -> {arg} -> {ans}\n')
+        print(ans, flush=True)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Convert users & groups between names & numbers for an rsync daemon.')
+    args = parser.parse_args()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(2)

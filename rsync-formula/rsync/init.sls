@@ -70,3 +70,9 @@ rsyncd_service:
     - watch:
       - file: rsyncd_config
     {%- endif %}
+
+rsync_nameconvert:
+  file.managed:
+    - name: /usr/local/bin/nameconvert.py
+    - source: salt://rsync/files/usr/local/bin/nameconvert.py.j2
+    - template: jinja
