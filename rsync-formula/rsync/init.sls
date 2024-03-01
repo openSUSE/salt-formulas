@@ -74,5 +74,6 @@ rsyncd_service:
 rsync_nameconvert:
   file.managed:
     - name: /usr/local/bin/nameconvert.py
+    - mode: '0755'
     - source: salt://rsync/files/usr/local/bin/nameconvert.py.j2
     - template: jinja
