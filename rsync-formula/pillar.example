@@ -26,6 +26,11 @@ rsync:
         - 2001:db8::1/128
         - 2001:db8:a::/64
 
+      # the formula ships /usr/local/bin/nameconvert.py to allow for resolution of names to IDs using the password database
+      name converter: /usr/local/bin/nameconvert.py
+      # note that when using "name converter" together with one of the chroot options, "numeric ids" needs to be disabled - see rsyncd.conf(5) MODULE PARAMETERS -> name converter, numeric ids
+      numeric ids: false
+
   # rsyncd.secrets file
   # no users will be written by default, the below is an example
   # data should be stored in an encrypted pillar; users can be referenced using "auth users" in modules
