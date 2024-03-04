@@ -1,0 +1,9 @@
+{%- set so = salt['pillar.get']('juniper_junos:switch-options', {}) -%}
+
+{#- todo: add delete statements -#}
+
+{%- set setso = 'set switch-options' -%}
+
+{%- if 'service-id' in so %}
+{{ setso }} service-id {{ so['service-id'] }}
+{%- endif %}
