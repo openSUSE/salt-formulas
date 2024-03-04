@@ -1,0 +1,15 @@
+{%- set mc = salt['pillar.get']('juniper_junos:multi-chassis', {}) -%}
+{%- set mcl = mc.get('mc-lag', {}) -%}
+{%- set mcp = mc.get('multi-chassis-protection', {}) -%}
+
+{#- todo: add delete statements -#}
+
+{%- set setmc = 'set multi-chassis' -%}
+
+{%- if 'consistency-check' in mcl and 'comparison-delay-time' in mcl['consistency-check'] %}
+{{ setmc }} mc-lag consistency-check comparison-delay-time {{ mcl['consistency-check']['comparison-delay-time'] }}
+{%- endif %}
+
+{%- if 'name' in mcp and 'interface' in mcp %}
+{{ setmc }} multi-chassis-protection {{ mcp['name'] }} interface {{ mcp['interface'] }}
+{%- endif %}
