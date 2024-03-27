@@ -30,7 +30,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set domain = grains['domain'] -%}
 {%- endif %}
 {%- set myid = grains['id'] -%}
+{%- if 'virt_cluster' in grains %}
 {%- set cluster = grains['virt_cluster'].replace('-bare','') -%}
+{%- else %}
+{%- set cluster = pillar.get('cluster') %}
+{%- endif %}
 {%- if not 'domains' in lowpillar -%}
 {%- do salt.log.error('Incomplete orchestration pillar - verify whether the orchestrator role is assigned.') -%}
 {%- elif not domain in lowpillar['domains'] -%}

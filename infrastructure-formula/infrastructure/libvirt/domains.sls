@@ -26,7 +26,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- else -%}
 {%- do salt.log.debug('libvirt.domains: running non-orchestrated') -%}
 {%- set domain = grains['domain'] -%}
+{%- if 'virt_cluster' in grains %}
 {%- set cluster = grains['virt_cluster'].replace('-bare','') -%}
+{%- else %}
+{%- set cluster = pillar.get('cluster') %}
+{%- endif %}
 {%- set lowpillar = salt['pillar.get']('infrastructure') -%}
 {%- endif -%} {#- close do_vd check -#}
 {%- if not 'domains' in lowpillar -%}
