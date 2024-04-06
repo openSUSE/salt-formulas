@@ -1,0 +1,7 @@
+---
+summary:
+  Salt states for managing SUSE backup scripts
+description:
+  Salt states for installing and configuring the SUSE backup scripts for MySQL and PostgreSQL.
+require:
+  - sysconfig
