@@ -24,7 +24,6 @@ suse_ha_packages:
       - conntrack-tools
       - corosync
       - crmsh
-      - ctdb
       - fence-agents
       - ldirectord
       - pacemaker
