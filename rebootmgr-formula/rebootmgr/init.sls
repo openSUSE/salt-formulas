@@ -23,20 +23,42 @@ rebootmgr_package:
     - name: rebootmgr
 
 {%- if 'rebootmgr' in pillar %}
-rebootmgr_config:
+{%- if os == 'openSUSE Tumbleweed' %}
+rebootmgr_config_file:
   file.managed:
     - name: /etc/rebootmgr.conf
-    - contents:
-        - {{ pillar.get('managed_by_salt_formula', '# Managed by the rebootmgr formula') | yaml_encode }}
-        - '[rebootmgr]'
-        {%- for option in options %}
-        - '{{ option }}="{{ config[option] }}"'
-        {%- endfor %}
+    - replace: false
+{%- endif %}
+
+rebootmgr_config_header:
+  file.prepend:
+    - name: /etc/rebootmgr.conf
+    - text: {{ pillar.get('managed_by_salt_formula', '# Managed by the rebootmgr formula') | yaml_encode }}
     - require:
+      {%- if os == 'openSUSE Tumbleweed' %}
+      - file: rebootmgr_config_file
+      {%- else %}
       - pkg: rebootmgr_package
+      {%- endif %}
+
+rebootmgr_config:
+  ini.options_present:
+    - name: /etc/rebootmgr.conf
+    - sections:
+        rebootmgr:
+          {%- for option in options %}
+          {{ option }}: '"{{ config[option] }}"'
+          {%- endfor %}
+    - strict: true
+    - require:
+      {%- if os == 'openSUSE Tumbleweed' %}
+      - file: rebootmgr_config_file
+      {%- else %}
+      - pkg: rebootmgr_package
+      {%- endif %}
 
 {%- elif os == 'openSUSE Tumbleweed' %}
-rebootmgr_config:
+rebootmgr_config_file:
   file.absent:
     - name: /etc/rebootmgr.conf
 {%- endif %}
@@ -47,7 +69,7 @@ rebootmgr_service:
     - enable: {{ config.get('enable', True) }}
     {%- if 'rebootmgr' in pillar %}
     - watch:
-      - file: rebootmgr_config
+      - ini: rebootmgr_config
     {%- endif %}
     - require:
       - pkg: rebootmgr_package
