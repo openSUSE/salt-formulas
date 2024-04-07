@@ -1,0 +1,189 @@
+# vim:ts=2:sw=2:et:ai:sts=2:cinoptions=(0
+
+# Syslog parser for Postfix, based on the parsing rules from:
+# https://github.com/kumina/postfix_exporter
+
+# Source 1: https://github.com/anarcat/puppet-mtail
+# Source 2: https://github.com/google/mtail/blob/main/examples/postfix.mtail
+
+# Copyright 2023-2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+# Multi-instance support Copyright 2019 <ale@incal.net>.
+# Copyright 2017 Martín Ferrari <tincho@tincho.org>. All Rights Reserved.
+# Copyright 2017 Kumina, https://kumina.nl/
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+const DELIVERY_DELAY_LINE /\sdelays=(?P<bqm>[0-9\.]+)\/(?P<qm>[0-9\.]+)\/(?P<cs>[0-9\.]+)\/(?P<tx>[0-9\.]+),\s/
+const SMTP_TLS_LINE /(\S+) TLS connection established to \S+: (\S+) with cipher (\S+) \((\d+)\/(\d+) bits\)/
+const SMTPD_TLS_LINE /(\S+) TLS connection established from \S+: (\S+) with cipher (\S+) \((\d+)\/(\d+) bits\)/
+const QMGR_INSERT_LINE /:.*, size=(?P<size>\d+), nrcpt=(?P<nrcpt>\d+)/
+const QMGR_REMOVE_LINE /: removed$/
+
+def syslog {
+  /^(?P<rfc3339_date>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+[-+]\d{2}:\d{2})/ { #+ /\s(?P<hostname>[-\w\.\/]+)\s/ {
+    len($rfc3339_date) > 0 {
+      strptime($rfc3339_date, "2006-01-02T15:04:05.000000-07:00")
+    }
+    next
+  }
+}
+
+# Total number of messages processed by cleanup.
+counter postfix_cleanup_messages_processed_total by postfix_instance
+# Total number of messages rejected by cleanup.
+counter postfix_cleanup_messages_rejected_total by postfix_instance
+
+# Total number of messages removed from mail queues.
+counter postfix_qmgr_messages_removed_total by postfix_instance
+
+# Total number of SMTP attempted deliveries by status.
+counter postfix_smtp_deliveries by postfix_instance, status
+
+# Total number of outgoing TLS connections.
+counter postfix_smtp_tls_connections_total by postfix_instance, trust, protocol, cipher, secret_bits, algorithm_bits
+
+# Total number of incoming connections.
+counter postfix_smtpd_connects_total by postfix_instance
+
+# Total number of incoming disconnections.
+counter postfix_smtpd_disconnects_total by postfix_instance
+
+# Total number of connections for which forward-confirmed DNS cannot be resolved.
+counter postfix_smtpd_forward_confirmed_reverse_dns_errors_total by postfix_instance
+
+# Total number of connections lost.
+counter postfix_smtpd_connections_lost_total by postfix_instance, after_stage
+
+# Total number of messages processed.
+counter postfix_smtpd_messages_processed_total by postfix_instance
+
+# Total number of rejects (NOQUEUE and others).
+counter postfix_smtpd_messages_rejected_total by postfix_instance, code
+
+# Total number of rejects due to rate limiting.
+counter postfix_smtpd_messages_ratelimited_total by postfix_instance
+
+# Total number of SASL authentication failures.
+counter postfix_smtpd_sasl_authentication_failures_total by postfix_instance
+
+# Total number of incoming TLS connections.
+counter postfix_smtpd_tls_connections_total by postfix_instance, trust, protocol, cipher, secret_bits, algorithm_bits
+
+# Total number of unrecognized log lines
+counter postfix_unsupported_log_entries_total by postfix_instance, service
+
+# Spamassassin classification counters (ham/spam).
+counter spamassassin_ham_total
+counter spamassassin_spam_total
+
+# delays
+counter postfix_smtp_delivery_delay_seconds by postfix_instance, delay
+counter postfix_smtp_delivery_delay_seconds_count by postfix_instance
+counter postfix_smtp_delivery_delay_seconds_sum by postfix_instance
+
+# qmgr, TODO: refactor to histogram as per postfix.mtail in the Google mtail examples directory
+counter postfix_qmgr_messages_inserted_recipients by postfix_instance
+counter postfix_qmgr_messages_inserted_size_bytes by postfix_instance
+
+@syslog {
+  /(?P<postfix_instance>postfix[-a-z]*)\/(?P<service>[-a-z\/]+)\[/ {
+
+    $service == "cleanup" {
+      /: message-id=</ {
+        postfix_cleanup_messages_processed_total[$postfix_instance]++
+      }
+      /: reject: / {
+        postfix_cleanup_messages_rejected_total[$postfix_instance]++
+      }
+    }
+
+    $service == "qmgr" {
+      // + QMGR_INSERT_LINE {
+        postfix_qmgr_messages_inserted_recipients[$postfix_instance] = $nrcpt
+        postfix_qmgr_messages_inserted_size_bytes[$postfix_instance] = $size
+        }
+      // + QMGR_REMOVE_LINE {
+        postfix_qmgr_messages_removed_total[$postfix_instance]++
+      }
+    }
+
+    $service =~ /smtp$/ {
+        // + DELIVERY_DELAY_LINE {
+          # 1st field: before_queue_manager
+          postfix_smtp_delivery_delay_seconds[$postfix_instance]["before_queue_manager"] = $bqm
+        
+          # 2nd field: queue_manager
+          postfix_smtp_delivery_delay_seconds[$postfix_instance]["queue_manager"] = $qm
+        
+          # 3rd field: connection_setup
+          postfix_smtp_delivery_delay_seconds[$postfix_instance]["connection_setup"] = $cs
+        
+          # 4th field: transmission
+          postfix_smtp_delivery_delay_seconds[$postfix_instance]["transmission"] = $tx
+
+          # increase counter (used for average calculation)
+          postfix_smtp_delivery_delay_seconds_sum[$postfix_instance] = $bqm + $qm + $cs + $tx
+          postfix_smtp_delivery_delay_seconds_count[$postfix_instance]++
+        }
+
+        /status=(?P<status>\w+)/ {
+          postfix_smtp_deliveries[$postfix_instance][$status]++
+        }
+
+        // + SMTP_TLS_LINE {
+          postfix_smtp_tls_connections_total[$postfix_instance][$1][$2][$3][$4][$5]++
+        }
+      }
+
+    $service == "smtpd" {
+      / connect from / {
+        postfix_smtpd_connects_total[$postfix_instance]++
+      }
+      / disconnect from / {
+        postfix_smtpd_disconnects_total[$postfix_instance]++
+      }
+      / warning: hostname \S+ does not resolve to address / {
+        postfix_smtpd_forward_confirmed_reverse_dns_errors_total[$postfix_instance]++
+      }
+      / lost connection after (\w+) from / {
+        postfix_smtpd_connections_lost_total[$postfix_instance][$1]++
+      }
+      /: client=/ {
+        postfix_smtpd_messages_processed_total[$postfix_instance]++
+      }
+      /: reject: RCPT from \S+: (\d+) / {
+        postfix_smtpd_messages_rejected_total[$postfix_instance][$1]++
+        / Rate limit / {
+          postfix_smtpd_messages_ratelimited_total[$postfix_instance]++
+        }
+      }
+      /warning: \S+: SASL \S+ authentication failed: / {
+        postfix_smtpd_sasl_authentication_failures_total[$postfix_instance]++
+      }
+      // + SMTPD_TLS_LINE {
+        postfix_smtpd_tls_connections_total[$postfix_instance][$1][$2][$3][$4][$5]++
+      }
+    }
+
+    otherwise {
+      postfix_unsupported_log_entries_total[$postfix_instance][$service]++
+    }
+  }
+
+  /spamd: clean message \([0-9.]+\/[0-9.]+\) for/ {
+    spamassassin_ham_total++
+  }
+  /spamd: identified spam \([0-9.]+\/[0-9.]+\) for/ {
+    spamassassin_spam_total++
+  }
+}
