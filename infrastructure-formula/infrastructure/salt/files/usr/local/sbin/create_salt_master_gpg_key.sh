@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 # Script to create a private GPG key for use with Salt
 # Copyright (C) 2023-2024 SUSE LLC <ignacio.torres@suse.com>
 #
