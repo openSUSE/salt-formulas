@@ -4,3 +4,6 @@ addFilter('infrastructure-formulas.noarch: W: explicit-lib-dependency libvirt-fo
 
 # this is a meta-package installing all the formula subpackages, it doesn't need any files
 addFilter('infrastructure-formulas.noarch: W: suse-filelist-empty packages without any files are discouraged in SUSE')
+
+# templated shell scripts are not meant to be directly executable
+addFilter('[EW]: non-executable-script /usr/share/salt-formulas/states/.*\.j2 6\d\d (?:/usr)?/bin/(?:ba)?sh')
