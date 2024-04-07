@@ -1,3 +1,5 @@
 ---
 summary:
   Salt states for managing mtail
+require:
+  - sysconfig
