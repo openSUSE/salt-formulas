@@ -20,13 +20,14 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        1.6.1
+Version:        1.7
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
 Source:         _service
+Requires:       backupscript-formula
 Requires:       bootloader-formula
 Requires:       gitea-formula
 Requires:       grains-formula
@@ -37,6 +38,7 @@ Requires:       kexec-formula
 Requires:       libvirt-formula
 Requires:       lock-formula
 Requires:       lunmap-formula
+Requires:       mtail-formula
 Requires:       multipath-formula
 Requires:       network-formula
 Requires:       orchestra-formula
@@ -48,6 +50,7 @@ Requires:       rsync-formula
 Requires:       smartmontools-formula
 Requires:       status_mail-formula
 Requires:       suse_ha-formula
+Requires:       sysconfig-formula
 Requires:       tayga-formula
 Requires:       zypper-formula
 BuildArch:      noarch
@@ -61,6 +64,15 @@ License:        GPL-3.0-or-later
 
 %description common
 Files and directories shared by openSUSE/SUSE infrastructure formuas.
+
+%package -n backupscript-formula
+Summary:        Salt states for managing SUSE backup scripts
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+Requires:       sysconfig-formula
+
+%description -n backupscript-formula
+Salt states for installing and configuring the SUSE backup scripts for MySQL and PostgreSQL.
 
 %package -n bootloader-formula
 Summary:        Salt states for managing the bootloader
@@ -141,6 +153,14 @@ Requires:       %{name}-common
 
 %description -n lunmap-formula
 Salt states for managing LUN mappings.
+
+%package -n mtail-formula
+Summary:        Salt states for managing mtail
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n mtail-formula
+Salt states for managing mtail.
 
 %package -n multipath-formula
 Summary:        Salt states for managing multipath
@@ -229,6 +249,14 @@ Requires:       %{name}-common
 
 %description -n suse_ha-formula
 Salt states for managing SUSE Linux Enterprise HA clusters.
+
+%package -n sysconfig-formula
+Summary:        Salt helpers for sysconfig
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n sysconfig-formula
+Library formula containing helper code for managing fillup/sysconfig files.
 
 %package -n tayga-formula
 Summary:        Salt states for managing TAYGA
@@ -336,6 +364,8 @@ done
 %dir %{sdir}
 %dir %{sdir}/_{modules,states}
 
+%files -n backupscript-formula -f backupscript.files
+
 %files -n bootloader-formula -f bootloader.files
 
 %files -n gitea-formula -f gitea.files
@@ -355,6 +385,8 @@ done
 %files -n lock-formula -f lock.files
 
 %files -n lunmap-formula -f lunmap.files
+
+%files -n mtail-formula -f mtail.files
 
 %files -n multipath-formula -f multipath.files
 
@@ -377,6 +409,8 @@ done
 %files -n status_mail-formula -f status_mail.files
 
 %files -n suse_ha-formula -f suse_ha.files
+
+%files -n sysconfig-formula -f sysconfig.files
 
 %files -n tayga-formula -f tayga.files
 
