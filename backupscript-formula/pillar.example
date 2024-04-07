@@ -1,0 +1,9 @@
+backupscript:
+  # writes /etc/sysconfig/mysql-backupscript
+  mysql:
+    # example for adjusting some defaults
+    backupdir: /my/backup/directory
+    retention: 7
+  # writes /etc/sysconfig/postgresql-backupscript
+  # use an empty dictionary to install and enable without changing any defaults
+  postgresql: {}
