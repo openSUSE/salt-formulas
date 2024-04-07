@@ -43,6 +43,8 @@ def fillup_regex(fillup, header_pillar=None, pattern_type=None):
   else:
     fillup_header = ''
   salt_header = __pillar__.get(header_pillar, '# Managed by Salt')  # noqa F821
+  if not salt_header.endswith('\n'):
+    salt_header = salt_header + '\n'
   patterns = {
     'replace': fillup_header + salt_header,
     'search': '^' + fillup_header + '(?:' + salt_header + ')?',
