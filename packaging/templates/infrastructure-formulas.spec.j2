@@ -46,6 +46,9 @@ Files and directories shared by openSUSE/SUSE infrastructure formuas.
 %package -n {{ formula }}-formula
 Summary:        {{ config.summary }}
 Requires:       %{name}-common
+{%- for require in config.requires %}
+Requires:       {{ require }}-formula
+{%- endfor %}
 {%- if config.license is not none %}
 License:        {{ config.license }}
 {%- endif %}

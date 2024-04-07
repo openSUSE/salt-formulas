@@ -61,6 +61,7 @@ for directory in directories:
         summary = meta.get('summary', None)
         description = meta.get('description', None)
         lic = meta.get('license', None)
+        requires = meta.get('require', [])
     else:
         log.warning('No metadata file for {}'.format(formula))
         summary = None
@@ -73,7 +74,7 @@ for directory in directories:
     if any([Path.is_file(Path('{}/{}'.format(directory, file))) for file in ['COPYING', 'LICENCE', 'LICENSE']]) and lic is None:
         log.warning('Formula {} ships a custom license, but does not declare it in its metadata. Make sure to update the generated spec file!'.format(formula))
         lic = 'FIX-ME'
-    formulas.update({formula: {'summary': summary, 'description': description, 'license': lic}})
+    formulas.update({formula: {'summary': summary, 'description': description, 'license': lic, 'requires': requires}})
 
 log.debug(formulas)
 
