@@ -41,6 +41,13 @@ rebootmgr_config_header:
       - pkg: rebootmgr_package
       {%- endif %}
 
+{%- elif os == 'openSUSE Tumbleweed' %}
+rebootmgr_config_file:
+  file.absent:
+    - name: /etc/rebootmgr.conf
+{%- endif %}
+
+{%- if os == 'Leap' or 'rebootmgr' in pillar %}
 rebootmgr_config:
   ini.options_present:
     - name: /etc/rebootmgr.conf
@@ -56,11 +63,6 @@ rebootmgr_config:
       {%- else %}
       - pkg: rebootmgr_package
       {%- endif %}
-
-{%- elif os == 'openSUSE Tumbleweed' %}
-rebootmgr_config_file:
-  file.absent:
-    - name: /etc/rebootmgr.conf
 {%- endif %}
 
 rebootmgr_service:
@@ -70,6 +72,9 @@ rebootmgr_service:
     {%- if 'rebootmgr' in pillar %}
     - watch:
       - ini: rebootmgr_config
+    {%- elif os == 'openSUSE Tumbleweed' %}
+    - watch:
+      - file: rebootmgr_config_file
     {%- endif %}
     - require:
       - pkg: rebootmgr_package
