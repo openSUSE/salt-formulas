@@ -3,3 +3,5 @@ summary:
   Salt states for managing the network
 description:
   Salt states for managing the network configuration using backends like Wicked.
+require:
+  - sysconfig

@@ -19,9 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- from 'network/wicked/map.jinja' import base, config, do_apply -%}
 
 network_wicked_config_header:
-  file.prepend:
+  suse_sysconfig.header:
     - name: {{ base }}/config
-    - text: {{ pillar.get('managed_by_salt_formula', '# Managed by the network formula') | yaml_encode }}
+    - fillup: config-network
+    - header_pillar: managed_by_salt_formula_sysconfig
 
 {%- if config %}
 network_wicked_config:
