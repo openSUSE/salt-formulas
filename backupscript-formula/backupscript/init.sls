@@ -55,6 +55,10 @@ backupscript_packages:
       {%- for k, v in config.items() %}
       {%- if v is string %}
       {%- set v = '"' ~ v ~ '"' %}
+      {%- elif v is sameas true %}
+      {%- set v = '"yes"' %}
+      {%- elif v is sameas false %}
+      {%- set v = '"no"' %}
       {%- endif %}
         {{ k | upper }}: '{{ v }}'
       {%- endfor %}
