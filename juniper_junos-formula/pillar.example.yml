@@ -35,6 +35,7 @@ juniper_junos:
     ge-0/0/2:
       description: foo
       mtu: 9100
+      speed: 1G
       # "native_vlan" cannot be combined with vlan:access, only with vlan:trunk
       native_vlan: 2
       units:

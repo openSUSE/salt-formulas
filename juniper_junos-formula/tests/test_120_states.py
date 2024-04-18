@@ -98,6 +98,7 @@ def test_apply(host, device, state, test):
     diffs_shared = [
             '+   ge-0/0/2 {',
             '+       description foo;',
+            '+       speed 1g;',
             '+       mtu 9100;',
             '+       unit 0 {',
             '+           description bar;',
