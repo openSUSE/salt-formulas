@@ -84,6 +84,16 @@ juniper_junos:
       # - "reth" is not supported on QFX devices
       reth: reth0
 
+  multi-chassis:
+    mc-lag:
+      consistency-check:
+        comparison-delay-time: 600
+    multi-chassis-protection:
+      interface: ae0
+      name: 192.168.1.2
+  switch-options:
+    service-id: 1
+
   # "redundancy_groups" are not supported on QFX devices
   redundancy_groups:
     1:
