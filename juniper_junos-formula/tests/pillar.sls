@@ -39,6 +39,7 @@ juniper_junos:
     # reth* interfaces will be counted to set the reth-count
     ge-0/0/2:
       description: foo
+      speed: 1G
       mtu: 9100
       #reth: reth0
       # cannot be combined with vlan:access, only vlan:trunk
