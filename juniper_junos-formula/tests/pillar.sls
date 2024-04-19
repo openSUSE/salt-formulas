@@ -93,6 +93,19 @@ juniper_junos:
           priority: 10
   {%- endif %}
 
+  {%- if 'qfx' in id %}
+  multi-chassis:
+    # not available in vQFX?
+    #mc-lag:
+    #  consistency-check:
+    #    comparison-delay-time: 600
+    multi-chassis-protection:
+      interface: ae0
+      name: 192.168.1.2
+  switch-options:
+    service-id: 1
+  {%- endif %}
+
   vlans:
     vlan1:
       id: 1
