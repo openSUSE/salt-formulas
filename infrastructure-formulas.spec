@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        1.7
+Version:        1.8
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -158,6 +158,7 @@ Salt states for managing LUN mappings.
 Summary:        Salt states for managing mtail
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
+Requires:       sysconfig-formula
 
 %description -n mtail-formula
 Salt states for managing mtail.
@@ -174,6 +175,7 @@ Salt states for installing multipath-tools and managing multipath/multipathd
 Summary:        Salt states for managing the network
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
+Requires:       sysconfig-formula
 
 %description -n network-formula
 Salt states for managing the network configuration using backends like Wicked.
