@@ -45,4 +45,15 @@ infrastructure:
           # reference to a file or symlink in $kvm_topdir/os-images.
           image: example.raw
 
+  salt:
+    git:
+      # default user and directory
+      user: cloneboy
+      directory: /srv/salt-git
+      formulas:
+        # default directory
+        directory: /srv/formulas
+        # example repository (no formulas will be cloned unless defined in the pillar)
+        repository: https://code.opensuse.org/heroes/salt-formulas-git.git
+
 # *RT: attribute is only used for updating RackTables
