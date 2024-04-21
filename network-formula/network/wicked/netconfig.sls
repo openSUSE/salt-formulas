@@ -43,7 +43,7 @@ network_wicked_config:
       {%- endfor %}
     - ignore_if_missing: {{ opts['test'] }}
     - require:
-      - file: network_wicked_config_header
+      - suse_sysconfig: network_wicked_config_header
 
 {%- if do_apply %}
 network_wicked_netconfig_update:
