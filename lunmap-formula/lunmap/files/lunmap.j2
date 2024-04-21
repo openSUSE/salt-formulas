@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set managed_by_salt = salt['pillar.get']('managed_by_salt') -%}
 {{ managed_by_salt }}
 {%- set mpathraw = salt['cmd.run']("multipathd show paths raw format '%w %i' | awk '!seen[$1]++'", python_shell=True) -%}
-{%- set mpathall = mpathraw.splitlines() -%}
+{%- set mpathall = mpathraw.splitlines() | sort -%}
 {%- do salt.log.debug(mpathall) -%}
 {%- for rawentry in mpathall %}
 {%- set mpathsingle = rawentry.split(' ') %}
