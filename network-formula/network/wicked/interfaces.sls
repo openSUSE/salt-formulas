@@ -138,7 +138,13 @@ network_wicked_interfaces:
       {%- for interface in startmode_ifcfg['auto'] %}
       - {{ script }}up {{ interface }}:
         - stateful:
-          - test_name: {{ script }}up {{ interface }} test
+          - test_name: |
+              if test -x {{ script }}up
+              then
+                {{ script }}up {{ interface }} test
+              else
+                echo 'changed=True comment="Helper script is not available" result=None'
+              fi
         {%- if salt['cmd.retcode'](cmd='ifstatus ' ~ interface ~ ' -o quiet', ignore_retcode=True) == 0 %}
         - onchanges:
           - file: {{ base }}/ifcfg-{{ interface }}
@@ -156,4 +162,5 @@ network_wicked_interfaces:
       - file: network_wicked_ifcfg_backup
       {%- endif %}
       - file: network_wicked_ifcfg_settings
+    - shell: /bin/sh
 {%- endif %}
