@@ -1,0 +1,69 @@
+{{ pillar.get('managed_by_salt_formula', '# Managed by the apache_httpd formula') }}
+
+{%- if type == 'vhosts' %}
+{%- set i = 4 %}
+
+{%- if 'listen' in config %}
+{%- set listen = config.pop('listen') %}
+{%- else %}
+{%- set listen = ['*:80'] %}
+{%- endif %}
+
+{%- if listen is string %}
+{%- set listen = [listen] %}
+{%- endif %}
+
+<VirtualHost {%- for listener in listen %} {{ listener }}{% endfor -%}>
+    ServerName {{ config.get('ServerName', name) }}
+    CustomLog {{ config.get('CustomLog', '{0}/{1}-access.log'.format(logdir, name)) }} {{ config.get('LogFormat', 'combined') }}
+    ErrorLog {{ config.get('ErrorLog', '{0}/{1}-error.log'.format(logdir, name)) }}
+
+{%- elif type == 'configs' %}
+{%- set i = 0 %}
+
+{%- endif %} {#- close config type check #}
+
+{%- for option, value in config.items() %}
+
+  {%- if value is iterable and value is not mapping %}
+
+    {%- if value is string %}
+      {%- set value = [value] %}
+    {%- endif %}
+
+    {%- if option in repetitive_options %}
+      {%- for entry in value %}
+{{ ( option ~ ' ' ~ entry ) | indent(i, True) }}
+      {%- endfor %}
+    {%- else %}
+{{ ( option ~ ' ' ~ ' '.join(value) ) | indent(i, True) }}
+    {%- endif %}
+
+  {%- elif value is mapping %}
+
+    {%- for low_option, low_value in value.items() %}
+
+      {%- if low_value is mapping %}
+{{ ( '<' ~ option ~ ' "' ~ low_option ~ '">' ) | indent(i, True) }}
+        {%- for low_low_option, low_low_value in low_value.items() %}
+          {%- if low_low_value is string %}
+            {%- set low_low_value = [low_low_value] %}
+          {%- endif %}
+  {{ ( low_low_option ~ ' ' ~ ' '.join(low_low_value) ) | indent(i + 2, True) }}
+        {%- endfor %} {#- close low_value iteration #}
+{{ ( '</' ~ option ~ '>' ) | indent(i, True) }}
+
+      {%- elif low_value is string %}
+    {{ option }} {{ low_option }} {{ low_value }}
+
+      {%- endif %} {#- close low_value type check #}
+
+    {%- endfor %} {#- close value iteration #}
+
+  {%- endif %} {#- close value type check #}
+
+{%- endfor %} {#- close config iteration #}
+
+{%- if type == 'vhosts' %}
+</VirtualHost>
+{%- endif %} {#- close vhost check #}

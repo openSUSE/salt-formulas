@@ -1,0 +1,7 @@
+---
+summary:
+  Salt states for managing the Apache httpd
+description:
+  Salt states for installing and configuring the Apache HTTP server on SUSE distributions.
+require:
+  - sysconfig

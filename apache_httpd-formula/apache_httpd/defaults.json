@@ -1,0 +1,24 @@
+{
+	"directories": {
+		"configs": "/etc/apache2/conf.d",
+		"vhosts": "/etc/apache2/vhosts.d",
+		"logs": "/var/log/apache2",
+		"htdocs": "/srv/www/htdocs"
+	},
+	"purge": true,
+	"sysconfig": {
+		"APACHE_CONF_INCLUDE_FILES": "",
+		"APACHE_CONF_INCLUDE_DIRS": "",
+		"APACHE_SERVER_FLAGS": "",
+		"APACHE_HTTPD_CONF": "",
+		"APACHE_MPM": "event",
+		"APACHE_SERVERADMIN": "",
+		"APACHE_SERVERNAME": ""
+	},
+	"internal": {
+		"repetitive_options": [
+			"Alias",
+			"RemoteIPTrustedProxy"
+		]
+	}
+}

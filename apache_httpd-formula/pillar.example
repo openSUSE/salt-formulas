@@ -1,0 +1,114 @@
+apache_httpd:
+
+  directories:
+    # defaults
+    configs: /etc/apache2/conf.d
+    vhosts: /etc/apache2/vhosts.d
+    logs: /var/log/apache2
+    htdocs: /srv/www/htdocs
+  
+  # whether to remove files neither managed by Salt nor by packages, True by default
+  purge: True
+
+  # which modules to enable (and to install through packages, in case of modules not contained in the base installation)
+  # the modules list will be automatically extended with:
+  #   - the modules enabled by default on a stock apache2 installation on openSUSE,
+  #     in order to keep them enabled - see internal:default_modules at the end of this file
+  #   - modules needed for certain options - see internal:module_map
+  modules:
+    # example
+    - status
+
+  # sysconfig will be written into /etc/sysconfig/apache2
+  sysconfig:
+    # the event mpm is used by default
+    apache_mpm: event
+    # any additional sysconfig options can be declared
+
+  # configs will be placed in directories.configs
+  configs:
+    myconfig:
+      # example
+      RemoteIPHeader: X-Forwarded-For
+      # all options should be supported - feature-wise identical with vhosts, reference more examples below
+
+  # vhosts will be placed in directories.vhosts
+  vhosts:
+    # just an example
+    mysite:
+
+      # again, all options should be supported
+
+      # some general rules with pseudo-code:
+      # options with a single parameter:
+      foo: bar
+      # options with multiple parameters:
+      foo:
+        - bar
+        - baz
+      # options using a <foo "bar"> baz: boo </foo> block:
+      foo:
+        bar:
+          baz: boo
+
+      # below are some more practical examples:
+
+      listen: localhost:80
+
+      # options which take multiple values can be specified either as a list, or as a string
+      ServerAlias:
+        - example.com
+        - example.net
+
+      Protocols:
+       - h2
+       - http/1.1
+      # OR
+      Protocols: h2
+
+      # declare repeated options as a mapping
+      Alias:
+        /mypath: /usr/share/mypath
+        /myotherpath: /usr/share/myotherpath
+
+      # mappings such as Directory, Location or LocationMatch are all feature identical
+      Directory:
+        /srv/www/example:
+          # again, options taking multiple values can be written as a list or as a string
+          Options:
+            - Indexes
+          Require: all granted
+
+      # special options used by the formula but not written
+      LogFormat: combined
+
+      # the following options are always written, but the values can be overwritten
+      CustomLog: {{ directories.logs }}/{{ name of vhost }}-access.log {{ LogFormat }}
+      ErrorLog: {{ directories.logs }}/{{ name of vhost }}-error.log
+
+  # the "internal" section is altering behavior in the formula logic
+  #   whilst it is possible to set and overwrite these setting in the pillar, doing so is not commonly tested
+  #   this example section merely explains the behavior, reference the JSON files in the formula sources for the long list of default values
+  internal:
+    modules:
+
+      # "modules:default" defines the modules enabled by default on the given distribution
+      #   if overwriting of the distribution enabled modules in favor of exclusively the ones in apache_httpd:modules is
+      #   desired, this can be set to an empty list in the pillar
+      default: []
+
+      # "modules:base" defines the modules shipped as part of the main apache2 package on the given distribution
+      #   modules not part of the base require a apache2-mod_<module> package to be available, hence this should _not_ be cleared
+      #   in the pillar
+      base: []
+
+      # the bin/modules.sh script should be used to generate the default and base maps to introduce distribution changes or
+      #   support for new distributions 
+
+      # "modules:map" defines options which require certain modules
+      #   this allows the formula to automatically enable modules based on the provided configuration and
+      #   avoids Salt failing to start the service
+      map: {}
+
+    # options which must be declared multiple times instead of supporting multiple values as a parameter
+    repetitive_options: []

@@ -1,0 +1,77 @@
+{#-
+Jinja variables file for Apache HTTP server Salt states
+Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- set base = 'apache_httpd' -%}
+
+{%- import_json base ~ '/defaults.json' as defaults -%}
+{%- set httpd = salt.pillar.get('apache_httpd', default=defaults, merge=True) -%}
+{%- set places = ['configs', 'vhosts'] -%}
+
+{%- import_json base ~ '/modules/os/' ~ grains.oscodename.replace(' ', '_') ~ '.json' as modules_os -%}
+{%- import_json base ~ '/modules/map.json' as modules_map -%}
+
+{%- set sysconfig = httpd.sysconfig -%}
+{%- set mpm       = sysconfig.APACHE_MPM -%}
+
+{%- do httpd.internal.update(
+        {
+          'modules': {
+            'base': modules_os.get('base', {}),
+            'default': modules_os.get('default', {}),
+            'map': modules_map
+          }
+        }
+) -%}
+
+{%- do salt.log.debug('apache_httpd internal: ' ~ httpd.internal) -%}
+
+{%- set modules   = httpd.get('modules', []) + httpd.internal.modules.default -%}
+{%- set options   = [] %}
+{%- for place in places %}
+  {%- for config, settings in httpd.get(place, {}).items() %}
+    {%- for option, low_settings in settings.items() %}
+      {%- if option not in options %}
+        {%- do options.append(option) %}
+      {%- endif %}
+      {%- if low_settings is mapping %}
+        {%- for low_option in low_settings.keys() %}
+          {%- if low_option not in options %}
+            {%- do options.append(low_option) %}
+          {%- endif %}
+        {%- endfor %}
+      {%- endif %}
+    {%- endfor %}
+  {%- endfor %}
+{%- endfor %}
+{%- for option in options %}
+  {%- for module_option, module in httpd.internal.modules.map.items() %}
+    {%- if option == module_option and module not in modules %}
+      {%- do modules.append(module) %}
+    {%- endif %}
+  {%- endfor %}
+{%- endfor %}
+
+{%- do salt.log.debug('apache_httpd modules: ' ~ modules) -%}
+
+{%- set cmd_kwargs = {
+      'clean_env': True,
+      'ignore_retcode': True,
+      'python_shell': False,
+      'shell': '/bin/sh',
+    }
+-%}
