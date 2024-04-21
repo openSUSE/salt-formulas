@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 network_wicked_config_header:
   suse_sysconfig.header:
     - name: {{ base }}/config
-    - fillup: config-network
+    - fillup: config-wicked
     - header_pillar: managed_by_salt_formula_sysconfig
 
 {%- if config %}
