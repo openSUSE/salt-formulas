@@ -36,17 +36,23 @@ def header(name, fillup=None, header_pillar=None):
     repl=patterns['replace'],
   )
 
-def sysconfig(name, key_values, fillup=None, header_pillar=None, upper=True, append_if_not_found=False):
+def sysconfig(name, key_values, fillup=None, header_pillar=None, unbool=True, upper=True, append_if_not_found=False):
   """
   Manages both the header and the key/value pairs in a sysconfig file.
   name = sysconfig file to manage (relative paths will be appended to /etc/sysconfig/)
+  unbool = whether boolean keys should be converted to quoted yes/no strings
   upper = whether keys should be converted to upper case
   All other arguments are passed to the equally named arguments in the suse_sysconfig.header and file.keyvalue functions.
   """
   if not name.startswith('/'):
     name = f'/etc/sysconfig/{name}'
-  if upper:
-    key_values = {key.upper(): value for key, value in key_values.items()}
+  boolmap = {
+    True: '"yes"',
+    False: '"no"',
+  }
+  key_values = {
+    key.upper() if upper else key: boolmap[value] if unbool and isinstance(value, bool) else value for key, value in key_values.items()
+  }
   returns = {
     'header': __states__['suse_sysconfig.header'](
                 name=name,
