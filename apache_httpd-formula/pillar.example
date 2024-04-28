@@ -54,7 +54,11 @@ apache_httpd:
 
       # below are some more practical examples:
 
+      # "listen" is special as it is not only written to the vhost configuration, but to listen.conf as well
       listen: localhost:80
+
+      # "ServerName" is always written, if not specified in the pillar, it defaults to the vhost name
+      ServerName: something.example.com
 
       # options which take multiple values can be specified either as a list, or as a string
       ServerAlias:
@@ -83,7 +87,7 @@ apache_httpd:
       # special options used by the formula but not written
       LogFormat: combined
 
-      # the following options are always written, but the values can be overwritten
+      # the following options are always written if not specified in the pillar, but the values can be overwritten
       CustomLog: {{ directories.logs }}/{{ name of vhost }}-access.log {{ LogFormat }}
       ErrorLog: {{ directories.logs }}/{{ name of vhost }}-error.log
 
