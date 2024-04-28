@@ -2,6 +2,7 @@ apache_httpd:
 
   directories:
     # defaults
+    base: /etc/apache2
     configs: /etc/apache2/conf.d
     vhosts: /etc/apache2/vhosts.d
     logs: /var/log/apache2

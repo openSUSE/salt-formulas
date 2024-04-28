@@ -1,0 +1,27 @@
+{{ pillar.get('managed_by_salt_formula', '# Managed by the apache_httpd formula') }}
+
+{%- if config %}
+  {%- set listeners = [] %}
+  {%- for vhost_name, vhost_config in config.items() %}
+    {%- set listen = vhost_config.get('listen', '*:80') %}
+    {%- if listen is string %}
+      {%- set listen = [listen] %}
+    {%- endif %}
+
+    {%- for listener in listen %}
+      {%- if listener not in listeners %}
+        {%- do listeners.append(listener) %}
+      {%- endif %}
+    {%- endfor %}
+  {%- endfor %}
+
+  {%- for listener in listeners %}
+Listen {{ listener }}
+    {%- endfor %}
+{%- else %}
+Listen 80
+
+<IfModule mod_ssl.c>
+    Listen 443
+</IfModule>
+{%- endif %} {#- close config check #}

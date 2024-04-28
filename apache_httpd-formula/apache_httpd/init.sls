@@ -17,28 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- from 'apache_httpd/map.jinja' import httpd, modules, mpm, places, sysconfig, cmd_kwargs -%}
+{%- from 'apache_httpd/macros.jinja' import config_file_common, watch_in_restart -%}
 
 {%- if salt['file.access']('/usr/sbin/a2enmod', 'x') %}
-{%- set have_a2enmod = True %}
-{%- set try_a2enmod = True %}
+  {%- set have_a2enmod = True %}
+  {%- set try_a2enmod = True %}
 {%- else %}
-{%- set have_a2enmod = False %}
-{#- if apache2 is not yet installed, states using a2enmod fail in test mode #}
-{%- set try_a2enmod = not opts['test'] %}
-{%- endif %}
-
-{#- no native is-active implementation in modules.systemd_service,
-    this was deemed better than reading the (potentially big) service.get_running list
-#}
-{%- if salt['cmd.retcode']('/usr/bin/systemctl is-active apache2', **cmd_kwargs) == 0 %}
-  {%- macro watch_in_restart() %}
-    - watch_in:
-        - module: apache_httpd_service_restart
-  {%- endmacro %}
-{%- else %}
-  {%- macro watch_in_restart() %}
-    {#- noop #}
-  {%- endmacro %}
+  {%- set have_a2enmod = False %}
+  {#- if apache2 is not yet installed, states using a2enmod fail in test mode #}
+  {%- set try_a2enmod = not opts['test'] %}
 {%- endif %}
 
 include:
@@ -95,6 +82,18 @@ apache_httpd_unload_module-{{ module }}:
 {%- endfor %} {#- close enabled modules loop #}
 {%- endif %} {#- close a2enmod check #}
 
+apache_httpd_listen:
+  file.managed:
+    - name: {{ httpd.directories['base'] }}/listen.conf
+    - context:
+        config: {{ httpd.get('vhosts', {}) }}
+    - source: salt://apache_httpd/templates/listen_config.jinja
+    {{ config_file_common() }}
+    - require:
+        - pkg: apache_httpd_packages
+    - watch_in:
+        - service: apache_httpd_service
+
 {%- for place in places %}
   {%- set directory = httpd.directories[place] %}
   {%- set config_pillar = httpd.get(place, {}) %}
@@ -113,12 +112,7 @@ apache_httpd_{{ place }}:
                 wwwdir: {{ httpd.directories.htdocs }}
         {%- endfor %}
     - source: salt://apache_httpd/templates/config.jinja
-    - template: jinja
-    - check_cmd: apachectl -tf
-    {#- setting this tmp_dir is marginally better than the default - the minion users home directory (usually /root/)
-        a mktemp like directory would be ideal, but creating one using modules.temp in Jinja would leave it behind after the state run
-    #}
-    - tmp_dir: /dev/shm
+    {{ config_file_common() }}
     - require:
         - pkg: apache_httpd_packages
     - watch_in:
