@@ -1,0 +1,42 @@
+{#-
+Jinja macros file for Apache HTTP server Salt states
+Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- from 'apache_httpd/map.jinja' import cmd_kwargs -%}
+
+{%- macro config_file_common() %}
+    - template: jinja
+    - check_cmd: apachectl -tf
+    {#- setting this tmp_dir is marginally better than the default - the minion users home directory (usually /root/)
+        a mktemp like directory would be ideal, but creating one using modules.temp in Jinja would leave it behind after the state run
+    #}
+    - tmp_dir: /dev/shm
+{%- endmacro %}
+
+{#- no native is-active implementation in modules.systemd_service,
+    this was deemed better than reading the (potentially big) service.get_running list
+#}
+{%- if salt['cmd.retcode']('/usr/bin/systemctl is-active apache2', **cmd_kwargs) == 0 %}
+  {%- macro watch_in_restart() %}
+    - watch_in:
+        - module: apache_httpd_service_restart
+  {%- endmacro %}
+{%- else %}
+  {%- macro watch_in_restart() %}
+    {#- noop #}
+  {%- endmacro %}
+{%- endif %}

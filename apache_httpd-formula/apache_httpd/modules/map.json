@@ -1,0 +1,9 @@
+{
+	"Header": "headers",
+	"ProxyPass": "proxy",
+	"ProxyPassReverse": "proxy",
+	"RemoteIPTrustedProxy": "remoteip",
+	"RewriteCond": "rewrite",
+	"SSLCertificateFile": "ssl",
+	"SetEnv": "env"
+}
