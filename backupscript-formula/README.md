@@ -2,10 +2,12 @@
 
 ## Available states
 
-`backupscript.mysql`
+`backupscript`
 
-Installs and configures the [mysql-backupscript](https://build.opensuse.org/package/show/home:lrupp/mysql-backupscript).
+Depending on the pillar configuration, installs and configures:
 
-`backupscript.postgresql`
+- [influxdb-backupscript](https://build.opensuse.org/package/show/home:lrupp/influxdb-backupscript)
+- [mysql-backupscript](https://build.opensuse.org/package/show/home:lrupp/mysql-backupscript)
+- [postgresql-backupscript](https://build.opensuse.org/package/show/home:lrupp/postgresql-backupscript)
 
-Installs and configures the [postgresql-backupscript](https://build.opensuse.org/package/show/home:lrupp/postgresql-backupscript).
+Backupscripts which are installed but not defined in the pillar will be disabled.
