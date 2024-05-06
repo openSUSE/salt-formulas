@@ -19,12 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set mypillar = pillar.get('backupscript', {}) %}
 
 {%- set backupscripts = {
+      'influxdb': mypillar.get('influxdb', False),
       'mysql': mypillar.get('mysql', False),
       'postgresql': mypillar.get('postgresql', False),
     }
 -%}
 
-{%- if backupscripts['mysql'] != False or backupscripts['postgresql'] != False %}
+{%- if backupscripts['influxdb'] != False or backupscripts['mysql'] != False or backupscripts['postgresql'] != False %}
 
 backupscript_packages:
   pkg.installed:
