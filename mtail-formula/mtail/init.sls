@@ -22,15 +22,6 @@ mtail_package:
   pkg.installed:
     - name: mtail 
 
-{%- set file = '/etc/sysconfig/mtail' %}
-
-mtail_sysconfig_header:
-  suse_sysconfig.header:
-    - name: {{ file }}
-    - header_pillar: managed_by_salt_formula_sysconfig
-    - require:
-      - pkg: mtail_package
-
 {%- set sysconfig = [] %}
 {%- for key, value in config['sysconfig']['args'].items() %}
 
@@ -46,11 +37,11 @@ mtail_sysconfig_header:
 {%- endfor %}
 
 mtail_sysconfig:
-  file.keyvalue:
-    - name: /etc/sysconfig/mtail
-    - key: ARGS
-    - value: '"{{ ' '.join(sysconfig) }}"'
-    - ignore_if_missing: {{ opts['test'] }}
+  suse_sysconfig.sysconfig:
+    - name: mtail
+    - header_pillar: managed_by_salt_formula_sysconfig
+    - key_values:
+        ARGS: '{{ ' '.join(sysconfig) }}'
     - require:
       - pkg: mtail_package
 
@@ -78,7 +69,7 @@ mtail_service:
     - require:
       - pkg: mtail_package
     - watch:
-      - file: mtail_sysconfig
+      - suse_sysconfig: mtail_sysconfig
       - file: mtail_programs
 
 {%- else %}
