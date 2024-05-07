@@ -1,4 +1,6 @@
 backupscript:
+  # writes /etc/sysconfig/influxdb-backupscript
+  influxdb: {}
   # writes /etc/sysconfig/mysql-backupscript
   mysql:
     # example for adjusting some defaults
