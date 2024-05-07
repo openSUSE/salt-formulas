@@ -38,6 +38,7 @@ include:
 apache_httpd_sysconfig:
   suse_sysconfig.sysconfig:
     - name: apache2
+    - header_pillar: managed_by_salt_formula_sysconfig
     - key_values:
         {%- for key, value in sysconfig.items() %}
         {{ key }}: '"{{ value }}"'
