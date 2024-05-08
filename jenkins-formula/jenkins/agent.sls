@@ -24,13 +24,13 @@ jenkins_agent_packages:
 
 {%- if 'sysconfig' in agent %}
 jenkins_agent_sysconfig:
-  file.keyvalue:
-    - name: /etc/sysconfig/jenkins-agent
+  suse_sysconfig.sysconfig:
+    - name: jenkins-agent
+    - header_pillar: managed_by_salt_formula_sysconfig
     - key_values:
       {%- for k, v in agent.sysconfig.items() %}
-        {{ k | upper }}: '"{{ v }}"'
+        {{ k }}: '{{ v }}'
       {%- endfor %}
-    - ignore_if_missing: {{ opts['test'] }}
     - append_if_not_found: True
     - require:
       - pkg: jenkins_agent_packages
@@ -40,7 +40,7 @@ jenkins_agent_service:
     - name: jenkins-agent
     - enable: True
     - watch:
-      - file: jenkins_agent_sysconfig
+      - suse_sysconfig: jenkins_agent_sysconfig
     - require:
       - pkg: jenkins_agent_packages
 {%- else %}

@@ -42,28 +42,14 @@ backupscript_packages:
 {%- if config %}
 {%- set file = '/etc/sysconfig/' ~ bs %}
 
-{{ bs }}_sysconfig_header:
-  suse_sysconfig.header:
+{{ bs }}_sysconfig:
+  suse_sysconfig.sysconfig:
     - name: {{ file }}
     - header_pillar: managed_by_salt_formula_sysconfig
-    - require:
-        - pkg: backupscript_packages
-
-{{ bs }}_sysconfig:
-  file.keyvalue:
-    - name: {{ file }}
     - key_values:
       {%- for k, v in config.items() %}
-      {%- if v is string %}
-      {%- set v = '"' ~ v ~ '"' %}
-      {%- elif v is sameas true %}
-      {%- set v = '"yes"' %}
-      {%- elif v is sameas false %}
-      {%- set v = '"no"' %}
-      {%- endif %}
-        {{ k | upper }}: '{{ v }}'
+        {{ k }}: {{ v }}
       {%- endfor %}
-    - ignore_if_missing: {{ opts['test'] }}
     - require:
         - pkg: backupscript_packages
 
@@ -77,7 +63,7 @@ backupscript_packages:
     - require:
         - pkg: backupscript_packages
         {%- if config %}
-        - file: {{ bs }}_sysconfig
+        - suse_sysconfig: {{ bs }}_sysconfig
         {%- endif %}
 {%- endif %}
 

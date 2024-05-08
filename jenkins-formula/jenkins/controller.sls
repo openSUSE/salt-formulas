@@ -25,13 +25,13 @@ jenkins_controller_packages:
       - jenkins-plugin-configuration-as-code
 
 jenkins_controller_sysconfig:
-  file.keyvalue:
-    - name: /etc/sysconfig/jenkins
+  suse_sysconfig.sysconfig:
+    - name: jenkins
+    - header_pillar: managed_by_salt_formula_sysconfig
     - key_values:
       {%- for k, v in controller.sysconfig.items() %}
-        {{ k | upper }}: '"{{ v }}"'
+        {{ k }}: '{{ v }}'
       {%- endfor %}
-    - ignore_if_missing: {{ opts['test'] }}
     - append_if_not_found: True
     - require:
       - pkg: jenkins_controller_packages
@@ -63,7 +63,7 @@ jenkins_controller_service:
     - name: jenkins
     - enable: True
     - watch: # graceful reload possible ?
-      - file: jenkins_controller_sysconfig
+      - suse_sysconfig: jenkins_controller_sysconfig
       - file: jenkins_controller_config_file
     - require:
       - pkg: jenkins_controller_packages
