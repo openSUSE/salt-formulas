@@ -62,14 +62,15 @@ def sysconfig(name, key_values, fillup=None, header_pillar=None, quote=True, quo
   for key, value in key_values.items():
     if upper:
       key = key.upper()
-    if unbool and isinstance(value, bool):
+    is_bool = isinstance(value, bool)
+    if unbool and is_bool:
       value = boolmap[value]
-    if quote and not value.startswith(quote_char) and (
-      quote_strings and isinstance(value, str) and value not in boolmap_values
+    if quote and (
+      quote_strings and isinstance(value, str) and not value.startswith(quote_char) and value not in boolmap_values
       or
-      quote_booleans and value in boolmap_values
+      quote_booleans and ( value in boolmap_values or is_bool )
       or
-      quote_integers and isinstance(value, int)
+      quote_integers and isinstance(value, int) and not is_bool
     ):
       value = f'{quote_char}{value}{quote_char}'
     _key_values.update(

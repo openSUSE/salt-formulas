@@ -31,9 +31,10 @@ def fillup_regex(fillup, header_pillar=None, pattern_type=None):
   if pattern_type not in [None, 'replace', 'search']:
     __salt__['log.error']('os_file: unknown pattern_type')  # noqa F821
     return None
+  header_pillar_fallback = 'managed_by_salt_sysconfig'
   if header_pillar is None:
     # not set using default arguments to allow for easier handling in state modules
-    header_pillar = 'managed_by_salt_sysconfig'
+    header_pillar = header_pillar_fallback
   sysconfig_directory = '/etc/sysconfig/'
   if fillup.startswith(sysconfig_directory):
     fillup = fillup.replace(sysconfig_directory, '')
@@ -42,7 +43,11 @@ def fillup_regex(fillup, header_pillar=None, pattern_type=None):
     fillup_header = seek_read(fillup_template, 100, 0).decode().split('\n')[0] + '\n'
   else:
     fillup_header = ''
-  salt_header = __pillar__.get(header_pillar, '# Managed by Salt')  # noqa F821
+  salt_header = __pillar__.get(header_pillar)  # noqa F821
+  if salt_header is None and header_pillar != header_pillar_fallback:
+    salt_header = __pillar__.get(header_pillar_fallback)  # noqa F821
+  if salt_header is None:
+    salt_header = '# Managed by Salt'
   if not salt_header.endswith('\n'):
     salt_header = salt_header + '\n'
   patterns = {
