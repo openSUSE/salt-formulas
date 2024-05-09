@@ -3,6 +3,7 @@
 	"ProxyPass": "proxy",
 	"ProxyPassReverse": "proxy",
 	"RemoteIPTrustedProxy": "remoteip",
+	"RequestHeader": "headers",
 	"RewriteCond": "rewrite",
 	"SSLCertificateFile": "ssl",
 	"SetEnv": "env"
