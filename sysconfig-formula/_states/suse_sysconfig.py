@@ -36,7 +36,7 @@ def header(name, fillup=None, header_pillar=None):
     repl=patterns['replace'],
   )
 
-def sysconfig(name, key_values, fillup=None, header_pillar=None, quote=True, quote_char='"', quote_booleans=True, quote_integers=False, quote_strings=True, unbool=True, upper=True, append_if_not_found=False):
+def sysconfig(name, key_values, fillup=None, header_pillar=None, quote=True, quote_char='"', quote_booleans=True, quote_integers=False, quote_strings=True, unbool=True, uncomment=None, upper=True, append_if_not_found=False):
   """
   Manages both the header and the key/value pairs in a sysconfig file.
   name = sysconfig file to manage (relative paths will be appended to /etc/sysconfig/)
@@ -90,6 +90,7 @@ def sysconfig(name, key_values, fillup=None, header_pillar=None, quote=True, quo
                 append_if_not_found=append_if_not_found,
                 ignore_if_missing=__opts__['test'],
                 key_values=_key_values,
+                uncomment=uncomment,
               ),
   }
 
