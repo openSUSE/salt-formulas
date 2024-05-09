@@ -16,10 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'bootloader/map.jinja' import bootloader_data, kvconfig -%}
+{%- from 'bootloader/map.jinja' import bootloader_data -%}
 
 {%- if 'config' in bootloader_data %}
-{{ kvconfig('bootloader', 'sysconfig', bootloader_data['config']) }}
+bootloader_sysconfig:
+  suse_sysconfig.sysconfig:
+    - name: bootloader
+    - header_pillar: managed_by_salt_formula_sysconfig
+    - append_if_not_found: True
+    - quote_booleans: False
+    - key_values: {{ bootloader_data['config'] }}
 
 {%- if bootloader_data.get('update', True) %}
 bootloader_update:
@@ -27,6 +33,6 @@ bootloader_update:
     {#- on 15.4 pbl is not yet available under /usr #}
     - name: /sbin/pbl --install
     - onchanges:
-      - file: bootloader_sysconfig
+      - suse_sysconfig: bootloader_sysconfig
 {%- endif %}
 {%- endif %}

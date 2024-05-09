@@ -19,6 +19,3 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set bootloader  = salt.pillar.get('bootloader', {}) -%}
 {%- set bootloader_data = bootloader.get('bootloader', {}) -%}
 {%- set grub_data = bootloader.get('grub', {}) -%}
-
-{%- from 'bootloader/macros.jinja' import kvconfig -%}
-{%- set kvconfig = kvconfig -%}
