@@ -20,13 +20,14 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        1.9.1
+Version:        2.0
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
 Source:         _service
+Requires:       apache_httpd-formula
 Requires:       backupscript-formula
 Requires:       bootloader-formula
 Requires:       gitea-formula
@@ -65,6 +66,15 @@ License:        GPL-3.0-or-later
 %description common
 Files and directories shared by openSUSE/SUSE infrastructure formuas.
 
+%package -n apache_httpd-formula
+Summary:        Salt states for managing the Apache httpd
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+Requires:       sysconfig-formula
+
+%description -n apache_httpd-formula
+Salt states for installing and configuring the Apache HTTP server on SUSE distributions.
+
 %package -n backupscript-formula
 Summary:        Salt states for managing SUSE backup scripts
 License:        GPL-3.0-or-later
@@ -78,6 +88,7 @@ Salt states for installing and configuring the SUSE backup scripts for MySQL and
 Summary:        Salt states for managing the bootloader
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
+Requires:       sysconfig-formula
 
 %description -n bootloader-formula
 Salt states for managing the bootloader setup and GRUB configuration.
@@ -110,6 +121,7 @@ Custom Salt states specific to the openSUSE/SUSE infrastructures.
 Summary:        Salt states for managing Jenkins
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
+Requires:       sysconfig-formula
 
 %description -n jenkins-formula
 Salt states for managing Jenkins Controller and Agent servers
@@ -134,6 +146,7 @@ Salt states for managing Kexec using the kexec-load service
 Summary:        Salt states for managing libvirt
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
+Requires:       sysconfig-formula
 
 %description -n libvirt-formula
 Salt states for managing libvirt servers.
@@ -248,6 +261,7 @@ Salt states for managing systemd-status-mail.
 Summary:        Salt states for managing SLE HA clusters
 License:        GPL-3.0-or-later
 Requires:       %{name}-common
+Requires:       sysconfig-formula
 
 %description -n suse_ha-formula
 Salt states for managing SUSE Linux Enterprise HA clusters.
@@ -365,6 +379,8 @@ done
 %dir %{mdir}
 %dir %{sdir}
 %dir %{sdir}/_{modules,states}
+
+%files -n apache_httpd-formula -f apache_httpd.files
 
 %files -n backupscript-formula -f backupscript.files
 
