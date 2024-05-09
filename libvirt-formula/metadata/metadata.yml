@@ -3,3 +3,5 @@ summary:
   Salt states for managing libvirt
 description:
   Salt states for managing libvirt servers.
+require:
+  - sysconfig

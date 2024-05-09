@@ -33,14 +33,14 @@ libvirt_guests_sysconfig_file:
     - replace: false
 
 libvirt_guests_sysconfig:
-  file.keyvalue:
-    - name: /etc/sysconfig/libvirt-guests
+  suse_sysconfig.sysconfig:
+    - name: libvirt-guests
+    - header_pillar: managed_by_salt_formula_sysconfig
     - key_values:
         {%- for key, value in options.items() %}
-        {{ key | upper }}: {{ value }}
+        {{ key }}: {{ value }}
         {%- endfor %}
     - append_if_not_found: true
-    - ignore_if_missing: {{ opts['test'] }}
     - require:
       - file: libvirt_guests_sysconfig_file
 {%- endif %}
@@ -52,7 +52,7 @@ libvirt_guests_service:
     - enable: true
     {%- if options %}
     - require:
-      - file: libvirt_guests_sysconfig
+      - suse_sysconfig: libvirt_guests_sysconfig
     {%- endif %}
 {%- else %}
   service.dead:
