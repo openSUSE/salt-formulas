@@ -70,19 +70,15 @@ sbd_format_devices:
 {%- endif %}
 
 sbd_sysconfig:
-  file.keyvalue:
-    - name: /etc/sysconfig/sbd
-    {%- if opts['test'] %}
-    - ignore_if_missing: True
-    {%- endif %}
-    - separator: '='
-    - show_changes: True
+  suse_sysconfig.sysconfig:
+    - name: sbd
     - uncomment: '#'
+    - quote: False
     - key_values:
         SBD_DEVICE: {{ sbd_ns.devices }}
         {%- if sysconfig.get('sbd', False) %}
         {%- for key, value in sysconfig.sbd.items() %}
-        '{{ key }}': '"{{ value }}"'
+        {{ key }}: {{ value }}
         {%- endfor %}
         {%- endif %}
     - require:
@@ -96,7 +92,7 @@ sbd_service:
       {%- if is_primary %}
       - cmd: sbd_format_devices
       {%- endif %}
-      - file: sbd_sysconfig
+      - suse_sysconfig: sbd_sysconfig
 
 {%- else %}
 {%- do salt.log.error('suse_ha: sbd.devices called with no devices in the pillar') -%}

@@ -117,17 +117,16 @@ pacemaker.service:
       - corosync.service
 {%- if sysconfig.pacemaker | length %}
     - watch:
-      - file: /etc/sysconfig/pacemaker
-  file.keyvalue:
+      - suse_sysconfig: /etc/sysconfig/pacemaker
+  suse_sysconfig.sysconfig:
     - name: /etc/sysconfig/pacemaker
-    - separator: '='
-    - show_changes: True
-    {%- if opts['test'] %}
-    - ignore_if_missing: True
-    {%- endif %}
+    - header_pillar: managed_by_salt_formula_sysconfig
+    - uncomment: '# '
+    - upper: False
+    - quote_booleans: False
     - key_values:
         {%- for key, value in sysconfig.pacemaker.items() %}
-        '{{ key }}': '"{{ value }}"'
+        {{ key }}: {{ value }}
         {%- endfor %}
     - require:
       - suse_ha_packages

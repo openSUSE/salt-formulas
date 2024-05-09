@@ -3,3 +3,5 @@ summary:
   Salt states for managing SLE HA clusters
 description:
   Salt states for managing SUSE Linux Enterprise HA clusters.
+require:
+  - sysconfig

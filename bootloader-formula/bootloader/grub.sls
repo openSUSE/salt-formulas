@@ -16,10 +16,31 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'bootloader/map.jinja' import grub_data, kvconfig -%}
+{%- from 'bootloader/map.jinja' import grub_data -%}
 
 {%- if 'config' in grub_data %}
-{{ kvconfig('grub', 'default', grub_data['config']) }}
+{%- set file = '/etc/default/grub' %}
+grub_header:
+  file.prepend:
+    - name: {{ file }}
+    - text: {{ pillar.get('managed_by_salt_formula', '# Managed by the bootloader formula') | yaml_encode }}
+
+{%- set boolmap = {true: 'true', false: 'false'} %}
+grub_default:
+  file.keyvalue:
+    - name: {{ file }}
+    - key_values:
+      {%- for k, v in grub_data['config'].items() %}
+        {%- if v is sameas True or v is sameas False %}
+          {%- set value = boolmap[v] %}
+        {%- else %}
+          {%- set value = v %}
+        {%- endif %}
+        {{ k | upper }}: '"{{ value }}"'
+      {%- endfor %}
+    - ignore_if_missing: {{ opts['test'] }}
+    - append_if_not_found: True
+    - uncomment: '#'
 
 {%- if grub_data.get('update', True) %}
 {%- set files = grub_data.get('grub_configuration', '/boot/grub2/grub.cfg') %}
