@@ -19,7 +19,10 @@
 	"internal": {
 		"repetitive_options": [
 			"Alias",
-			"RemoteIPTrustedProxy"
+			"RemoteIPTrustedProxy",
+			"RewriteCond",
+			"RewriteMap",
+			"RewriteRule"
 		]
 	}
 }
