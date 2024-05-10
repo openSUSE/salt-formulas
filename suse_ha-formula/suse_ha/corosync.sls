@@ -42,7 +42,7 @@ corosync.service:
       {%- if is_primary %}
       - cmd: sbd_format_devices
       {%- endif %}
-      - file: sbd_sysconfig
+      - suse_sysconfig: sbd_sysconfig
       {%- endif %}
 
 /etc/corosync/authkey:
