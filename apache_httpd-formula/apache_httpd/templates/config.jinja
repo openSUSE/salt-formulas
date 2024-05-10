@@ -60,7 +60,7 @@
 {{ ( '</' ~ option ~ '>' ) | indent(i, True) }}
 
       {%- elif low_value is string %}
-    {{ option }} {{ low_option }} {{ low_value }}
+{{ ( option ~ ' ' ~ low_option ~ ' ' ~ low_value ) | indent(i, True) }}
 
       {%- endif %} {#- close low_value type check #}
 
