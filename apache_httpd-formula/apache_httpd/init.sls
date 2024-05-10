@@ -58,7 +58,9 @@ apache_httpd_load_module-{{ module }}:
         - pkg: apache_httpd_packages
     - require_in:
         {%- for place in places %}
+        {%- if httpd.get(place) %}
         - file: apache_httpd_{{ place }}
+        {%- endif %}
         {%- endfor %}
     - unless:
         - fun: apache.check_mod_enabled
@@ -76,7 +78,9 @@ apache_httpd_unload_module-{{ module }}:
         - mod: {{ module }}
     - require_in:
         {%- for place in places %}
+        {%- if httpd.get(place) %}
         - file: apache_httpd_{{ place }}
+        {%- endif %}
         {%- endfor %}
     {{ watch_in_restart() }}
   {%- endif %}

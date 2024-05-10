@@ -23,6 +23,7 @@ include:
 
 {%- for place in places %}
   {%- set directory = httpd.directories[place] %}
+  {%- set config_pillar = httpd.get(place, {}) %}
   {%- for file in salt['file.find'](directory, print='name', type='f') %}
     {%- set path = directory ~ '/' ~ file %}
     {%- do salt.log.debug('apache_httpd.purge: ' ~ path) %}
@@ -30,7 +31,7 @@ include:
     {%- if
           salt['cmd.retcode']('/usr/bin/rpm -fq --quiet ' ~ path, **cmd_kwargs) == 1
           and
-          file.replace('.conf', '') not in httpd.get(place, {})
+          file.replace('.conf', '') not in config_pillar
     %}
 apache_httpd_remove_{{ place }}-{{ file }}:
   file.absent:
