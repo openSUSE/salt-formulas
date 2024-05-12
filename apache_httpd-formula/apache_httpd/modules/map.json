@@ -5,6 +5,10 @@
 	"RemoteIPTrustedProxy": "remoteip",
 	"RequestHeader": "headers",
 	"RewriteCond": "rewrite",
+	"RewriteEngine": "rewrite",
+	"RewriteMap": "rewrite",
+	"RewriteOptions": "rewrite",
+	"RewriteRule": "rewrite",
 	"SSLCertificateFile": "ssl",
 	"SetEnv": "env"
 }
