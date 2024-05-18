@@ -2,6 +2,8 @@
 
 {%- if config %}
   {%- set listeners = [] %}
+  {%- set wildcard_ports = [] %}
+
   {%- for vhost_name, vhost_config in config.items() %}
     {%- set listen = vhost_config.get('listen', '*:80') %}
     {%- if listen is string %}
@@ -10,14 +12,34 @@
 
     {%- for listener in listen %}
       {%- if listener not in listeners %}
-        {%- do listeners.append(listener) %}
+        {%- if ':' in listener %}
+          {%- do listeners.append(listener) %}
+        {%- else %}
+          {%- do salt.log.error('apache_httpd: invalid listener: ' ~ listener) %}
+        {%- endif %}
       {%- endif %}
     {%- endfor %}
   {%- endfor %}
 
   {%- for listener in listeners %}
+    {%- set listener_split = listener.split(':') %}
+    {%- if listener_split[0] == '*' %}
+      {%- set listener_port = listener_split[1] %}
+      {%- if listener_port not in wildcard_ports %}
+        {%- do wildcard_ports.append(listener_port) %}
+      {%- endif %}
+    {%- endif %}
+  {%- endfor %}
+
+  {%- for listener in listeners %}
+    {%- if not listener.split(':')[1] in wildcard_ports %}
 Listen {{ listener }}
-    {%- endfor %}
+    {%- endif %}
+  {%- endfor %}
+
+  {%- for port in wildcard_ports %}
+Listen *:{{ port }}
+  {%- endfor %}
 {%- else %}
 Listen 80
 
