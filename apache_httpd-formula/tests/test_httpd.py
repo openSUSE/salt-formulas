@@ -52,6 +52,7 @@ def test_httpd_config(host, salt_apply, test):
   assert len(result) > 0
   output = result[0]
   for file, checksum in {
+    'conf.d/log.conf': 'f36f2adb9df5b321b6b2383a339de780',
     'conf.d/remote.conf': '2d4e69a65a3c77743f8504af4ae2415a',
     'vhosts.d/mysite1.conf': '15edeaf0ea295a192e9aa964b011493f',
     'vhosts.d/mysite2.conf': '60c7cf30c4cf87e6ad7cbab904538b73',

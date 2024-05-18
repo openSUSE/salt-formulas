@@ -50,14 +50,24 @@
     {%- for low_option, low_value in value.items() %}
 
       {%- if low_value is mapping %}
+        {%- if option not in repetitive_options %}
 {{ ( '<' ~ option ~ ' "' ~ low_option ~ '">' ) | indent(i, True) }}
-        {%- for low_low_option, low_low_value in low_value.items() %}
-          {%- if low_low_value is string %}
-            {%- set low_low_value = [low_low_value] %}
+        {%- endif %} {#- close first inner repetitive_option check #}
+        {%- for low_low_option, low_low_values in low_value.items() %}
+          {%- if low_low_values is string %}
+            {%- set low_low_values = [low_low_values] %}
           {%- endif %}
-  {{ ( low_low_option ~ ' ' ~ ' '.join(low_low_value) ) | indent(i + 2, True) }}
+          {%- if option in repetitive_options %}
+            {%- for low_low_value in low_low_values %}
+{{ ( option ~ ' ' ~ low_option ~ ' ' ~ low_low_option ~ ' ' ~ low_low_value ) | indent(i, True) }}
+            {%- endfor %}
+          {%- else %}
+  {{ ( low_low_option ~ ' ' ~ ' '.join(low_low_values) ) | indent(i + 2, True) }}
+          {%- endif %} {#- close second inner repetitive_option check #}
         {%- endfor %} {#- close low_value iteration #}
+        {%- if option not in repetitive_options %}
 {{ ( '</' ~ option ~ '>' ) | indent(i, True) }}
+        {%- endif %} {#- close third inner repetitive_option check #}
 
       {%- elif low_value is string %}
 {{ ( option ~ ' ' ~ low_option ~ ' ' ~ low_value ) | indent(i, True) }}

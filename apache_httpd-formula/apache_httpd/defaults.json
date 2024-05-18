@@ -22,7 +22,8 @@
 			"RemoteIPTrustedProxy",
 			"RewriteCond",
 			"RewriteMap",
-			"RewriteRule"
+			"RewriteRule",
+			"SetEnvIf"
 		]
 	}
 }
