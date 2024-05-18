@@ -84,6 +84,11 @@ apache_httpd:
             - Indexes
           Require: all granted
 
+      # options which aren't blocks but which take multiple arguments can be provided as mappings as well
+      SetEnvIf:
+        Request_URI:
+          ^/example$: myvariable
+
       # special options used by the formula but not written
       LogFormat: combined
 

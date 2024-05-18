@@ -4,6 +4,10 @@ apache_httpd:
   sysconfig:
     apache_servername: ipv6-localhost
   configs:
+    log:
+      SetEnvIf:
+        Request_URI:
+          ^/health$: donotlog
     remote:
       RemoteIPHeader: X-Forwarded-For
       RemoteIPTrustedProxy:
