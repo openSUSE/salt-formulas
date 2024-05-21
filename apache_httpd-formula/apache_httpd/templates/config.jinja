@@ -30,6 +30,11 @@
 {%- endif %} {#- close config type check #}
 
 {%- for option, value in config.items() %}
+  {%- if value is sameas true %}
+    {%- set value = 'on' %}
+  {%- elif value is sameas false %}
+    {%- set value = 'off' %}
+  {%- endif %}
 
   {%- if value is iterable and value is not mapping %}
 

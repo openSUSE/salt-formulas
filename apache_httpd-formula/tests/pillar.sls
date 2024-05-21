@@ -20,11 +20,13 @@ apache_httpd:
         /server-status:
           SetHandler: server-status
     mysite1:
+      RewriteEngine: on
       Directory:
         /srv/www/htdocs:
           Require: all granted
     mysite2:
       ServerName: mysite2.example.com
+      RewriteEngine: off
       Protocols:
         - h2
         - http/1.1
