@@ -89,6 +89,9 @@ apache_httpd:
         Request_URI:
           ^/example$: myvariable
 
+      # boolean values are rewritten to on/off
+      RewriteEngine: true
+
       # special options used by the formula but not written
       LogFormat: combined
 
