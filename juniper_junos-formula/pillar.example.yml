@@ -84,6 +84,9 @@ juniper_junos:
       # - "reth" is not supported on QFX devices
       reth: reth0
 
+      # if "disable" is falsy or not specified, the interface will be kept enabled
+      disable: false
+
   multi-chassis:
     mc-lag:
       consistency-check:

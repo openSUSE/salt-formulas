@@ -70,6 +70,10 @@ juniper_junos:
               - 1
               - 2
 
+    ge-0/0/5:
+      disable: true
+      mtu: 1500
+
   {%- if 'srx' in id %}
     reth0:
       description: test

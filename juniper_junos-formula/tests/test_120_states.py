@@ -121,6 +121,7 @@ def test_apply(host, device, state, test):
             '+               interface-mode trunk;',
             '+               vlan {',
             '+                   members 1-2;',
+            '+   ge-0/0/5 {\n\+       disable;\n\+       mtu 1500;',
             '+   ae0 {',
             '+       description Katze;',
             '+       mtu 9100;',
