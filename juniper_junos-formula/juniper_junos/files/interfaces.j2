@@ -25,6 +25,10 @@ delete interfaces {{ interface }}
 {{ setif }} description "{{ ifconfig['description'] }}"
 {%- endif %}
 
+{%- if 'disable' in ifconfig and ifconfig['disable'] %}
+{{ setif }} disable
+{%- endif %}
+
 {%- if 'speed' in ifconfig %}
 {{ setif }} speed {{ ifconfig['speed'] | lower }}
 {%- endif %}
