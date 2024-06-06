@@ -1,0 +1,4 @@
+lldpd:
+  # written to /etc/sysconfig/lldpd
+  sysconfig:
+    lldpd_options: -M 1

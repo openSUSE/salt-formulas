@@ -1,0 +1,7 @@
+---
+summary:
+  Salt states for managing lldpd
+description:
+  Salt states for installing and configuring lldpd.
+require:
+  - sysconfig
