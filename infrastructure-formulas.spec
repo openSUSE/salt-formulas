@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        2.1.2
+Version:        2.2
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -37,6 +37,7 @@ Requires:       jenkins-formula
 Requires:       juniper_junos-formula
 Requires:       kexec-formula
 Requires:       libvirt-formula
+Requires:       lldpd-formula
 Requires:       lock-formula
 Requires:       lunmap-formula
 Requires:       mtail-formula
@@ -150,6 +151,15 @@ Requires:       sysconfig-formula
 
 %description -n libvirt-formula
 Salt states for managing libvirt servers.
+
+%package -n lldpd-formula
+Summary:        Salt states for managing lldpd
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+Requires:       sysconfig-formula
+
+%description -n lldpd-formula
+Salt states for installing and configuring lldpd.
 
 %package -n lock-formula
 Summary:        Salt state module for managing lockfiles
@@ -399,6 +409,8 @@ done
 %files -n kexec-formula -f kexec.files
 
 %files -n libvirt-formula -f libvirt.files
+
+%files -n lldpd-formula -f lldpd.files
 
 %files -n lock-formula -f lock.files
 
