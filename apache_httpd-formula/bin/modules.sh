@@ -50,7 +50,7 @@ printf '{\n    "base": [\n' >| "$outfile"
 
 # Gather installed modules
 find "$libdir" \
-  -name 'mod_*.so' -type f \
+  -name 'mod_*.so' -type l \
   -execdir basename {} \; \
     | LC_ALL=C sort \
     | sed -E \
