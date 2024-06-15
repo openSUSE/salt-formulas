@@ -27,3 +27,4 @@ apache_httpd_packages:
         - apache2-mod_{{ module }}
           {%- endif %}
         {%- endfor %}
+        - apache2-utils
