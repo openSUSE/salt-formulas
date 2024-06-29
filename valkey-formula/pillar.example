@@ -1,0 +1,21 @@
+valkey:
+
+  # this example will instantiate a "valkey@myapp" service
+  myapp:
+    # any available Valkey settings can be defined
+    port: 0
+
+    # the following parameters will be set automatically unless they are overwritten
+    timeout: 0
+    supervised: systemd
+    unixsocket: /run/valkey/myapp.sock
+    unixsocketperm: 460
+    pidfile: /run/valkey/myapp.pid
+    logfile: /var/log/valkey/myapp.log
+    dir: /var/lib/valkey/myapp
+
+  # this example will instantiate a "valkey@yourapp" service
+  yourapp:
+    # this completely disables the formula defaults for this instance
+    # if this is set (to False), other necessary parameters and dependencies need to be provided to allow the instance to start
+    formula_defaults: False
