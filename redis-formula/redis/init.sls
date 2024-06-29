@@ -1,5 +1,6 @@
 {#-
 Salt state file for managing Redis
+Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
@@ -15,6 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
+
+{%- if grains['osfullname'] == 'openSUSE Tumbleweed' %}
+{%- do salt.log.warning('redis: diverting to valkey!') %}
+include:
+  - valkey
+{%- else %}
 
 {%- from 'redis/map.jinja' import config, dirs, package -%}
 
@@ -57,3 +64,5 @@ redis_{{ instance }}_service:
       - file: redis_{{ instance }}_config
 
 {%- endfor %}
+
+{%- endif %} {#- close Tumbleweed check #}
