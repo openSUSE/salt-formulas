@@ -73,7 +73,7 @@ sbd_sysconfig:
   suse_sysconfig.sysconfig:
     - name: sbd
     - uncomment: '#'
-    - quote: False
+    - quote_char: "'"
     - key_values:
         SBD_DEVICE: {{ sbd_ns.devices }}
         {%- if sysconfig.get('sbd', False) %}
