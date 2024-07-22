@@ -74,3 +74,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set is_primary = False -%}
 {%- endif -%}
 {%- do salt.log.debug('suse_ha: is_primary: ' ~ is_primary) -%}
+
+{%- set cmd_kwargs = {
+      'clean_env': True,
+      'python_shell': False,
+      'shell': '/bin/sh',
+    }
+-%}
+{%- set cmd_kwargs_ir = {
+      **cmd_kwargs,
+      'ignore_retcode': True,
+    }
+-%}
+
+{%- if salt['cmd.has_exec']('/usr/sbin/crm_standby') and salt['cmd.retcode']('/usr/bin/systemctl is-active pacemaker', **cmd_kwargs_ir) == 0 %}
+  {%- set is_standby = salt['cmd.run_stdout']('/usr/sbin/crm_standby -Gq', **cmd_kwargs) == 'on' -%}
+  {%- do salt.log.debug('suse_ha: standby: ' ~ is_standby) -%}
+{%- else -%}
+  {%- set is_standby = True -%}
+  {%- do salt.log.debug('suse_ha: assuming standby') -%}
+{%- endif -%}
