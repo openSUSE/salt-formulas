@@ -35,10 +35,10 @@ def test_httpd_package(host, package, pillar, salt_apply, test):
   assert output[state].get('name') == 'apache_httpd_packages'
   changes = output[state].get('changes')
   if test:
-    assert changes == {package: {'new': 'installed', 'old': ''}}
+    assert changes == {package: {'new': 'installed', 'old': ''}, 'apache2-utils': {'new': 'installed', 'old': ''}, 'apache2': {'new': 'installed', 'old': ''}}
   else:
     assert package in changes
-    assert 'apache2-utils' in changes
+    assert 'apache2' in changes
     # in non-test runs, "new" will return the freshly installed version, such as 2.4.51-150400.6.14.1
     assert '2.4' in changes[package]['new']
   print(output)
