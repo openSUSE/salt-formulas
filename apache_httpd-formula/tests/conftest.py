@@ -40,5 +40,5 @@ def salt_apply(host, pillar, test):
     print(f'sa pillar: {pillar}')
     print(f'sa test: {test}')
     yield salt(host, f'state.apply apache_httpd pillar="{pillar}" test={test}')
-    host.run('zypper -n rm -u apache2')
+    host.run('zypper -n rm -u apache2*')
     host.run('rm -fr /etc/apache2 /etc/sysconfig/apache2 /var/cache/apache2 /var/lib/apache2 /var/log/apache2')
