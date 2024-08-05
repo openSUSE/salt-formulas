@@ -28,3 +28,5 @@ apache_httpd_packages:
           {%- endif %}
         {%- endfor %}
         - apache2-utils
+        # https://bugzilla.opensuse.org/show_bug.cgi?id=1226379
+        - apache2
