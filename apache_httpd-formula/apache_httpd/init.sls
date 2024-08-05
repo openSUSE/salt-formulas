@@ -90,8 +90,6 @@ apache_httpd_unload_module-{{ module }}:
 apache_httpd_listen:
   file.managed:
     - name: {{ httpd.directories['base'] }}/listen.conf
-    - context:
-        config: {{ httpd.get('vhosts', {}) }}
     - source: salt://apache_httpd/templates/listen_config.jinja
     {{ config_file_common() }}
     - require:
@@ -106,11 +104,10 @@ apache_httpd_listen:
 apache_httpd_{{ place }}:
   file.managed:
     - names:
-        {%- for config, settings in config_pillar.items() %}
+        {%- for config in config_pillar.keys() %}
         - {{ directory }}/{{ config }}.conf:
             - context:
                 name: {{ config }}
-                config: {{ settings }}
                 type: {{ place }}
                 repetitive_options: {{ httpd.internal.repetitive_options }}
                 logdir: {{ httpd.directories.logs }}
