@@ -19,10 +19,10 @@
     ServerName {{ name }}
     {%- endif %}
     {%- if not 'CustomLog' in config %}
-    CustomLog {{ '{0}/{1}-access.log'.format(logdir, name) }} {{ config.get('LogFormat', 'combined') }}
+    CustomLog {{ '{0}/{1}-access_log'.format(logdir, name) }} {{ config.get('LogFormat', 'combined') }}
     {%- endif %}
     {%- if not 'ErrorLog' in config %}
-    ErrorLog {{ '{0}/{1}-error.log'.format(logdir, name) }}
+    ErrorLog {{ '{0}/{1}-error_log'.format(logdir, name) }}
     {%- endif %}
 
 {%- elif type == 'configs' %}
