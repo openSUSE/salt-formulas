@@ -14,12 +14,35 @@
 {%- set listen = [listen] %}
 {%- endif %}
 
+{%- set defaults = {
+      'customlog': {
+        'location': '{0}/{1}-access_log'.format(logdir, name),
+        'format': 'combined',
+        'env': None,
+      },
+    }
+%}
+
+{%- if 'CustomLog' in config and config['CustomLog'] is mapping %}
+  {%- set customlog = config.pop('CustomLog') %}
+  {%- do salt.log.error(customlog) %}
+  {%- for customlog_option in defaults['customlog'].keys() %}
+    {%- do salt.log.error(customlog_option) %}
+    {%- if not customlog_option in customlog %}
+      {%- do customlog.update({customlog_option: defaults['customlog'][customlog_option]}) %}
+    {%- endif %}
+  {%- endfor %}
+{%- else %}
+  {%- set customlog = defaults['customlog'] %}
+{%- endif %}
+{#- if CustomLog is in config and is not a mapping, assume a full CustomLog line to write as-is #}
+
 <VirtualHost {%- for listener in listen %} {{ listener }}{% endfor -%}>
     {%- if not 'ServerName' in config %}
     ServerName {{ name }}
     {%- endif %}
     {%- if not 'CustomLog' in config %}
-    CustomLog {{ '{0}/{1}-access_log'.format(logdir, name) }} {{ config.get('LogFormat', 'combined') }}
+    CustomLog {{ customlog['location'] }} {{ customlog['format'] }}{{ ' env' ~ customlog['env'] if customlog['env'] else '' }}
     {%- endif %}
     {%- if not 'ErrorLog' in config %}
     ErrorLog {{ '{0}/{1}-error_log'.format(logdir, name) }}
