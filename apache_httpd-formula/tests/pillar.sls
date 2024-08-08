@@ -24,6 +24,8 @@ apache_httpd:
       Directory:
         /srv/www/htdocs:
           Require: all granted
+      CustomLog:
+        env: =!donotlog
     mysite2:
       ServerName: mysite2.example.com
       RewriteEngine: off

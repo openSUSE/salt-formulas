@@ -92,12 +92,15 @@ apache_httpd:
       # boolean values are rewritten to on/off
       RewriteEngine: true
 
-      # special options used by the formula but not written
-      LogFormat: combined
-
       # the following options are always written if not specified in the pillar, but the values can be overwritten
-      CustomLog: {{ directories.logs }}/{{ name of vhost }}-access.log {{ LogFormat }}
+      CustomLog: {{ directories.logs }}/{{ name of vhost }}-access.log combined
       ErrorLog: {{ directories.logs }}/{{ name of vhost }}-error.log
+
+      # customize CustomLog parameters
+      CustomLog:
+        location: /somewhere/else/foo.log
+        format: notCombined
+        env: =!baz
 
   # the "internal" section is altering behavior in the formula logic
   #   whilst it is possible to set and overwrite these setting in the pillar, doing so is not commonly tested
