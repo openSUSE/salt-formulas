@@ -114,3 +114,35 @@ ha_fencing_ipmi_secret_{{ host }}:
       - ha_resource_update_{{ host }}
 {%- endif %}
 {%- endmacro -%}
+
+{%- macro restart() -%}
+{%- set file = '/var/adm/suse_ha_pending_restart' %}
+
+{%- if salt ['file.file_exists'](file) or is_standby %}
+  {%- if is_standby %}
+
+suse_ha_restart:
+  cmd.run:
+    - name: /usr/sbin/crm cluster restart
+    - shell: /bin/sh
+    - timeout: 600
+
+suse_ha_clear_restart:
+  file.absent:
+    - name: {{ file }}
+    - require:
+        - cmd: suse_ha_restart
+
+  {%- else %}
+    {%- do salt.log.warning('suse_ha: restart from previous execution is still pending, node is not in standby mode!')
+  {%- endif %} {#- close inner standby check #}
+
+{%- else %}
+
+suse_ha_note_restart_{{ service }}:
+  file.managed:
+    - name: {{ file }}
+    - replace: False
+
+{%- endif %} {#- close file or standby check #}
+{%- endmacro -%}
