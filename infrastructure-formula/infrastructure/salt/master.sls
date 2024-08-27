@@ -1,5 +1,5 @@
 {%- set extrascriptdir = '/usr/local/sbin/' -%}
-{%- set extrascripts = ['state-apply-super-async.sh'] -%}
+{%- set extrascripts = ['qjid', 'state-apply-super-async.sh'] -%}
 {%- set extrapackages = ['salt-keydiff'] + salt['pillar.get']('infrastructure:salt:formulas', []) -%}
 
 include:
