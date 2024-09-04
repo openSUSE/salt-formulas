@@ -1,0 +1,46 @@
+{#-
+Jinja variables file for the Valkey Salt states
+Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+
+This program is free software: you can valkeytribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- import_yaml 'valkey/defaults.yaml' as instance_defaults -%}
+
+{%- set instances = salt['pillar.get']('valkey', {}) -%}
+{%- set config = {} -%}
+
+{%- if not instances -%}
+{%- do salt.log.warning('valkey: using legacy redis pillar!') -%}
+{%- set instances = salt['pillar.get']('redis', {}) -%}
+{%- endif -%}
+
+{%- for instance, iconfig in instances.items() -%}
+{%- if iconfig.get('formula_defaults', True) -%}
+{%- for defkey in instance_defaults.keys() -%}
+{%- if not defkey in iconfig -%}
+{%- do iconfig.update(instance_defaults) -%}
+{%- endif -%}
+{%- endfor -%} {#- end defaults loop -#}
+{%- else -%}
+{%- do iconfig.pop('formula_defaults') -%}
+{%- endif -%} {#- close formula_defaults check -#}
+{%- do config.update({instance: iconfig}) -%}
+{%- endfor -%} {#- end instances loop -#}
+
+{%- set dirs = {
+                'config': '/etc/valkey',
+                'data': '/var/lib/valkey'
+        }
+-%}
