@@ -59,7 +59,7 @@ os-update_config_file:
     - name: /etc/os-update.conf
 {%- endif %}
 
-{%- if config.time %}
+{%- if config.time or 'accuracysec' in config or 'randomizeddelaysec' in config %}
 os-update_timer_unit:
   file.managed:
     - name: /etc/systemd/system/os-update.timer.d/override.conf
@@ -67,8 +67,18 @@ os-update_timer_unit:
     - contents:
         - {{ pillar.get('managed_by_salt_formula', '# Managed by the os_update formula') | yaml_encode }}
         - '[Timer]'
+        {%- if config.time %}
         - 'OnCalendar='
         - 'OnCalendar={{ config.time }}'
+        {%- endif %}
+        {%- if 'accuracysec' in config %}
+        - 'AccuracySec={{ config.accuracysec }}'
+        {%- endif %}
+        {%- if 'randomizeddelaysec' in config %}
+        - 'RandomizedDelaySec={{ config.randomizeddelaysec }}'
+        {%- endif %}
+    - watch_in:
+        - service: os-update_timer_service
 {%- endif %}
 
 os-update_timer_service:
@@ -77,7 +87,3 @@ os-update_timer_service:
     - enable: {{ config.enable }}
     - require:
       - pkg: os-update_package
-    {%- if config.time %}
-    - watch:
-      - file: os-update_timer_unit
-    {%- endif %}
