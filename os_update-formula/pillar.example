@@ -8,6 +8,10 @@ os-update:
   # time: 'Thu *-*-01/4 02:00:00'
   time: false
 
+  # additional, optional, overrides for the timer unit
+  accuracysec: 1us
+  randomizeddelaysec: 20
+
   # options written to /etc/os-update.conf
   update_cmd: auto
   reboot_cmd: auto
