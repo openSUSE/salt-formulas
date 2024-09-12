@@ -1,0 +1,45 @@
+{%- from 'nftables/map.jinja' import dir, nft, nft_chains, nft_variables, nft_sets, nft_maps, nft_vmaps -%}
+{{ pillar.get('managed_by_salt_formula', '# Managed by the nftables formula') }}
+
+{#- -#}
+{{ nft_variables(config.get('variables', {})) }}
+
+{#- -#}
+{{ nft_sets(config.get('sets', {})) }}
+
+{#- -#}
+{%- if config.get('mode', 'active') == 'passive' %}
+{%- if 'chains' in config %}
+{{ nft_chains(config['chains']) }}
+{%- endif %}
+{%- if 'maps' in config %}
+{{ nft_maps(config['maps']) }}
+{%- endif -%}
+{%- if 'vmaps' in config %}
+{{ nft_vmaps(config['vmaps']) }}
+{%- endif %}
+{%- endif %}
+
+{#- -#}
+{%- for table, table_config in config.get('tables', {}).items() %}
+table {{ table }}{{ ' ' ~ table_config['type'] if 'type' in table_config else '' }} {
+  {%- if 'include' in table_config %}
+  {%- if table_config['include'] is string %}
+  {%- set table_includes = [table_config['include']] %}
+  {%- elif table_config['include'] is iterable and table_config['include'] is not mapping %}
+  {%- set table_includes = table_config['include'] %}
+  {%- else %}
+  {%- do salt.log.error('nftables: illegal value for include in table ' ~ table) %}
+  {%- endif %}
+  {%- for table_include in table_includes %}
+  {%- if table_include in nft and nft[table_include].get('mode') == 'passive' %}
+  {%- set lowinclude = dir ~ '/passive/' ~ table_include ~ '.conf' -%}
+  {%- else %}
+  {%- set lowinclude = table_include -%}
+  {%- endif %}
+  include "{{ lowinclude }}"
+  {%- endfor %}
+  {%- endif -%}
+  {{ nft_chains(table_config.get('chains', {})) | indent(2) }}
+}
+{%- endfor %}
