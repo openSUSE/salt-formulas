@@ -14,6 +14,8 @@ zypper:
       priority: 99
       refresh: False
     repo-update-oss:
-      baseurl: https://download.opensuse.org/update/leap/15.4/oss
+      baseurl: https://$mymirror/update/leap/15.4/oss
       priority: 99
       refresh: True
+  variables:
+    mymirror: example.com

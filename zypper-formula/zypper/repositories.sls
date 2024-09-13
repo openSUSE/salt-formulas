@@ -1,3 +1,7 @@
+include:
+  {#- dependency to avoid refresh failure in case a newly declared variable is used in the repository URLs #}
+  - zypper.variables
+
 {%- set repositories = salt['pillar.get']('zypper:repositories', {}) %}
 
 {%- for repo, data in repositories.items() %}
@@ -12,4 +16,6 @@
     - gpgautoimport: {{ data.gpgautoimport | default(True) }}
     - gpgkey: {{ data.gpgkey | default(data.key_url) }}
     {%- endif %}
+    - require:
+        - sls: zypper.variables
 {%- endfor %}
