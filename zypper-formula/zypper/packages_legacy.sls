@@ -1,13 +1,13 @@
-{% set packages = salt['pillar.get']('zypper:packages', {}) %}
+{%- set packages = salt['pillar.get']('zypper:packages', {}) %}
 
-{% for package, data in packages.items() %}
+{%- for package, data in packages.items() %}
 zypper_pkg_{{ package }}:
   pkg.installed:
     - name: {{ package }}
-    {% if 'refresh' in data %}
+    {%- if 'refresh' in data %}
     - refresh: {{ data.refresh }}
-    {% endif %}
-    {% if 'fromrepo' in data %}
+    {%- endif %}
+    {%- if 'fromrepo' in data %}
     - fromrepo: {{ data.fromrepo }}
-    {% endif %}
-{% endfor %}
+    {%- endif %}
+{%- endfor %}

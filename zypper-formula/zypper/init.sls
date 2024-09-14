@@ -6,3 +6,4 @@ include:
   {%- else %}
   - zypper.packages
   {%- endif %}
+  - zypper.variables
