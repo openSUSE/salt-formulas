@@ -1,0 +1,13 @@
+acl:
+  # file or directory to set ACLs on
+  /tmp/test:
+    group:
+      myusers:
+        read: True
+        # possible permissions are "read", "write", and "execute"
+        # if one is not specified, it defaults to False
+    user:
+      myadmin:
+        read: True
+        write: True
+        execute: True
