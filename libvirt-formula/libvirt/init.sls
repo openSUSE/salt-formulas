@@ -29,6 +29,7 @@ libvirt_packages:
     - pkgs:
       - patterns-server-kvm_server
       - libvirt-client
+      - libvirt-daemon
       {%- for config in libvirt_configs %}
       - libvirt-daemon-config-{{ config }}
       {%- endfor %}
