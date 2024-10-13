@@ -1,0 +1,15 @@
+{%- if crscs and crscs | length == 2 and cscore is not none %}
+      <rsc_colocation id="{{ cid }}" score="{{ cscore }}" rsc="{{ crscs[0] }}" with-rsc="{{ crscs[1] }}"/>
+{%- elif csets %}
+      <rsc_colocation id="{{ cid }}"{{ ' score="' ~ cscore ~ '"' if cscore is not none else '' }}>
+      {%- for cset, csetrscs in csets.items() %}
+        <resource_set id="{{ cset }}">
+          {%- for csetrsc, csetrscconfig in csetrscs.items() %}
+          <resource_ref id="{{ csetrsc }}"{%- for csetrscattr, csetrscval in csetrscconfig.items() -%}{{ ' ' ~ csetrscattr ~ '="' ~ csetrscval ~ '"' }}{%- endfor -%}/>
+          {%- endfor %}
+        </resource_set>
+      {%- endfor %}
+      </rsc_colocation>
+{%- else %}
+{%- do salt.log.error('suse_ha: unsupported constraints combination') -%}
+{%- endif %}

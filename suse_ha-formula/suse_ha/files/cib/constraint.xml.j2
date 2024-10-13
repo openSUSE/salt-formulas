@@ -1,0 +1,12 @@
+{%- set source = 'suse_ha/files/cib/' -%}
+{%- if ctype == 'rsc_colocation' -%}
+  {%- set typetemplate = source ~ 'colocation' ~ '.xml.j2' -%}
+{%- include source ~ 'header.xml.j2' %}
+    <constraints>
+{%- include typetemplate %}
+    </constraints>
+{% include source ~ 'footer.xml.j2' %}
+{%- else -%}
+  {%- do salt.log.error('suse_ha: unsupported constraint') -%}
+{%- endif -%}
+

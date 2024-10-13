@@ -29,6 +29,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- do salt.log.error('suse_ha: No multicast pillar provided - configuration might be incomplete!') -%}
 {%- endif -%}
 {%- set fencing_base = hapillar.get('fencing', {}) -%}
+{%- set constraints = hapillar.get('constraints', {}) -%}
 {%- set resources = hapillar.get('resources', {}) -%}
 {%- set sysconfig = hapillar.get('sysconfig', {}) -%}
 
