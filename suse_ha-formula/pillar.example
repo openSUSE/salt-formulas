@@ -114,3 +114,17 @@ suse_ha:
           # proper booleans seem to work albeit the Pacemaker documentation using lowercase true/false values
           # to be on the safe side, the lowercase boolean value can be quoted
           interleave: true
+
+  # cluster resource constraints
+  constraints:
+    colo_databases:         # id for the colocation object
+      type: rsc_colocation  # currently, only rsc_colocation is supported
+      score: 100            # score to set on the main colocation object - mandatory with "resources", optional with "sets"
+      resources:            # list of a maximum of 2 resources to configure as rsc/with-rsc respectively
+        - VM_dbvm1
+        - VM_dbvm2
+      sets:                 # alternatively, resource_sets
+        coloset_databases:  # id for the resource_set object
+          VM_dbvm1:         # resource name
+            score: 100      # optional attributes and values to configure on the resource entries in the set
+          VM_dbvm2: {}      # empty dict if no additional attributes are to be configured on the resource entry in the set
