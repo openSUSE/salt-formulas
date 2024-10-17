@@ -1,0 +1,12 @@
+doofetch:
+  # optional PGP key to import into the keyring of the user executing the Salt Minion
+  gpg:
+    key:
+      url: http://download.infra.opensuse.org/repositories/openSUSE%3A/infrastructure/15.6/repodata/repomd.xml.key
+      fingerprint: 034EB7A6E7506D45DE9CCEC68E01781420F13AAC
+
+  # settings to write into /etc/sysconfig/doofetch
+  sysconfig:
+    url: https://download.opensuse.org/repositories/openSUSE:/infrastructure:/Images:/15.6/images/admin-openSUSE-Leap-15.6.x86_64-qcow.qcow2
+    targetdir: /srv/my-images
+    targetlink: my-latest-image
