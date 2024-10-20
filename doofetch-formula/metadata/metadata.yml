@@ -1,0 +1,7 @@
+---
+summary:
+  Salt states for managing doofetch
+description:
+  Salt states for installing and configuring doofetch.
+require:
+  - sysconfig
