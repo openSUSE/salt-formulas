@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        2.5
+Version:        2.5.1
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -30,6 +30,7 @@ Source:         _service
 Requires:       apache_httpd-formula
 Requires:       backupscript-formula
 Requires:       bootloader-formula
+Requires:       doofetch-formula
 Requires:       gitea-formula
 Requires:       grains-formula
 Requires:       infrastructure-formula
@@ -93,6 +94,15 @@ Requires:       sysconfig-formula
 
 %description -n bootloader-formula
 Salt states for managing the bootloader setup and GRUB configuration.
+
+%package -n doofetch-formula
+Summary:        Salt states for managing doofetch
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+Requires:       sysconfig-formula
+
+%description -n doofetch-formula
+Salt states for installing and configuring doofetch.
 
 %package -n gitea-formula
 Summary:        Salt states for managing Gitea
@@ -395,6 +405,8 @@ done
 %files -n backupscript-formula -f backupscript.files
 
 %files -n bootloader-formula -f bootloader.files
+
+%files -n doofetch-formula -f doofetch.files
 
 %files -n gitea-formula -f gitea.files
 
