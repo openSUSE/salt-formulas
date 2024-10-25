@@ -1,0 +1,32 @@
+security:
+
+  # configures /etc/sysconfig/security
+  sysconfig:
+
+    # sets PERMISSION_SECURITY
+    # defaults to "secure"
+    permission_security: secure
+
+    # sets PERMISSION_FSCAPS
+    # defaults to ""
+    permission_fscaps: yes
+
+    # any other sysconfig settings can be given to manage,
+    #  but so far only permission_security and permission_fscaps will be enforced even if not present in the pillar
+
+  # configures /etc/permissions.local
+  permissions:
+
+    /usr/sbin/tcpdump:
+
+      # user and group default to "root"
+      user: root
+      group: root
+
+      # mode defaults to "0755"
+      mode: '0755'  # must be a string, not an integer (use quotes in case of a YAML pillar)
+
+      # no capabilities by default
+      capabilities:
+        - cap_net_raw
+        - cap_net_admin=ep

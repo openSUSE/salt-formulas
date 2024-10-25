@@ -1,0 +1,7 @@
+---
+summary:
+  Salt states for managing permissions
+description:
+  Salt states for configuring permissions and capabilities.
+require:
+  - sysconfig

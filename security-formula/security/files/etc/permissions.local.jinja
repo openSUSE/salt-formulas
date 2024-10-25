@@ -1,0 +1,8 @@
+{{ pillar.get('managed_by_salt_formula', '# Managed by the security formula') }}
+
+{%- for path, config in permissions.items() %}
+{{ path }} {{ ( config.get('user', 'root') ~ ':' ~ config.get('group', 'root') ~ '    ' ~ config.get('mode', '0755') ) | indent(30 - path | length, true) }}
+ {%- if 'capabilities' in config %}
+ +capabilities {{ ','.join(config['capabilities']) }}
+ {%- endif %}
+{%- endfor %}
