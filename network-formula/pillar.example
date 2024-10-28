@@ -35,6 +35,8 @@ network:
       addresses:
         - 192.168.101.1/24
         - fe80::1/64
+    mlx0:
+      ethtool_options: -K foo rxvlan off
   # each listed route will be written into /etc/sysconfig/network/routes and applied
   # "default4" and "default6" will be written as "default"
   routes:

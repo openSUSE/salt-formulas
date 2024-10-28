@@ -42,6 +42,7 @@ include:
 {%- endif %}
 
 {%- for option, value in config.items() %}
+{%- set option = option | lower %}
 {%- if value is sameas true %}
 {%- set value = 'yes' %}
 {%- elif value is sameas false %}
@@ -50,10 +51,9 @@ include:
 {%- else %}
 {%- set value = 'no' %}
 {%- endif %}
-{%- else %}
+{%- elif option != 'ethtool_options' %}
 {%- set value = value | lower %}
 {%- endif %}
-{%- set option = option | lower %}
 {%- if not option in ['address', 'addresses'] %}
 {%- do ifcfg_data[interface].update({option: value}) %}
 {%- endif %}
