@@ -20,7 +20,7 @@
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
 Name:           infrastructure-formulas
-Version:        2.5.1
+Version:        2.6
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -50,6 +50,7 @@ Requires:       rebootmgr-formula
 Requires:       redis-formula
 Requires:       redmine-formula
 Requires:       rsync-formula
+Requires:       security-formula
 Requires:       smartmontools-formula
 Requires:       status_mail-formula
 Requires:       suse_ha-formula
@@ -261,6 +262,15 @@ Requires:       %{name}-common
 %description -n rsync-formula
 Salt states for managing rsyncd.
 
+%package -n security-formula
+Summary:        Salt states for managing permissions
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+Requires:       sysconfig-formula
+
+%description -n security-formula
+Salt states for configuring permissions and capabilities.
+
 %package -n smartmontools-formula
 Summary:        Salt states for managing smartmontools
 License:        GPL-3.0-or-later
@@ -445,6 +455,8 @@ done
 %files -n redmine-formula -f redmine.files
 
 %files -n rsync-formula -f rsync.files
+
+%files -n security-formula -f security.files
 
 %files -n smartmontools-formula -f smartmontools.files
 
