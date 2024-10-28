@@ -43,6 +43,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set domainpillar = lowpillar['domains'][domain] -%}
 {%- set clusterpillar = domainpillar['clusters'] -%}
 {%- set machinepillar = domainpillar['machines'] -%}
+{%- set topdir = lowpillar.get('kvm_topdir', '/kvm') -%}
+{%- set domaindir = lowpillar.get('libvirt_domaindir', topdir ~ '/vm') -%}
 
 {%- if cluster in clusterpillar and myid == clusterpillar[cluster]['primary'] %}
 {%- if machinepillar is not none %}
@@ -52,7 +54,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- if config['cluster'] == cluster %}
 
 {%- set instance_attributes = {
-      'config': '/kvm/vm/' ~ machine ~ '.xml',
+      'config': domaindir ~ '/' ~ machine ~ '.xml',
       'hypervisor': 'qemu:///system',
       'autoset_utilization_cpu': 'true',
       'autoset_utilization_hv_memory': 'true',
