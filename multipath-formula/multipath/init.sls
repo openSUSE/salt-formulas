@@ -40,6 +40,21 @@ multipath_service_reload:
     - require:
       - pkg: multipath_packages
 
+{%- if grains['osrelease'] | float > 15.5 %}
+multipath_service:
+  service.running:
+    - name: multipathd
+    - enable: true
+    - require:
+      - pkg: multipath_packages
+      - file: multipath_config
+
+multipath_socket:
+  service.dead:
+    - name: multipathd.socket
+
+{%- else %}
+
 multipath_socket:
   service.running:
     - name: multipathd.socket
@@ -47,3 +62,4 @@ multipath_socket:
     - require:
       - pkg: multipath_packages
       - file: multipath_config
+{%- endif %}
