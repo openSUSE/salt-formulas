@@ -19,6 +19,7 @@
 %define fdir %{_datadir}/salt-formulas
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
+%define pythons python3
 Name:           infrastructure-formulas
 Version:        0
 Release:        0
@@ -57,10 +58,25 @@ License:        {{ config.license }}
 {{ config.description if config.description else config.summary ~ '.' }}
 {%- endfor %}
 
+%package -n infrastructure-formula-python
+Summary:        Infrastructure pillar helpers
+BuildRequires:  %{python_module pip}
+BuildRequires:  %{python_module setuptools}
+BuildRequires:  %{python_module wheel}
+BuildRequires:  %{pythons}
+BuildRequires:  python-rpm-macros
+BuildArch:      noarch
+
+%description -n infrastructure-formula-python
+Python libraries to help with rendering Salt formula pillars using YAML datasets found in the openSUSE infrastructure.
+
 %prep
 mv %{_sourcedir}/salt-formulas-%{version}/* .
 
 %build
+pushd infrastructure-formula/python
+%pyproject_wheel
+popd
 
 %install
 install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states %{buildroot}%{_bindir}
@@ -137,6 +153,10 @@ do
 
 done
 
+pushd infrastructure-formula/python
+%pyproject_install
+popd
+
 %files
 
 %files common
@@ -149,5 +169,14 @@ done
 {% for formula in formulas.keys() %}
 %files -n {{ formula }}-formula -f {{ formula }}.files
 {% endfor %}
-%changelog
 
+%files -n infrastructure-formula-python
+%dir %{python_sitelib}/opensuse_infrastructure_formula
+%pycache_only %{python_sitelib}/opensuse_infrastructure_formula/__pycache__
+%{python_sitelib}/opensuse_infrastructure_formula/__{init,version}__.py
+%dir %{python_sitelib}/opensuse_infrastructure_formula/pillar
+%pycache_only %{python_sitelib}/opensuse_infrastructure_formula/pillar/__pycache__
+%{python_sitelib}/opensuse_infrastructure_formula/pillar/*.py
+%{python_sitelib}/opensuse_infrastructure_formula-*.dist-info
+
+%changelog
