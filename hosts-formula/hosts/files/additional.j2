@@ -1,0 +1,8 @@
+# Additional mappings
+{%- for address, hosts in pillar.get('hosts', {}).items() -%}
+  {%- if hosts is string %}
+    {%- set hosts = [hosts] %}
+  {%- endif %}
+  {%- do salt.log.error(hosts) %}
+{{ address }} {{ ' '.join(hosts) | indent(30 - address | length, true) }}
+{%- endfor %}

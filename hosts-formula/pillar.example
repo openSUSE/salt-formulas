@@ -1,0 +1,5 @@
+hosts:
+  2001:0db8:100::10: example.com
+  '2001:0db8:f00:b43::':
+    - server.example.net
+    - server

@@ -1,0 +1,17 @@
+{{ salt['pillar.get']('managed_by_salt_formula', '# Managed by the infrastructure formula') }}
+
+{% include 'hosts/files/default.j2' %}
+
+# Host mappings
+{%- for interface, ifconfig in salt['pillar.get']('network:interfaces', {}).items() %}
+  {%- if not interface.endswith('-ur') and not '-ur-' in interface %}
+    {%- for address in ifconfig.get('addresses', []) %}
+      {%- set address = address.split('/')[0] %}
+      {%- if address.startswith('2a07') or salt['network.is_private'](address) %}
+{{ address }} {{ ( salt['grains.get']('fqdn') ~ ' ' ~ salt['grains.get']('host') ) | indent(30 - address | length, true) }}
+      {%- endif %}
+    {%- endfor %}
+  {%- endif %}
+{%- endfor %}
+
+{% include 'hosts/files/additional.j2' %}

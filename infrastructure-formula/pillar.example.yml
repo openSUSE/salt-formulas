@@ -45,6 +45,8 @@ infrastructure:
           # reference to a file or symlink in $kvm_topdir/os-images.
           image: example.raw
 
+  hosts: true  # if enabled, the hosts formula will use the infrastructure template for rendering /etc/hosts
+
   salt:
     git:
       # default user and directory
