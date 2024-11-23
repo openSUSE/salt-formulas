@@ -11,7 +11,8 @@
         {%- if config['operations'] | length > 0 %}
         <operations>
           {%- for op, opconfig in config['operations'].items() %}
-          <op name="{{ op }}" timeout="{{ opconfig ['timeout'] }}" interval="{{ opconfig ['interval'] }}" id="{{ resource_id }}-{{ op }}-{{ opconfig ['interval'] }}"/>
+          {%- set interval = opconfig.pop('interval') %}
+          <op name="{{ op }}" timeout="{{ opconfig.pop('timeout') }}" interval="{{ interval }}"{% for property, value in opconfig.items() %}{{ ' ' ~ property ~ '="' ~ value ~ '"' }}{% endfor %} id="{{ resource_id }}-{{ op }}-{{ interval }}"/>
           {%- endfor %}
         </operations>
         {%- endif %}
