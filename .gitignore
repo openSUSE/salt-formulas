@@ -1,3 +1,6 @@
 .vagrant/
 __pycache__/
 .scullery_*
+*.egg-info
+dist/
+venv/
