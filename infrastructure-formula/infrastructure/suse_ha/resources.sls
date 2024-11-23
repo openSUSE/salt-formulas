@@ -56,6 +56,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set instance_attributes = {
       'config': domaindir ~ '/' ~ machine ~ '.xml',
       'hypervisor': 'qemu:///system',
+      'migrate_options': '--auto-converge',
       'autoset_utilization_cpu': 'true',
       'autoset_utilization_hv_memory': 'true',
       'migration_transport': 'tcp',
