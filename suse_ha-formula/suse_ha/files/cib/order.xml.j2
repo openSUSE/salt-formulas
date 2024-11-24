@@ -1,0 +1,18 @@
+{%- if crscs and crscs | length == 2 and ckind is not none %}
+  {#- TODO: support other attributes for rsc_order #}
+      <rsc_order id="{{ cid }}" kind="{{ ckind }}" first="{{ crscs[0] }}" then="{{ crscs[1] }}"/>
+  {#- the macro default is a dictionary for colocation, but for order constraints, we process a list instead #}
+{%- elif csets and csets is iterable and csets is not mapping and csets is not string %}
+      <rsc_order id="{{ cid }}" kind="{{ ckind }}">
+      {%- for cset in csets %}
+        {%- set resources = cset.pop('resources') %}
+        <resource_set id="{{ cid }}-{{ loop.index0 }}"{% for key, value in cset.items() %}{% if value is sameas true or value is sameas false %}{% set value = value | string | lower %}{% endif %}{{ ' ' ~ key ~ '="' ~ value ~ '"' }}{% endfor %}>
+          {%- for resource in resources %}
+          <resource_ref id="{{ resource }}"/>
+          {%- endfor %}
+        </resource_set>
+      {%- endfor %}
+      </rsc_order>
+{%- else %}
+{%- do salt.log.error('suse_ha: unsupported constraints combination') -%}
+{%- endif %}

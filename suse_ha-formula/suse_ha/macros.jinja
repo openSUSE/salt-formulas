@@ -30,7 +30,7 @@ ha_resource_update_{{ resource }}:
 #}
 {%- endmacro -%}
 
-{%- macro ha_constraint(cid, ctype, cscore=None, crscs=[], csets={}) -%}
+{%- macro ha_constraint(cid, ctype, ckind=None, cscore=None, crscs=[], csets={}) -%}
 ha_constraint_file_{{ cid }}:
   file.managed:
     - name: {{ resources_dir }}/{{ cid }}.xml
@@ -39,6 +39,7 @@ ha_constraint_file_{{ cid }}:
     - context:
         cid: {{ cid }}
         ctype: {{ ctype }}
+        ckind: {{ ckind | capitalize if ckind is not none else 'null' }}
         cscore: {{ cscore if cscore is not none else 'null' }}
         crscs: {{ crscs }}
         csets: {{ csets }}
