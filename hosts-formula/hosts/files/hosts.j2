@@ -1,0 +1,5 @@
+{{ salt['pillar.get']('managed_by_salt_formula', '# Managed by the hosts formula') }}
+
+{% include 'hosts/files/default.j2' %}
+
+{% include 'hosts/files/additional.j2' %}
