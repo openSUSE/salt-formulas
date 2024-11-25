@@ -41,6 +41,7 @@ ha_resources_directory:
 {{ ha_constraint(
       constraint,
       config.get('type'),
+      config.get('kind'),
       config.get('score'),
       config.get('resources', []),
       config.get('sets', {}),
