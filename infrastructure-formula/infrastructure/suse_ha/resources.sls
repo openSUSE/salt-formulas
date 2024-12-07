@@ -67,8 +67,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
       'monitor': {'timeout': 30, 'interval': 10},
       'start': {'timeout': 90, 'interval': 0},
       'stop': {'timeout': 90, 'interval': 0},
-      'migrate_to': {'timeout': 600, 'interval': 0},
-      'migrate_from': {'timeout': 550, 'interval': 0}
+      'migrate_to': {
+        'timeout': 600,
+        'interval': 0,
+        'on-fail': 'block',
+      },
+      'migrate_from': {
+        'timeout': 550,
+        'interval': 0,
+        'on-fail': 'block',
+      }
 } %}
 
 {%- set meta_attributes = {
