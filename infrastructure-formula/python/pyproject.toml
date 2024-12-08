@@ -1,0 +1,29 @@
+[build-system]
+requires = ['setuptools', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'opensuse_infrastructure_formula'
+authors = [
+  { name='Georg Pfuetzenreuter', email='georg+opensuse@lysergic.dev' },
+]
+dynamic = ['version']
+requires-python = '>=3.6'
+
+dependencies = [
+  'salt',
+]
+
+[tool.setuptools.dynamic]
+version = {attr = 'opensuse_infrastructure_formula.__version__'}
+readme = {file = ['README.md']}
+
+[tool.setuptools]
+packages = [
+  'opensuse_infrastructure_formula',
+  'opensuse_infrastructure_formula.pillar',
+]
+
+[tool.setuptools.package-dir]
+opensuse_infrastructure_formula = 'main'
+'opensuse_infrastructure_formula.pillar' = 'pillar'
