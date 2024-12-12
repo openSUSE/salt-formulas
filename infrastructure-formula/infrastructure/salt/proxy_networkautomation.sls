@@ -85,6 +85,9 @@ salt_pod_proxy_config:
               {%- if 'domain' in mypillar %}
               domain: {{ mypillar['domain'] }}
               {%- endif %}
+              {%- if 'site' in mypillar %}
+              site: {{ mypillar['site'] }}
+              {%- endif %}
       - /etc/salt-pod/proxy_schedule.conf:
         - source: salt://{{ slspath }}/files/etc/salt/schedule.conf.j2
         - template: jinja
