@@ -1,9 +1,8 @@
 {#-
-Salt state file for managing Redis
+Salt state file for managing Valkey
 Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
-Copyright (C) 2023-2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
-This program is free software: you can redistribute it and/or modify
+This program is free software: you can valkeytribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -17,21 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- if grains['osfullname'] == 'openSUSE Tumbleweed' %}
-{%- do salt.log.warning('redis: diverting to valkey!') %}
-include:
-  - valkey
-{%- else %}
+{%- from 'valkey/map.jinja' import config, dirs -%}
 
-{%- from 'redis/map.jinja' import config, dirs, package -%}
-
-redis_package:
+valkey_package:
   pkg.installed:
-    - name: {{ package }}
+    - name: valkey
 
 {%- for instance, settings in config.items() %}
 
-redis_{{ instance }}_config:
+valkey_{{ instance }}_config:
   file.managed:
     - name: {{ dirs['config'] }}/{{ instance }}.conf
     - contents:
@@ -42,27 +35,25 @@ redis_{{ instance }}_config:
       - {{ key }} {{ value }}
       {%- endfor %}
     - user: root
-    - group: redis
+    - group: valkey
     - mode: '0640'
     - require:
-      - pkg: redis_package
+      - pkg: valkey_package
 
-redis_{{ instance }}_directory:
+valkey_{{ instance }}_directory:
   file.directory:
     - name: {{ dirs['data'] }}/{{ instance }}
-    - user: redis
-    - group: redis
+    - user: valkey
+    - group: valkey
     - mode: '0750'
     - require:
-      - pkg: redis_package
+      - pkg: valkey_package
 
-redis_{{ instance }}_service:
+valkey_{{ instance }}_service:
   service.running:
-    - name: redis@{{ instance }}
+    - name: valkey@{{ instance }}
     - enable: True
     - watch:
-      - file: redis_{{ instance }}_config
+      - file: valkey_{{ instance }}_config
 
 {%- endfor %}
-
-{%- endif %} {#- close Tumbleweed check #}
