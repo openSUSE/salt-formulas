@@ -1,7 +1,7 @@
 #
 # spec file for package infrastructure-formulas
 #
-# Copyright (c) 2024 SUSE LLC
+# Copyright (c) 2025 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -19,8 +19,9 @@
 %define fdir %{_datadir}/salt-formulas
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
+%define pythons python3
 Name:           infrastructure-formulas
-Version:        2.7.2
+Version:        2.8
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
@@ -33,6 +34,7 @@ Requires:       bootloader-formula
 Requires:       doofetch-formula
 Requires:       gitea-formula
 Requires:       grains-formula
+Requires:       hosts-formula
 Requires:       infrastructure-formula
 Requires:       jenkins-formula
 Requires:       juniper_junos-formula
@@ -120,6 +122,14 @@ Requires:       %{name}-common
 
 %description -n grains-formula
 Salt state for managing grains.
+
+%package -n hosts-formula
+Summary:        Salt states for managing %{_sysconfdir}/hosts
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n hosts-formula
+Salt states for managing the %{_sysconfdir}/hosts file.
 
 %package -n infrastructure-formula
 Summary:        Salt states specific to the openSUSE/SUSE infrastructures
@@ -320,10 +330,26 @@ Requires:       %{name}-common
 %description -n zypper-formula
 Salt states for configuring packages, repositories, and zypper itself.
 
+%package -n infrastructure-formula-python
+Summary:        Infrastructure pillar helpers
+License:        GPL-3.0-or-later
+BuildRequires:  %{python_module pip}
+BuildRequires:  %{python_module setuptools}
+BuildRequires:  %{python_module wheel}
+BuildRequires:  %{pythons}
+BuildRequires:  python-rpm-macros
+BuildArch:      noarch
+
+%description -n infrastructure-formula-python
+Python libraries to help with rendering Salt formula pillars using YAML datasets found in the openSUSE infrastructure.
+
 %prep
 mv %{_sourcedir}/salt-formulas-%{version}/* .
 
 %build
+pushd infrastructure-formula/python
+%pyproject_wheel
+popd
 
 %install
 install -dm0755 %{buildroot}%{mdir} %{buildroot}%{sdir} %{buildroot}%{sdir}/_modules %{buildroot}%{sdir}/_states %{buildroot}%{_bindir}
@@ -400,6 +426,10 @@ do
 
 done
 
+pushd infrastructure-formula/python
+%pyproject_install
+popd
+
 %files
 
 %files common
@@ -421,6 +451,8 @@ done
 %files -n gitea-formula -f gitea.files
 
 %files -n grains-formula -f grains.files
+
+%files -n hosts-formula -f hosts.files
 
 %files -n infrastructure-formula -f infrastructure.files
 
@@ -469,5 +501,14 @@ done
 %files -n tayga-formula -f tayga.files
 
 %files -n zypper-formula -f zypper.files
+
+%files -n infrastructure-formula-python
+%dir %{python_sitelib}/opensuse_infrastructure_formula
+%pycache_only %{python_sitelib}/opensuse_infrastructure_formula/__pycache__
+%{python_sitelib}/opensuse_infrastructure_formula/__{init,version}__.py
+%dir %{python_sitelib}/opensuse_infrastructure_formula/pillar
+%pycache_only %{python_sitelib}/opensuse_infrastructure_formula/pillar/__pycache__
+%{python_sitelib}/opensuse_infrastructure_formula/pillar/*.py
+%{python_sitelib}/opensuse_infrastructure_formula-*.dist-info
 
 %changelog
