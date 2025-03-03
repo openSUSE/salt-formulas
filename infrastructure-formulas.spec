@@ -21,7 +21,7 @@
 %define mdir %{fdir}/metadata
 %define pythons python3
 Name:           infrastructure-formulas
-Version:        2.8
+Version:        2.9
 Release:        0
 Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
 License:        GPL-3.0-or-later
