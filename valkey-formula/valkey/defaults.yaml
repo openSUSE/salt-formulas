@@ -1,0 +1,8 @@
+---
+timeout: 0
+supervised: systemd
+unixsocket: /run/valkey/%%INSTANCE%%.sock
+unixsocketperm: 460
+pidfile: /run/valkey/%%INSTANCE%%.pid
+logfile: /var/log/valkey/%%INSTANCE%%.log
+dir: /var/lib/valkey/%%INSTANCE%%
