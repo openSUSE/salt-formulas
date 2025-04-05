@@ -14,6 +14,7 @@ lldpd_sysconfig:
 lldpd_service:
   service.running:
     - name: lldpd
+    - enable: true
     - reload: false
     - require:
         - pkg: lldpd_package
