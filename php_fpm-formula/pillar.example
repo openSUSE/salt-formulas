@@ -1,0 +1,28 @@
+php-fpm:
+  # default version is 8
+  # fpm configuration directories from other versions will be removed if present
+  version: 7
+  # pools written to salt.conf
+  # other fpm configuration files will be removed if present
+  pools:
+    # define a pool "www"
+    www:
+      options:
+        apparmor_hat: www
+        user: wwwrun
+        group: www
+        listen: /run/php-fpm/php-www-fpm.sock
+        pm: dynamic
+      php_admin_flag:
+        display_errors: false
+        log_errors: true
+      php_admin_value:
+        memory_limit: 32M
+      pm:
+        max_children: 5
+        max_spare_servers: 3
+        min_spare_servers: 1
+        start_servers: 2
+        status_path: /status
+      security:
+        limit_extensions: php
