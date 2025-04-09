@@ -40,3 +40,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     {#- noop #}
   {%- endmacro %}
 {%- endif %}
+
+{%- macro expandOrJoin(option, values, repetitive, indent_i) -%}
+  {%- if repetitive and values[0] is not mapping -%}
+    {%- for value in values %}
+{{ ( option ~ ' ' ~ value ) | indent(indent_i, True) }}
+    {%- endfor %}
+  {%- else -%}
+    {%- if values[0] is mapping -%}
+      {%- for entry in values -%}
+        {%- for k, v in entry.items() %}
+{{ ( option ~ ' ' ~ k ~ ' ' ~ v ) | indent(indent_i, True) }}
+        {%- endfor %}
+      {%- endfor -%}
+    {%- else %}
+{{ ( option ~ ' ' ~ ' '.join(values) ) | indent(indent_i, True) }}
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro -%}
