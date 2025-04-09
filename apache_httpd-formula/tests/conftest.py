@@ -18,6 +18,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from json import loads
 from yaml import safe_load
+
+from shlex import quote
+
 import pytest
 
 def salt(host, command):
@@ -39,6 +42,7 @@ def pillar(request):
 def salt_apply(host, pillar, test):
     print(f'sa pillar: {pillar}')
     print(f'sa test: {test}')
-    yield salt(host, f'state.apply apache_httpd pillar="{pillar}" test={test}')
+    pillar = quote(str(pillar))
+    yield salt(host, f'state.apply apache_httpd pillar={pillar} test={test}')
     host.run('zypper -n rm -u apache2*')
     host.run('rm -fr /etc/apache2 /etc/sysconfig/apache2 /var/cache/apache2 /var/lib/apache2 /var/log/apache2')
