@@ -24,6 +24,11 @@ apache_httpd:
       Directory:
         /srv/www/htdocs:
           Require: all granted
+          RewriteCond:
+            - '%{REQUEST_FILENAME}': '!-f'
+            - '%{REQUEST_FILENAME}': '!-d'
+          RewriteRule:
+            - '^(foo.html/)?(.+)$ foo.php?bar=$2 [L]'
       CustomLog:
         env: =!donotlog
     mysite2:
@@ -41,4 +46,10 @@ apache_httpd:
             - FollowSymLinks
           AllowOverride: None
           Require: all granted
-
+    mysite3:
+      RewriteEngine: on
+      RewriteCond:
+        - '%{REQUEST_FILENAME}': '!-f'
+        - '%{REQUEST_FILENAME}': '!-d'
+      RewriteRule:
+        - '^(foo.html/)?(.+)$ foo.php?bar=$2 [QSA]'

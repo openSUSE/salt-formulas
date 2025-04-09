@@ -83,6 +83,10 @@ apache_httpd:
           Options:
             - Indexes
           Require: all granted
+          RewriteCond:
+            # mappings with the same key can be provided as a list
+            - '%{REQUEST_FILENAME}': '!-f'
+            - '%{REQUEST_FILENAME}': '!-d'
 
       # options which aren't blocks but which take multiple arguments can be provided as mappings as well
       SetEnvIf:

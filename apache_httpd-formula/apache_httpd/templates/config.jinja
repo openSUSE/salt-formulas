@@ -1,3 +1,4 @@
+{%- from 'apache_httpd/macros.jinja' import expandOrJoin -%}
 {{ pillar.get('managed_by_salt_formula', '# Managed by the apache_httpd formula') }}
 {%- set config = salt['pillar.get']('apache_httpd:' ~ type, {}).get(name, {}) %}
 
@@ -64,15 +65,9 @@
 
     {%- if value is string %}
       {%- set value = [value] %}
-    {%- endif %}
+    {%- endif -%}
 
-    {%- if option in repetitive_options %}
-      {%- for entry in value %}
-{{ ( option ~ ' ' ~ entry ) | indent(i, True) }}
-      {%- endfor %}
-    {%- else %}
-{{ ( option ~ ' ' ~ ' '.join(value) ) | indent(i, True) }}
-    {%- endif %}
+{{ expandOrJoin(option, value, option in repetitive_options, i) }}
 
   {%- elif value is mapping %}
 
@@ -86,12 +81,14 @@
           {%- if low_low_values is string %}
             {%- set low_low_values = [low_low_values] %}
           {%- endif %}
-          {%- if option in repetitive_options %}
-            {%- for low_low_value in low_low_values %}
-{{ ( option ~ ' ' ~ low_option ~ ' ' ~ low_low_option ~ ' ' ~ low_low_value ) | indent(i, True) }}
-            {%- endfor %}
-          {%- else %}
-  {{ ( low_low_option ~ ' ' ~ ' '.join(low_low_values) ) | indent(i + 2, True) }}
+          {%- if option in repetitive_options -%}
+
+{{ expandOrJoin(option ~ ' ' ~ low_option ~ ' ' ~ low_low_option, low_low_values, True, i) }}
+
+          {%- else -%}
+
+{{ expandOrJoin(low_low_option, low_low_values, False, i+4) }}
+
           {%- endif %} {#- close second inner repetitive_option check #}
         {%- endfor %} {#- close low_value iteration #}
         {%- if option not in repetitive_options %}

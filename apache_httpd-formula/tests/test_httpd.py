@@ -54,8 +54,9 @@ def test_httpd_config(host, salt_apply, test):
   for file, checksum in {
     'conf.d/log.conf': 'f36f2adb9df5b321b6b2383a339de780',
     'conf.d/remote.conf': '2d4e69a65a3c77743f8504af4ae2415a',
-    'vhosts.d/mysite1.conf': 'da428b1d98b77a0679a7cb7f1b981be9',
+    'vhosts.d/mysite1.conf': '9a121be8a4196294722e1707fc975e44',
     'vhosts.d/mysite2.conf': 'd0004f7ee286d5402c55fa2f187f0bab',
+    'vhosts.d/mysite3.conf': 'a030e822bc10043b9d10558d1558ee1a',
     'vhosts.d/status.conf': 'dda3e0dd18b99d5c3525dd1b43e35081',
   }.items():
     if file.startswith('conf.d'):
