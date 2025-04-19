@@ -1,0 +1,32 @@
+{%- from 'php-fpm/macros.jinja' import value -%}
+{{ pillar.get('managed_by_salt_formula_ini', '; Managed by the PHP-FPM formula') }}
+
+{%- for pool, pool_config in pools | dictsort %}
+
+[{{ pool }}]
+  {%- for k, v in pool_config.get('options', {}).items() %}
+{{ k }} = {{ value(v) }}
+  {%- endfor %}
+
+  {%- for prefix in [
+        'env',
+        'php_admin_flag',
+        'php_admin_value',
+      ]
+  %}
+    {%- for k, v in pool_config.get(prefix, {}).items() %}
+{{ prefix }}[{{ k }}] = {{ value(v) }}
+    {%- endfor %}
+  {%- endfor %}
+
+  {%- for prefix in [
+        'listen',
+        'pm',
+        'security',
+      ]
+  %}
+    {%- for k, v in pool_config.get(prefix, {}).items() %}
+{{ prefix }}.{{ k }} = {{ value(v) }}
+    {%- endfor %}
+  {%- endfor %}
+{%- endfor %}
