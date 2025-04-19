@@ -21,9 +21,9 @@
 %define mdir %{fdir}/metadata
 %define pythons python3
 Name:           infrastructure-formulas
-Version:        2.9
+Version:        3.0
 Release:        0
-Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
+Summary:        Salt states for openSUSE and SLE
 License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
@@ -48,6 +48,7 @@ Requires:       multipath-formula
 Requires:       network-formula
 Requires:       orchestra-formula
 Requires:       os_update-formula
+Requires:       php_fpm-formula
 Requires:       rebootmgr-formula
 Requires:       redis-formula
 Requires:       redmine-formula
@@ -62,7 +63,7 @@ Requires:       zypper-formula
 BuildArch:      noarch
 
 %description
-Custom Salt states used in the openSUSE and SUSE infrastructures.
+Salt states for managing applications running on openSUSE or SUSE Linux Enterprise based minions.
 
 %package common
 Summary:        Files and directories shared by formulas
@@ -239,6 +240,14 @@ Requires:       %{name}-common
 
 %description -n os_update-formula
 Salt states for managing os-update.
+
+%package -n php_fpm-formula
+Summary:        Salt states for managing PHP FPM
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n php_fpm-formula
+Salt states for managing PHP FPM.
 
 %package -n rebootmgr-formula
 Summary:        Salt states for managing rebootmgr
@@ -479,6 +488,8 @@ popd
 %files -n orchestra-formula -f orchestra.files
 
 %files -n os_update-formula -f os_update.files
+
+%files -n php_fpm-formula -f php_fpm.files
 
 %files -n rebootmgr-formula -f rebootmgr.files
 
