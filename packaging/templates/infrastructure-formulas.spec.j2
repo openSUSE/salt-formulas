@@ -1,7 +1,7 @@
 #
 # spec file for package infrastructure-formulas
 #
-# Copyright (c) 2024 SUSE LLC
+# Copyright (c) 2025 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -23,7 +23,7 @@
 Name:           infrastructure-formulas
 Version:        0
 Release:        0
-Summary:        Custom Salt states for the openSUSE/SUSE infrastructures
+Summary:        Salt states for openSUSE and SLE
 License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
@@ -34,7 +34,7 @@ Requires:       {{ formula }}-formula
 BuildArch:      noarch
 
 %description
-Custom Salt states used in the openSUSE and SUSE infrastructures.
+Salt states for managing applications running on openSUSE or SUSE Linux Enterprise based minions.
 
 %package common
 Summary:        Files and directories shared by formulas
