@@ -21,7 +21,7 @@
 %define mdir %{fdir}/metadata
 %define pythons python3
 Name:           infrastructure-formulas
-Version:        3.0
+Version:        3.0.1
 Release:        0
 Summary:        Salt states for openSUSE and SLE
 License:        GPL-3.0-or-later
@@ -373,17 +373,20 @@ do
   fname="${formula%%-*}"
 
   src_metadata="$formula/metadata"
+  dst_metadata="%{mdir}/$fname"
+
   src_states="$formula/$fname"
+  dst_states="%{sdir}/$fname"
   if [ ! -d "$src_states" ]
   then
-    src_states="$formula/${fname//_/-}"
+    fname_sub="${fname//_/-}"
+    src_states="$formula/$fname_sub"
+    dst_states="%{sdir}/$fname_sub"
   fi
+
   src_execumodules="$formula/_modules"
   src_statemodules="$formula/_states"
   src_bin="$formula/bin"
-
-  dst_metadata="%{mdir}/$fname"
-  dst_states="%{sdir}/$fname"
 
   if [ -d "$src_metadata" ]
   then
