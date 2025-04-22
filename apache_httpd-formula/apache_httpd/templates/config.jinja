@@ -26,9 +26,9 @@
 
 {%- if 'CustomLog' in config and config['CustomLog'] is mapping %}
   {%- set customlog = config.pop('CustomLog') %}
-  {%- do salt.log.error(customlog) %}
+  {%- do salt.log.debug(customlog) %}
   {%- for customlog_option in defaults['customlog'].keys() %}
-    {%- do salt.log.error(customlog_option) %}
+    {%- do salt.log.debug(customlog_option) %}
     {%- if not customlog_option in customlog %}
       {%- do customlog.update({customlog_option: defaults['customlog'][customlog_option]}) %}
     {%- endif %}
