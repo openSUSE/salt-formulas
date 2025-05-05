@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 # Script to create a private GPG key for use with Salt
-# Copyright (C) 2023-2024 SUSE LLC <ignacio.torres@suse.com>
+# Copyright (C) 2023-2025 SUSE LLC <ignacio.torres@suse.com>
+# Copyright (C) 2025 SUSE LLC <georg.pfuetzenreuter@suse.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,7 +55,7 @@ fi
 sudo -u salt pkill gpg-agent || true
 
 sudo -u salt gpg2 --homedir "$homedir" --batch --passphrase '' --quick-generate-key "$name <$mail>" ed25519 cert 2y
-fingerprint=$(sudo -u salt gpg2 --batch --homedir "$homedir" --list-options show-only-fpr-mbox --list-secret-keys | awk '{print $1}')
+fingerprint="$(sudo -u salt gpg2 --batch --homedir "$homedir" --list-options show-only-fpr-mbox --list-secret-keys "$mail" | awk '{print $1}')"
 sudo -u salt gpg2 --homedir "$homedir" --batch --passphrase '' --quick-add-key "$fingerprint" cv25519 encrypt 2y
 
 set -x
