@@ -1,6 +1,6 @@
 {#-
 Salt state file for managing Redmine
-Copyright (C) 2023-2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+Copyright (C) 2023-2025 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,11 +45,20 @@ redmine_file_{{ file }}:
     - require:
       - pkg: redmine_packages
     - watch_in:
-      - service: redmine_service
+      - service: redmine_hot_units
 {%- endif %}
 {%- endfor %}
 
-redmine_service:
+redmine_cold_units:
+  service.running:
+    - names:
+        - redmine.socket
+        - redmine-reminder.timer
+    - enable: True
+    - require:
+      - pkg: redmine_packages
+
+redmine_hot_units:
   service.running:
     - names:
       - redmine
