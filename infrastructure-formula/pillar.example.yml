@@ -62,5 +62,9 @@ infrastructure:
         directory: /srv/formulas
         # example repository (no formulas will be cloned unless defined in the pillar)
         repository: https://code.opensuse.org/heroes/salt-formulas-git.git
+    master:
+      # if set to true (the default), a GPG key will be managed for the Salt Master
+      # if set to false, no GPG key will be managed, and an existing /etc/salt/gpgkeys will be purged
+      gpg: true
 
 # *RT: attribute is only used for updating RackTables
