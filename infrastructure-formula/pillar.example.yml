@@ -5,6 +5,11 @@ infrastructure:
   kvm_topdir: /data/kvm
   # directory for Libvirt VM definitions (XML files), default is "/kvm/vm"
   libvirt_domaindir: /data/kvm/domains
+  libvirt:
+    domains:
+      # if set to false (the default), only domain definitions for machines under the domain matching the domain grain are managed
+      # if set to true, domain definitions for machines under all infrastructure:domains are managed
+      do_all: true
   domains:
     example.com:
       clusters:
