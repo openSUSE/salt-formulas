@@ -55,8 +55,9 @@ salt_git_gc:
     - enable: true
 {%- endif %}
 
-{%- set id = grains['id'] %}
 {%- set gpg_script = '/usr/local/sbin/create_salt_master_gpg_key.sh' %}
+{%- if salt['pillar.get']('infrastructure:salt:master:gpg', True) %}
+  {%- set id = grains['id'] %}
 
 install_gpg_bootstrap_script:
   file.managed:
@@ -72,3 +73,20 @@ run_gpg_bootstrap_script:
         - file: install_gpg_bootstrap_script
     - watch_in:
         - file: /etc/salt/gpgkeys
+
+{%- else %}
+
+  {%- if salt['file.file_exists']('/etc/salt/gpgkeys') %}
+salt_gpg_backup:
+  file.copy:
+    - name: /etc/salt/gpgkeys.bak
+    - source: /etc/salt/gpgkeys
+
+salt_gpg_purge:
+  file.absent:
+    - names:
+        - {{ gpg_script }}
+        - /etc/salt/gpgkeys
+  {%- endif %}
+
+{%- endif %}
