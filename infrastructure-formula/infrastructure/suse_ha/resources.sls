@@ -28,6 +28,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- do salt.log.debug('suse_ha.resources: running non-orchestrated') -%}
 {%- set lowpillar = salt['pillar.get']('infrastructure') -%}
 {%- set domain = grains['domain'] -%}
+{%- set do_all_domains = salt['pillar.get']('infrastructure:libvirt:domains:do_all', false) -%}
 {%- endif %}
 {%- set myid = grains['id'] -%}
 {%- if 'virt_cluster' in grains %}
@@ -40,7 +41,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- elif not domain in lowpillar['domains'] -%}
 {%- do salt.log.error('Domain ' ~ domain ~ ' not correctly registered in pillar/domain or orchestrator role is not assigned!') -%}
 {%- else -%}
-{%- set domainpillar = lowpillar['domains'][domain] -%}
+{%- for dname in lowpillar['domains'] %}
+{%- if dname == domain or do_all_domains %}
+{%- set domainpillar = lowpillar['domains'][dname] -%}
 {%- set clusterpillar = domainpillar['clusters'] -%}
 {%- set machinepillar = domainpillar['machines'] -%}
 {%- set topdir = lowpillar.get('kvm_topdir', '/kvm') -%}
@@ -49,7 +52,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- if cluster in clusterpillar and myid == clusterpillar[cluster]['primary'] %}
 {%- if machinepillar is not none %}
 {%- for machine, config in machinepillar.items() %}
-{%- set machine = machine ~ '.' ~ domain %}
+{%- set machine = machine ~ '.' ~ dname %}
 {%- do salt.log.debug(machine) %}
 {%- if config['cluster'] == cluster %}
 
@@ -88,7 +91,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {{ ha_resource('VM_' ~ machine, 'ocf', 'VirtualDomain', instance_attributes, operations, meta_attributes, 'heartbeat', requires=None) }}
 
 {%- endif %}
+{%- endif %}
 {%- endfor %}
 {%- endif %}
 {%- endif %}
 {%- endif %}
+{%- endfor %}
