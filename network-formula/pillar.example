@@ -1,4 +1,7 @@
 network:
+  # by default the configuration happens through wicked
+  # alternative choice is "NetworkManager"
+  backend: wicked
   control:
     # by default, changes will be applied after configuration files have been written
     # this can be set to False if it's desired for no reload operations to be performed
@@ -15,9 +18,13 @@ network:
     netconfig_dns_resolver_options:
       - attempts:1
       - timeout:1
-  # each listed interface will generate an ifcfg- file
+  # each listed interface will generate an ifcfg- file (wicked backend) or a .nmconnection file (NetworkManager backend)
   interfaces:
     eth0:
+      ## Variant 1: ifcfg-style configuration
+      ##  - with the wicked backend, many of these will be written as is
+      ##  - with the NetworkManager backend, all keys and values will be translated if possible, and otherwise skippeed
+
       # STARTMODE is "auto" by default, causing the interface to be started. if set to "off", it will be stopped.
       # other startmodes will not trigger any action by Salt.
       startmode: auto
@@ -37,6 +44,23 @@ network:
         - fe80::1/64
     mlx0:
       ethtool_options: -K foo rxvlan off
+
+    ## Variant 2: NM-style configuration
+    ##   - with the wicked backend, this will lead to failure and possibly undefined behavior
+    ##   - with the NetworkManager backend, all sections, keys and values will be written as is, except for special keys "addresses" and "routes", which will be expanded for convenience
+
+    nm0:
+      connection:
+        type: ethernet
+      ipv4:
+        addresses: 
+          - 10.128.4.129/27
+        # method will default to "manual" if addresses are specified, or to "disabled" otherwise
+        method: manual
+      ipv6:
+        addresses:
+          - 2001:db8:1::10/64
+
   # each listed route will be written into /etc/sysconfig/network/routes and applied
   # "default4" and "default6" will be written as "default"
   routes:
