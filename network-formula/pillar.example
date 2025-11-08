@@ -49,3 +49,20 @@ network:
       gateway: 192.168.120.2
       options:
         - blackhole
+
+  systemd:
+    # remove files not configured in this pillar from /etc/systemd/network/ (defaults to true)
+    clean: true
+    # manage systemd.link(5) configuration files
+    # (this is currently the only supported systemd network configuration type)
+    link:
+      # will manage a file /etc/systemd/network/10-salt-eth0.link
+      eth0:
+        # all sections ...
+        Match:
+        # ... and all options ...
+          MACAddress: 00:11:22:AA:66:DD
+          Type: ether
+        # ... will be written to the ini file 1:1
+        Link:
+          Name: eth0
