@@ -29,3 +29,7 @@ Configures routes using Wicked (`/etc/sysconfig/network/routes`).
 `network.wicked.netconfig`
 
 Configures netconfig (`/etc/sysconfig/network/config`).
+
+`network.systemd.link`
+
+Configures network devices using `systemd.link(5)` (`/etc/systemd/network/*.link`).
