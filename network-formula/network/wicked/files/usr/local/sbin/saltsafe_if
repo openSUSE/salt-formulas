@@ -100,7 +100,7 @@ run() {
 	else
 		local call="$call $interface"
 	fi
-	timeout --preserve-status -k 60 30 $call
+	timeout --preserve-status -k 60 30 $call >&2
 }
 
 backup() {
