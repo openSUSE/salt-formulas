@@ -27,4 +27,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- do defaults.qemu.update(defaults_qemu) -%}
 {%- do defaults.sockets.update(defaults_sockets) -%}
 
+{%- if salt['grains.get']('selinux:enabled', false) is sameas true %}
+  {%- do defaults.qemu.update({'security_driver': 'selinux'}) %}
+{%- endif %}
+
 {%- set config = salt.pillar.get('libvirt', default=defaults, merge=True, merge_nested_lists=False) -%}
