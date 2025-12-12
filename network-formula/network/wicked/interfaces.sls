@@ -25,76 +25,74 @@ include:
   - .common
 
 {%- for interface, config in interfaces.items() %}
-{%- do ifcfg_data.update({ interface: {'addresses': [], 'startmode': 'auto'} }) %}
+  {%- do ifcfg_data.update({ interface: {'addresses': [], 'startmode': 'auto'} }) %}
 
-{%- if 'address' in config %}
-{%- set addr = config['address'] %}
-{%- elif 'addresses' in config %}
-{%- set addr = config['addresses'] %}
-{%- else %}
-{%- set addr = None %}
-{%- endif %}
+  {%- if 'address' in config %}
+    {%- set addr = config['address'] %}
+  {%- elif 'addresses' in config %}
+    {%- set addr = config['addresses'] %}
+  {%- else %}
+    {%- set addr = None %}
+  {%- endif %}
 
-{%- if addr is string %}
-{%- do ifcfg_data[interface]['addresses'].append(addr) %}
-{%- elif addr is iterable and addr is not mapping %}
-{%- do ifcfg_data[interface]['addresses'].extend(addr) %}
-{%- endif %}
+  {%- if addr is string %}
+    {%- do ifcfg_data[interface]['addresses'].append(addr) %}
+  {%- elif addr is iterable and addr is not mapping %}
+    {%- do ifcfg_data[interface]['addresses'].extend(addr) %}
+  {%- endif %}
 
-{%- for option, value in config.items() %}
-{%- set option = option | lower %}
-{%- if value is sameas true %}
-{%- set value = 'yes' %}
-{%- elif value is sameas false %}
-{%- if option == 'startmode' %}
-{%- set value = 'off' %}
-{%- else %}
-{%- set value = 'no' %}
-{%- endif %}
-{%- elif option != 'ethtool_options' %}
-{%- set value = value | lower %}
-{%- endif %}
-{%- if not option in ['address', 'addresses'] %}
-{%- do ifcfg_data[interface].update({option: value}) %}
-{%- endif %}
-{%- endfor %}
+  {%- for option, value in config.items() %}
+    {%- set option = option | lower %}
+    {%- if value is sameas true %}
+      {%- set value = 'yes' %}
+    {%- elif value is sameas false %}
+      {%- if option == 'startmode' %}
+        {%- set value = 'off' %}
+      {%- else %}
+        {%- set value = 'no' %}
+      {%- endif %}
+    {%- elif option != 'ethtool_options' %}
+      {%- set value = value | lower %}
+    {%- endif %}
+    {%- if not option in ['address', 'addresses'] %}
+      {%- do ifcfg_data[interface].update({option: value}) %}
+    {%- endif %}
+  {%- endfor %}
 
-{%- if ifcfg_data[interface]['startmode'] in startmode_ifcfg.keys() %}
-{%- do startmode_ifcfg[ifcfg_data[interface]['startmode']].append(interface) %}
-{%- endif %}
+  {%- if ifcfg_data[interface]['startmode'] in startmode_ifcfg.keys() %}
+    {%- do startmode_ifcfg[ifcfg_data[interface]['startmode']].append(interface) %}
+  {%- endif %}
 
-{%- if interface.startswith('br') and 'bridge_ports' in config %}
-{%- if not 'bridge' in config %}
-{%- do ifcfg_data[interface].update({'bridge': 'yes'}) %}
-{%- endif %}
-{%- do enslaved.extend(config['bridge_ports'].split()) %}
-{%- endif %}
-
-{%- endfor %}
+  {%- if interface.startswith('br') and 'bridge_ports' in config %}
+    {%- if not 'bridge' in config %}
+      {%- do ifcfg_data[interface].update({'bridge': 'yes'}) %}
+    {%- endif %}
+    {%- do enslaved.extend(config['bridge_ports'].split()) %}
+  {%- endif %}
+{%- endfor %} {#- close first interfaces loop #}
 
 {%- for interface, config in interfaces.items() %}
-{%- if not 'bootproto' in config %}
-{%- if interface in enslaved %}
-{%- set bootproto = 'none' %}
-{%- else %}
-{%- set bootproto = 'static' %}
-{%- endif %}
-{%- do ifcfg_data[interface].update({'bootproto': bootproto}) %}
-{%- endif %}
-
-{%- endfor %}
+  {%- if not 'bootproto' in config %}
+    {%- if interface in enslaved %}
+      {%- set bootproto = 'none' %}
+    {%- else %}
+      {%- set bootproto = 'static' %}
+    {%- endif %}
+    {%- do ifcfg_data[interface].update({'bootproto': bootproto}) %}
+  {%- endif %}
+{%- endfor %} {#- close second interfaces loop #}
 
 {%- if ifcfg_data %}
 
-{%- set interface_files = {} %}
-{%- for interface in ifcfg_data.keys() %}
-{%- set file = base ~ '/ifcfg-' ~ interface %}
-{%- if salt['file.file_exists'](file) %}
-{%- do interface_files.update({interface: file}) %}
-{%- endif %}
-{%- endfor %} {#- close interface loop #}
+  {%- set interface_files = {} %}
+    {%- for interface in ifcfg_data.keys() %}
+      {%- set file = base ~ '/ifcfg-' ~ interface %}
+      {%- if salt['file.file_exists'](file) %}
+        {%- do interface_files.update({interface: file}) %}
+      {%- endif %}
+    {%- endfor %} {#- close interface loop #}
 
-{%- if interface_files %}
+  {%- if interface_files %}
 network_wicked_ifcfg_backup:
   file.copy:
     - names:
@@ -104,7 +102,7 @@ network_wicked_ifcfg_backup:
       {%- endfor %}
     - require:
       - file: network_wicked_backup_directory
-{%- endif %} {#- close interface_files check #}
+  {%- endif %} {#- close interface_files check #}
 
 network_wicked_ifcfg_settings:
   file.managed:
@@ -117,19 +115,19 @@ network_wicked_ifcfg_settings:
             - IPADDR_{{ loop.index }}='{{ address }}'
           {%- endfor %}
           {%- for key, value in config.items() %}
-          {%- if value is string %}
+            {%- if value is string %}
             - {{ key | upper }}='{{ value }}'
-          {%- else %}
-          {%- do salt.log.warning('wicked: unsupported value for key ' ~ key) %}
-          {%- endif %}
-          {%- endfor %}
-      {%- endfor %}
+            {%- else %}
+              {%- do salt.log.warning('wicked: unsupported value for key ' ~ key) %}
+            {%- endif %}
+          {%- endfor %} {#- close config loop #}
+      {%- endfor %} {#- close ifcfg_data loop #}
     - mode: '0640'
     {%- if interface_files %}
     - require:
       - file: network_wicked_ifcfg_backup
     {%- endif %}
-{%- endif %}
+{%- endif %} {#- close ifcfg_data check #}
 
 {%- if do_apply and ( startmode_ifcfg['auto'] or startmode_ifcfg['off'] ) %}
 network_wicked_interfaces:
@@ -163,4 +161,4 @@ network_wicked_interfaces:
       {%- endif %}
       - file: network_wicked_ifcfg_settings
     - shell: /bin/sh
-{%- endif %}
+{%- endif %} {#- close do_apply check #}

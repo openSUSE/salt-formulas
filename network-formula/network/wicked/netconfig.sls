@@ -32,13 +32,13 @@ network_wicked_config:
           {%- set value = ' '.join(value) | lower -%}
         {%- endif %}
         {{ key }}: {{ value }}
-      {%- endfor %}
+      {%- endfor %} {#- close config loop #}
 
-{%- if do_apply %}
+  {%- if do_apply %}
 network_wicked_netconfig_update:
   cmd.run:
     - name: netconfig update
     - onchanges:
       - suse_sysconfig: network_wicked_config
-{%- endif %} {#- close do_apply check #}
-{%- endif %}
+  {%- endif %} {#- close do_apply check #}
+{%- endif %} {#- close config check #}
