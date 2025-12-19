@@ -22,6 +22,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set routes = network.get('routes', {}) -%}
 {%- set interfaces = network.get('interfaces', {}) -%}
 {%- set control = network.get('control', {}) -%}
-{%- set do_apply = control.get('apply', True) -%}
 
 {%- set legal_backends = ['wicked'] -%}

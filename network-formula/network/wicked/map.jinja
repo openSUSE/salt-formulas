@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'network/map.jinja' import config, interfaces, routes, do_apply -%}
+{%- from 'network/map.jinja' import config, control, interfaces, routes -%}
 {%- set config = config -%}
+{%- set control = control -%}
 {%- set interfaces = interfaces -%}
 {%- set routes = routes -%}
-{%- set do_apply = do_apply -%}
+{%- set do_apply = control.get('apply', True) -%}
 
 {%- set base = '/etc/sysconfig/network' -%}
 {%- set base_backup = base ~ '/salt-backup' %}

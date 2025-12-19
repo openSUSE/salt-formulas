@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'network/wicked/map.jinja' import base, base_backup, interfaces, script, do_apply -%}
+{%- from 'network/wicked/map.jinja' import base, base_backup, control, interfaces, script -%}
 {%- set ifcfg_data = {} %}
 {%- set enslaved = [] %}
 {%- set startmode_ifcfg = {'auto': [], 'off': []} %}
@@ -129,7 +129,7 @@ network_wicked_ifcfg_settings:
     {%- endif %}
 {%- endif %} {#- close ifcfg_data check #}
 
-{%- if do_apply and ( startmode_ifcfg['auto'] or startmode_ifcfg['off'] ) %}
+{%- if control.get('apply', true) and ( startmode_ifcfg['auto'] or startmode_ifcfg['off'] ) %}
 network_wicked_interfaces:
   cmd.run:
     - names:
@@ -161,4 +161,32 @@ network_wicked_interfaces:
       {%- endif %}
       - file: network_wicked_ifcfg_settings
     - shell: /bin/sh
-{%- endif %} {#- close do_apply check #}
+{%- endif %} {#- close control.apply check #}
+
+{%- if control.get('clean', true) %}
+  {%- for file in salt['file.find'](base, mindepth=1, maxdepth=1, name='ifcfg-*', print='name', type='f') %}
+    {#- ifcfg-lo is managed by the wicked-service package #}
+    {%- if file != 'ifcfg-lo' and file[-4:] != '.bak' %}
+      {%- set interface = file.replace('ifcfg-', '') %}
+      {%- if interface not in ifcfg_data %}
+network_wicked_destroy_interface_{{ interface }}:
+  cmd.run:
+    - name: {{ script }}down {{ interface }}
+    - stateful:
+      - test_name: {{ script }}down {{ interface }} test
+    - onlyif: ifstatus {{ interface }} -o quiet
+    - require:
+      - file: network_wicked_script
+        {%- if interface_files %}
+      - file: network_wicked_ifcfg_backup
+        {%- endif %}
+    - shell: /bin/sh
+
+  file.absent:
+    - name: {{ base }}/{{ file }}
+    - require:
+        - cmd: network_wicked_destroy_interface_{{ interface }}
+      {%- endif %} {#- close interface check #}
+    {%- endif %} {#- close file check #}
+  {%- endfor %} {#- close file loop #}
+{%- endif %} {#- close control.clean check #}

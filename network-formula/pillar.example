@@ -4,6 +4,10 @@ network:
     # this can be set to False if it's desired for no reload operations to be performed
     apply: True
 
+    # by default, interface configuration files not configured through the pillar will be removed from /etc/sysconfig/network
+    # this can be set to False if unmanaged configuration should be preserved
+    clean: True
+
   # settings written into /etc/sysconfig/network/config
   config:
     # keys/values are written as-is, but keys are uppercased and booleans values are converted automatically.
