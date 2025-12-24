@@ -27,8 +27,12 @@ def generate_network_pillar(enabled_domains, domain, host):
     if domain not in enabled_domains:
         return {}
 
-    domaindir = f'{root}/domain/{domain.replace(".", "_")}'
+    if domain == 'infra.opensuse.org':
+        domaindir = f'{root}/infra'
+    else:
+        domaindir = f'{root}/domain/{domain.replace(".", "_")}'
 
+    log(f'common.network domaindir: {domaindir}')
     msg = f'common.network, host {host}:'
 
     domaindata = {
