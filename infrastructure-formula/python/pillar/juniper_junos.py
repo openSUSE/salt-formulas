@@ -1,5 +1,5 @@
 """
-Copyright (C) 2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
+Copyright (C) 2024-2025 SUSE LLC <georg.pfuetzenreuter@suse.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,14 +15,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from .common import pillar_domain_path
+
 from bisect import insort
 from ipaddress import ip_network
 from logging import getLogger
 from pathlib import PosixPath
 
 import yaml
-
-root = '/srv/salt-git/pillar'
 
 log = getLogger(__name__)
 
@@ -44,11 +44,10 @@ def generate_juniper_junos_pillar(enabled_domains, minion_id, spacemap):
         if domain_space in spacemap:
             domain_space = spacemap[domain_space]
         log.debug(f'Domain space set to "{domain_space}"')
-        domain = domain.replace('.', '_')
 
         for dataset in data.keys():
             log.debug(f'Scanning domain {domain}, dataset {dataset} ...')
-            file = f'{root}/domain/{domain}/{dataset}.yaml'
+            file = pillar_domain_path(domain) + '/' + dataset + '.yaml'
 
             if PosixPath(file).is_file():
                 with open(file) as fh:

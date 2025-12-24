@@ -1,5 +1,5 @@
 """
-Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+Copyright (C) 2024-2025 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,32 +17,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from logging import getLogger
 
-from yaml import safe_load
-
-root = '/srv/salt-git/pillar'
+from .common import pillar_domain_data
 
 log = getLogger(__name__).debug
 
-def generate_network_pillar(enabled_domains, domain, host):
+def generate_network_pillar(enabled_domains, domain, host, site=None):
     if domain not in enabled_domains:
         return {}
 
-    if domain == 'infra.opensuse.org':
-        domaindir = f'{root}/infra'
-    else:
-        domaindir = f'{root}/domain/{domain.replace(".", "_")}'
-
-    log(f'common.network domaindir: {domaindir}')
     msg = f'common.network, host {host}:'
 
-    domaindata = {
-            'hosts': {},
-            'networks': {},
-    }
-
-    for file in domaindata.keys():
-        with open(f'{domaindir}/{file}.yaml') as fh:
-            domaindata[file] = safe_load(fh)
+    domaindata = pillar_domain_data(domain, [
+            'hosts',
+            'networks',
+        ],
+        site,
+    )
 
     # machine not in hosts, can be an error or expected (for example because the machine is bare metal or in an unsupported location)
     if host not in domaindata['hosts']:
