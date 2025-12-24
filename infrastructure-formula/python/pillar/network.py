@@ -147,8 +147,13 @@ def generate_network_pillar(enabled_domains, domain, host):
                 pillar['network']['routes'] = {}
 
                 if ip4 is not None and 'gw4' in nwconfig:
+                    if isinstance(nwconfig['gw4'], dict) and 'gw_vip' in nwconfig['gw4']:
+                        gw4 = nwconfig['gw4']['gw_vip']
+                    else:
+                        gw4 = nwconfig['gw4']
+
                     pillar['network']['routes']['default4'] = {
-                            'gateway': nwconfig['gw4'],
+                            'gateway': gw4,
                     }
 
                 if ip6 is not None and 'gw6' in nwconfig:
