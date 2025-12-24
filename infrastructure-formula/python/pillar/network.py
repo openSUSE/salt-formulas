@@ -58,7 +58,7 @@ def generate_network_pillar(enabled_domains, domain, host):
     else:
         interface_candidates = [interface for interface in ifconfig.keys() if not interface.endswith('-ur')]
 
-        if len(interface_candidates) == 1:
+        if len(interface_candidates) > 0:
             primary_interface = next(iter(interface_candidates))
 
         else:
