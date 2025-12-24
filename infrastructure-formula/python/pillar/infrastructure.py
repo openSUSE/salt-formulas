@@ -117,8 +117,11 @@ def generate_infrastructure_pillar(enabled_domains):
                     ip4 = hostinterfaces[interface].get('ip4')
                     ip6 = hostinterfaces[interface].get('ip6')
 
-            hostpillar['ip4'] = ip4
-            hostpillar['ip6'] = ip6
+            if ip4 is not None:
+                hostpillar['ip4'] = ip4
+
+            if ip6 is not None:
+                hostpillar['ip6'] = ip6
 
             for interface, ifconfig in hostinterfaces.items():
                 iftype = ifconfig.get('type', 'direct')
