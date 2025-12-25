@@ -1,5 +1,5 @@
 """
-Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+Copyright (C) 2024-2025 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from logging import getLogger
 
-from yaml import safe_load
-
-root = '/srv/salt-git/pillar'
+from .common import pillar_domain_data
 
 log = getLogger(__name__).debug
 
@@ -27,7 +25,7 @@ def generate_infrastructure_pillar(enabled_domains):
     pillar = {
         'infrastructure': {
             'domains': {},
-        }
+        },
     }
 
     for domain in enabled_domains:
@@ -37,21 +35,16 @@ def generate_infrastructure_pillar(enabled_domains):
         }
 
         domainpillar = pillar['infrastructure']['domains'][domain]
-        domaindir = f'{root}/domain/'
-        mydomaindir = f'{domaindir}{domain.replace(".", "_")}'
 
         msg = f'Parsing domain {domain}'
         log(f'{msg} ...')
 
-        domaindata = {
-                'clusters': {},
-                'hosts': {},
-                'inherited_clusters': {},
-        }
+        domaindata = pillar_domain_data(domain, [
+            'clusters',
+            'hosts',
+        ])
 
-        for file in ['clusters', 'hosts']:
-            with open(f'{mydomaindir}/{file}.yaml') as fh:
-                domaindata[file] = safe_load(fh)
+        domaindata['inherited_clusters'] = {}
 
         for cluster, clusterconfig in domaindata['clusters'].items():
             log(f'{msg} => cluster {cluster} ...')
@@ -59,10 +52,9 @@ def generate_infrastructure_pillar(enabled_domains):
             if 'delegate_to' in clusterconfig:
                 delegated_domain = clusterconfig['delegate_to']
 
-                with open(f'{domaindir}/{delegated_domain}/clusters.yaml') as fh:
-                    domaindata['inherited_clusters'].update({
-                        delegated_domain: safe_load(fh),
-                    })
+                domaindata['inherited_clusters'].update({
+                    delegated_domain: pillar_domain_data(delegated_domain, ['clusters']),
+                })
 
                 if cluster in domaindata['inherited_clusters']:
                     clusterconfig = domaindata['inherited_clusters'][cluster]
@@ -125,8 +117,11 @@ def generate_infrastructure_pillar(enabled_domains):
                     ip4 = hostinterfaces[interface].get('ip4')
                     ip6 = hostinterfaces[interface].get('ip6')
 
-            hostpillar['ip4'] = ip4
-            hostpillar['ip6'] = ip6
+            if ip4 is not None:
+                hostpillar['ip4'] = ip4
+
+            if ip6 is not None:
+                hostpillar['ip6'] = ip6
 
             for interface, ifconfig in hostinterfaces.items():
                 iftype = ifconfig.get('type', 'direct')

@@ -1,5 +1,5 @@
 """
-Copyright (C) 2024 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
+Copyright (C) 2024-2025 Georg Pfuetzenreuter <mail+opensuse@georg-pfuetzenreuter.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,28 +17,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from logging import getLogger
 
-from yaml import safe_load
-
-root = '/srv/salt-git/pillar'
+from .common import pillar_domain_data
 
 log = getLogger(__name__).debug
 
-def generate_network_pillar(enabled_domains, domain, host):
+def generate_network_pillar(enabled_domains, domain, host, site=None):
     if domain not in enabled_domains:
         return {}
 
-    domaindir = f'{root}/domain/{domain.replace(".", "_")}'
-
     msg = f'common.network, host {host}:'
 
-    domaindata = {
-            'hosts': {},
-            'networks': {},
-    }
-
-    for file in domaindata.keys():
-        with open(f'{domaindir}/{file}.yaml') as fh:
-            domaindata[file] = safe_load(fh)
+    domaindata = pillar_domain_data(domain, [
+            'hosts',
+            'networks',
+        ],
+        site,
+    )
 
     # machine not in hosts, can be an error or expected (for example because the machine is bare metal or in an unsupported location)
     if host not in domaindata['hosts']:
@@ -58,7 +52,7 @@ def generate_network_pillar(enabled_domains, domain, host):
     else:
         interface_candidates = [interface for interface in ifconfig.keys() if not interface.endswith('-ur')]
 
-        if len(interface_candidates) == 1:
+        if len(interface_candidates) > 0:
             primary_interface = next(iter(interface_candidates))
 
         else:
@@ -147,8 +141,13 @@ def generate_network_pillar(enabled_domains, domain, host):
                 pillar['network']['routes'] = {}
 
                 if ip4 is not None and 'gw4' in nwconfig:
+                    if isinstance(nwconfig['gw4'], dict) and 'gw_vip' in nwconfig['gw4']:
+                        gw4 = nwconfig['gw4']['gw_vip']
+                    else:
+                        gw4 = nwconfig['gw4']
+
                     pillar['network']['routes']['default4'] = {
-                            'gateway': nwconfig['gw4'],
+                            'gateway': gw4,
                     }
 
                 if ip6 is not None and 'gw6' in nwconfig:
