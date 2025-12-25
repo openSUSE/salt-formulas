@@ -44,6 +44,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
   {%- set topdir = lowpillar.get('kvm_topdir', '/kvm') -%}
   {%- set domaindir = lowpillar.get('libvirt_domaindir', topdir ~ '/vm') -%}
+  {%- set diskdir = topdir ~ '/disks/' %}
+  {%- set old_diskdir = diskdir ~ 'old/' %}
 
   {%- if not salt['file.file_exists']('/etc/uuidmap') %}
 /etc/uuidmap:
@@ -51,12 +53,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   {%- endif %}
 
   {%- if cluster in clusterpillar and ( not 'primary' in clusterpillar[cluster] or myid == clusterpillar[cluster]['primary'] ) %}
+    {%- set domainxmls = [] %}
+
     {%- for dname, dpillar in lowpillar['domains'].items() %}
       {%- if dname == domain or do_all_domains %}
         {%- for machine, config in dpillar['machines'].items() %}
           {%- set machine = machine ~ '.' ~ dname %}
           {%- if config['cluster'] == cluster and ( not 'node' in config or config['node'] == myid ) %}
-            {%- set domainxml = domaindir ~ '/' ~ machine ~ '.xml' %}
+            {%- set domainxmlname = machine ~ '.xml' %}
+            {%- do domainxmls.append(domainxmlname) %}
+            {%- set domainxml = domaindir ~ '/' ~ domainxmlname %}
             {%- if opts['test'] %}
               {%- set alt_uuid = 'echo will-generate-a-new-uuid' %}
             {%- else %}
@@ -95,7 +101,7 @@ define_domain_{{ machine }}:
       - file: write_domainfile_{{ machine }}
 
               {%- if 'root' in config['disks'] %}
-                {%- set root_disk = topdir ~ '/disks/' ~ machine ~ '_root.qcow2' %}
+                {%- set root_disk = diskdir ~ machine ~ '_root.qcow2' %}
                 {%- set image = topdir ~ '/os-images/' ~ config['image'] %}
                 {%- set reinit = config.get('irreversibly_wipe_and_overwrite_vm_disk', False) %}
 
@@ -169,6 +175,37 @@ start_domain_{{ machine }}:
         {%- endfor %} {#- close machine loop #}
       {%- endif %} {#- close domain check #}
     {%- endfor %} {#- close domain loop #}
+
+    {#- TODO: cleanup for VMs on clustered hypervisors #}
+    {%- if clusterpillar[cluster].get('storage') == 'local' %}
+    {%- for file in salt['file.find'](domaindir, mindepth=1, maxdepth=1, name='*.xml', print='name', type='f') %}
+      {%- if file not in domainxmls %}
+        {%- set machine = file[:-4] %}
+destroy_machine_{{ machine }}:
+  virt.powered_off:
+    - name: {{ machine }}
+
+  module.run:
+    - virt.undefine:
+        - vm_: {{ machine }}
+
+  file.absent:
+    - name: {{ domaindir ~ '/' ~ file }}
+
+        {%- set old_images = salt['file.find'](diskdir, mindepth=1, maxdepth=1, name=machine ~ '_*.qcow2', print='name', type='f') %}
+        {%- if old_images %}
+move_{{ machine }}_images:
+  file.rename:
+    - names:
+          {%- for image in old_images %}
+        - {{ old_diskdir }}{{ image }}:
+            - source: {{ diskdir }}{{ image }}
+          {%- endfor %}
+    - force: true
+        {%- endif %} {#- close old_images check #}
+      {%- endif %} {#- close file check #}
+    {%- endfor %} {#- close file loop #}
+    {%- endif %} {#- close standalone hypervisor check / TODO #}
 
   {%- else %}
 
