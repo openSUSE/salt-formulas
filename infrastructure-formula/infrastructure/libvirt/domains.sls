@@ -45,6 +45,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   {%- set topdir = lowpillar.get('kvm_topdir', '/kvm') -%}
   {%- set domaindir = lowpillar.get('libvirt_domaindir', topdir ~ '/vm') -%}
   {%- set diskdir = topdir ~ '/disks/' %}
+  {%- set old_diskdir = diskdir ~ 'old/' %}
 
   {%- if not salt['file.file_exists']('/etc/uuidmap') %}
 /etc/uuidmap:
@@ -189,7 +190,19 @@ destroy_machine_{{ machine }}:
         - vm_: {{ machine }}
 
   file.absent:
-    - names: {{ ( [domaindir ~ '/' ~ file] + salt['file.find'](diskdir, mindepth=1, maxdepth=1, name=machine ~ '_*.qcow2', type='f') ) | yaml }}
+    - name: {{ domaindir ~ '/' ~ file }}
+
+        {%- set old_images = salt['file.find'](diskdir, mindepth=1, maxdepth=1, name=machine ~ '_*.qcow2', print='name', type='f') %}
+        {%- if old_images %}
+move_{{ machine }}_images:
+  file.rename:
+    - names:
+          {%- for image in old_images %}
+        - {{ old_diskdir }}{{ image }}:
+            - source: {{ diskdir }}{{ image }}
+          {%- endfor %}
+    - force: true
+        {%- endif %} {#- close old_images check #}
       {%- endif %} {#- close file check #}
     {%- endfor %} {#- close file loop #}
     {%- endif %} {#- close standalone hypervisor check / TODO #}
