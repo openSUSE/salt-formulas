@@ -163,7 +163,7 @@ network_wicked_interfaces:
     - shell: /bin/sh
 {%- endif %} {#- close control.apply check #}
 
-{%- if control.get('clean', true) %}
+{%- if control.get('clean', ifcfg_data) %}
   {%- for file in salt['file.find'](base, mindepth=1, maxdepth=1, name='ifcfg-*', print='name', type='f') %}
     {#- ifcfg-lo is managed by the wicked-service package #}
     {%- if file != 'ifcfg-lo' and file[-4:] != '.bak' %}
