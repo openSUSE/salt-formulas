@@ -82,9 +82,9 @@ include:
   {%- endif %}
 {%- endfor %} {#- close second interfaces loop #}
 
-{%- if ifcfg_data %}
+{%- set interface_files = {} %}
 
-  {%- set interface_files = {} %}
+{%- if ifcfg_data %}
     {%- for interface in ifcfg_data.keys() %}
       {%- set file = base ~ '/ifcfg-' ~ interface %}
       {%- if salt['file.file_exists'](file) %}
