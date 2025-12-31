@@ -5,7 +5,9 @@ network:
     apply: True
 
     # by default, interface configuration files not configured through the pillar will be removed from /etc/sysconfig/network
-    # this can be set to False if unmanaged configuration should be preserved
+    # _if_ a network:interfaces pillar is defined
+    # this can be explicitly set to False if unmanaged configuration should be preserved regardless of there being an interfaces pillar
+    # or explicitly set to True if unmanaged configuration should be wiped regardless of there _not_ being an interfaces pillar
     clean: True
 
   # settings written into /etc/sysconfig/network/config
