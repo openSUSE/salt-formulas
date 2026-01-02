@@ -1,4 +1,9 @@
 zypper:
+  clean:
+    # whether to remove configuration not present in the zypper:config pillar (defaults to false)
+    config: true
+    # whether to remove repositories not present in the zypper:repositories pillar (defaults to false)
+    repositories: true
   config:
     zypp_conf:
       main:
