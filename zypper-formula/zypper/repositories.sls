@@ -19,3 +19,12 @@ include:
     - require:
         - sls: zypper.variables
 {%- endfor %}
+
+{%- if salt['pillar.get']('zypper:clean:repositories', false) is sameas true %}
+  {%- for repo in salt['pkg.list_repos']() %}
+    {%- if repo not in repositories %}
+{{ repo }}:
+  pkgrepo.absent
+    {%- endif %}
+  {%- endfor %}
+{%- endif %}
