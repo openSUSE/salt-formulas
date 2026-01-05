@@ -1,7 +1,7 @@
 #
 # spec file for package infrastructure-formulas
 #
-# Copyright (c) 2025 SUSE LLC
+# Copyright (c) 2026 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -19,7 +19,12 @@
 %define fdir %{_datadir}/salt-formulas
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
+# align with salt
+%if 0%{?sle_version} == 150700
+%{?sle15_python_module_pythons}
+%else
 %define pythons python3
+%endif
 Name:           infrastructure-formulas
 Version:        0
 Release:        0
