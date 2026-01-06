@@ -1,4 +1,5 @@
 {%- set mypillar = salt['pillar.get']('zypper:config', {}) %}
+{%- set clean = salt['pillar.get']('zypper:clean:config', false) %}
 
 {%- set zypp_conf = mypillar.get('zypp_conf', {}) %}
 {%- set zypper_conf = mypillar.get('zypper_conf', {}) %}
@@ -13,6 +14,7 @@
           {{ config }}: '{{ value }}'
           {%- endfor %}
         {%- endfor %}
+    - strict: {{ clean }}
 {%- endif %}
 
 {%- if zypper_conf %}
@@ -25,4 +27,5 @@
           {{ config }}: '{{ value }}'
           {%- endfor %}
         {%- endfor %}
+    - strict: {{ clean }}
 {%- endif %}
