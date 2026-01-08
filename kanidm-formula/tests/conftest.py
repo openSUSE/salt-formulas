@@ -29,12 +29,29 @@ def idm_admin_password(host):
             return loads(line)
     return None
 
+def login_cmd(host, password=None):
+    if password is None:
+        password = idm_admin_password(host)
+    return f'env KANIDM_PASSWORD={password} kanidm -D idm_admin login'
+
 @pytest.fixture
 def idm_admin(host):
     return idm_admin_password(host)
 
 @pytest.fixture(scope='module')
-def clean_accounts(host):
+def accounts_only_delete(host):
     yield
 
-    print(host.run(f'env KANIDM_PASSWORD={idm_admin_password(host)} kanidm -D idm_admin login && for x in testperson1 testperson2; do echo $x; kanidm -D idm_admin person delete "$x"; done'))
+    print(host.run(f'{login_cmd(host)} && for x in testperson1 testperson2; do echo $x; kanidm -D idm_admin person delete "$x"; done'))
+
+@pytest.fixture
+def account(host):
+    name = 'testperson3'
+    password = idm_admin_password(host)
+    login = login_cmd(host, password)
+
+    print(host.run(f'{login} && kanidm -D idm_admin person create {name} "Full name of {name}"'))
+
+    yield (name, password)
+
+    print(host.run(f'{login} && kanidm -D idm_admin person delete {name}'))
