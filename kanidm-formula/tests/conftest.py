@@ -19,8 +19,7 @@ from json import loads
 
 import pytest
 
-@pytest.fixture
-def idm_admin(host):
+def idm_admin_password(host):
     result = host.run(f'sudo kanidmd -o json recover-account idm_admin')
     print(result)
     for line in result.stdout.splitlines():
@@ -29,3 +28,13 @@ def idm_admin(host):
         if line[0] == '"':
             return loads(line)
     return None
+
+@pytest.fixture
+def idm_admin(host):
+    return idm_admin_password(host)
+
+@pytest.fixture(scope='module')
+def clean_accounts(host):
+    yield
+
+    print(host.run(f'env KANIDM_PASSWORD={idm_admin_password(host)} kanidm -D idm_admin login && for x in testperson1 testperson2; do echo $x; kanidm -D idm_admin person delete "$x"; done'))

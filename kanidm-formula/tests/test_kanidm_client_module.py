@@ -43,7 +43,7 @@ def test_kanim_client_local_login(host, name, success, idm_admin):
         ],
 )
 
-def test_kanim_client_person_create(host, idm_admin, name, displayname, success):
+def test_kanim_client_person_create(host, idm_admin, name, displayname, success, clean_accounts):
     out, err, rc = salt(host, f'kanidm_client.person_account_create {name} "{displayname}"')
     if success:
         assert rc == 0
