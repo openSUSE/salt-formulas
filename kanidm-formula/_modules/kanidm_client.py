@@ -68,7 +68,7 @@ def local_login(user, password):
     return _run_kanidm('login', expect_out=False, user=user, env={'KANIDM_PASSWORD': password})
 
 def local_service_account_create(account_id, display_name, managed_by, groups=[]):
-    data = _run_kanidm(f'service-account create {account_id} "{display_name}" {managed_by}')
+    data = _run_kanidm(f'service-account create {account_id} "{display_name}" {managed_by}', expect_out=False)
     if data is True:
         for group in groups:
             _run_kanidm(f'group add-members {group} {account_id}')

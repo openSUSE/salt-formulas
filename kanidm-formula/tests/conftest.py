@@ -39,10 +39,17 @@ def idm_admin(host):
     return idm_admin_password(host)
 
 @pytest.fixture(scope='module')
-def accounts_only_delete(host):
+def people_accounts_only_delete(host):
     yield
 
     print(host.run(f'{login_cmd(host)} && for x in testperson1 testperson2; do echo $x; kanidm -D idm_admin person delete "$x"; done'))
+
+@pytest.fixture(scope='module')
+def service_accounts_only_delete(host):
+    yield
+
+    # for some reason accounts must be deleted from groups first, otherwise account delete will return 403 (very helpful indeed)
+    print(host.run(f'{login_cmd(host)} && for a in testsvc1 testsvc2 testsvc3 testsvc4; do echo $x; for g in idm_people_admins idm_service_account_admins; do kanidm -D idm_admin group remove-members $g $a; done; kanidm -D idm_admin service-account delete $a; done'))
 
 @pytest.fixture
 def account(host):

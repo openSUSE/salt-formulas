@@ -38,13 +38,37 @@ def test_kanidm_client_local_login(host, name, success, idm_admin):
     assert out == success
 
 @pytest.mark.parametrize(
+        'name, displayname, managed_by, groups, success', [
+            ('testsvc1', 'Test Service 1', 'idm_admin', ['idm_service_account_admins@idm.example.com'], True),
+            ('testsvc1', 'Test Service 2', 'idm_admin', ['idm_service_account_admins'], False),
+            ('testsvc1', 'Test Service 2', 'idm_admin', [], False),
+            ('testsvc2', 'Test Service 2', 'idm_admin', ['idm_service_account_admins', 'idm_people_admins'], True),
+            ('testsvc3', 'Test Service 3', 'boo_not_exist', ['idm_service_account_admins', 'idm_people_admins'], False),
+            ('testsvc3', 'Test Service 3', 'boo_not_exist', [], False),
+        ],
+)
+def test_kanidm_client_local_service_account_create(host, idm_admin, service_accounts_only_delete, name, displayname, managed_by, groups, success):
+    out, err, rc = salt(host, f'kanidm_client.local_login idm_admin {idm_admin}')
+    if rc != 0:
+        pytest.fail('could not authenticate for testing local_service_account_create() test')
+
+    cmd = f'kanidm_client.local_service_account_create {name} "{displayname}" {managed_by}'
+    if groups:
+        cmd = f'{cmd} "{groups}"'
+    out, err, rc = salt(host, cmd)
+    if success:
+        assert rc == 0
+    else:
+        assert rc == 1
+    assert out == success
+
+@pytest.mark.parametrize(
         'name, displayname, success', [
             ('testperson1', 'Test Person 1', True),
             ('testperson1', 'Test Person 2', False),
         ],
 )
-
-def test_kanidm_client_person_create(host, idm_admin, accounts_only_delete, name, displayname, success):
+def test_kanidm_client_person_create(host, idm_admin, people_accounts_only_delete, name, displayname, success):
     out, err, rc = salt(host, f'kanidm_client.person_account_create {name} "{displayname}"')
     if success:
         assert rc == 0
