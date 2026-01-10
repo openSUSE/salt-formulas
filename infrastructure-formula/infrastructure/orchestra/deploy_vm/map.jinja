@@ -25,7 +25,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- set lockfile = 'lock_' ~ fqdn -%}
 {%- set lowpillar = salt.pillar.get('orchestra') -%}
 {%- set globalpillar = lowpillar['global'] -%}
-{%- set racktables = lowpillar['global']['racktables'] -%}
 {#- to-do: allow external deployhosts and domains to be inserted via cli pillar -#}
 {%- set basepillar = lowpillar['domains'][domain] -%}
 {%- set vmpillar = basepillar['machines'][deployhost] -%}
