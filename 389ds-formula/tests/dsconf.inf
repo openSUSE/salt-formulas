@@ -1,0 +1,14 @@
+[general]
+config_version = 2
+start = False
+
+[slapd]
+instance_name = testidm
+root_password = {PBKDF2-SHA512}25000$N4bwPickZMz5v5cyJkQIIQ$PQojDC.8pY/DWOU1XDnwwglQmRyk671j3MpYRMI1Thv494pajOunezf9IAiTlQEJSJ9Y5iMR06UJQvPk.kj6MQ
+port = 3389
+secure_port = 6636
+self_sign_cert = False
+
+[backend-userroot]
+create_suffix_entry = True
+suffix = dc=example,dc=com

@@ -1,0 +1,72 @@
+# vim: ft=yaml
+
+389ds:
+  instances:
+    myidm:
+      # config will be written to an answer file and loaded with dscreate
+      # note: modifictions to these after the initial setup will be written to the answer file but not automatically applied
+      config:
+        slapd:
+          # passwords must always be provided as a hash
+          root_password: '{PBKDF2-SHA512}25000$N4bwPickZMz5v5cyJkQIIQ$PQojDC.8pY/DWOU1XDnwwglQmRyk671j3MpYRMI1Thv494pajOunezf9IAiTlQEJSJ9Y5iMR06UJQvPk.kj6MQ'
+        backend-userroot:
+          create_suffix_entry: True
+          suffix: dc=example,dc=com
+      # replication will enable/disable replications
+      # note: so far, modifications to these after the initial setup are only partially supported - changes to "replica-id" and "bind-dn" will be applied (with a reset of the replication), but others require manual steps
+      replication:
+        dc=example,dc=com:
+          role: supplier
+          replica-id: 1
+          bind-dn: cn=replication manager,cn=config
+          bind-passwd: '{PBKDF2-SHA512}25000$N4bwPickZMz5v5cyJkQIIQ$PQojDC.8pY/DWOU1XDnwwglQmRyk671j3MpYRMI1Thv494pajOunezf9IAiTlQEJSJ9Y5iMR06UJQvPk.kj6MQ'
+
+      # the below allows for management of objects inside the LDAP database 
+      data:
+        # whether to delete objects not managed in the pillar below
+        # note this will so far only cover the deletion of objects under parent objects defined in the pillar
+        # defaults to True
+        clean: true
+        tree:
+          # the top keys under "tree" are the suffixes
+          dc=example,dc=com:
+            # below are objects under those suffixes
+            # the parent DN is appended, this becomes "ou=people,dc=example,dc=com"
+            ou=people:
+              # there are no limitations on the possible attribute
+              objectClass:
+                - organizationalUnit
+                - top
+              # only "children" is special - it recurses to further objects
+              children:
+                # this becomes "cn=Max Mustermannn,ou=people,dc=example,dc=com"
+                cn=Max Mustermannn:
+                  objectClass:
+                    - inetOrgPerson
+                    - top
+                    - organizationalPerson
+                    - person
+                  # string values will be converted to a list
+                  # (this is useful for attribute one knows will always only have one value)
+                  sn: Person
+                  mail:
+                    - foo@example.com
+                  # the attribute used in the first part of the DN does not need to be declared here, it's already added automatically
+                  #cn: Max Mustermannn
+
+                # this becomes "uid=demo_user,ou=people,dc=example,dc=com"
+                uid=demo_user:
+                  objectClass:
+                    - top
+                    - nsPerson
+                    - nsAccount
+                    - nsOrgPerson
+                    - posixAccount
+                  cn: Demo User
+                  displayName: Demo User
+                  homeDirectory: /var/empty
+                  legalName: Demo User Name
+                  loginShell: /bin/false
+                  uidNumber: 99998
+                  gidNumber: 99998
+                  userPassword: '{PBKDF2-SHA512}100000$zPwioWIiZGQArGMeRtg7a2wC/DlkRWQP$iY2x9Arj7NqZg1d6NnEvw7OPWOokxL9NbAmubY6DfvMI36rx9cJhZcYSXYTS3gcVVTVlQ7RKJJOnMlKKWoYpXA=='
