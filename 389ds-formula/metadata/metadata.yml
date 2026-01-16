@@ -1,0 +1,5 @@
+---
+summary:
+  Salt modules and states for 389-DS
+description:
+  Salt modules and states for the configuration and management of 389-DS LDAP servers.
