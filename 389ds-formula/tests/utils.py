@@ -66,6 +66,10 @@ def instance_setup(host, samples=False):
         if result.rc != 0:
             pytest.fail('Could not create replication for testing.')
 
+        result = host.run(cmd_dsconf([INSTANCE, 'repl-agmt', 'create', '--suffix', SUFFIX, '--host', 'localhost', '--port', '3389', '--conn-protocol', 'ldap', '--bind-dn', 'cn=replication manager,cn=config', '--bind-passwd', 'foo', '--bind-method', 'SIMPLE', 'sampleagmt']))
+        if result.rc != 0:
+            pytest.fail('Could not create replication agreement for testing.')
+
 
 def instance_teardown(host):
     result = host.run(cmd(['sudo', 'dsctl', INSTANCE, 'remove', '--do-it']))

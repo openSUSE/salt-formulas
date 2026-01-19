@@ -67,3 +67,126 @@ def test_replication_get_exist(host, instance, replications):
     assert out[1]
     assert isinstance(out[0], dict)
     assert out[0].get('type') == 'entry'  # JSON from dsconf
+
+
+def test_repl_agmt_create(host, instance, replications):
+    agmt_name = 'test-agmt'
+
+    out, err, rc = salt(
+            host,
+            f'389ds.repl_agmt_create {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}'
+            ' host=127.0.0.2 port=636 conn_protocol=ldaps'
+            ' bind_dn=cn=replman,cn=config'
+            ' bind_passwd=rllysecret'
+            ' bind_method=SIMPLE',
+    )
+
+    assert rc == 0
+    assert out == (f'Successfully created replication agreement "{agmt_name}"', True)
+
+    host.run(f'sudo dsconf {INSTANCE} repl-agmt delete --suffix {SUFFIX} {agmt_name}')
+
+
+def test_repl_agmt_delete(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    out, err, rc = salt(host, f'389ds.repl_agmt_delete {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}')
+
+    assert rc == 0
+    assert out == ('Agreement has been successfully deleted', True)
+
+
+def test_repl_agmt_delete_notexist_name(host, instance, replications):
+    agmt_name = 'agmtwhichdoesnotexist'
+
+    out, err, rc = salt(host, f'389ds.repl_agmt_delete {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}')
+
+    assert rc == 1
+    assert not out[1]
+    assert isinstance(out[0], dict)
+    assert out[0].get('desc') == f'Could not find the agreement "{agmt_name}" for suffix "{SUFFIX}"'
+
+
+def test_repl_agmt_enable(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    out, err, rc = salt(host, f'389ds.repl_agmt_enable {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}')
+
+    assert rc == 0
+    assert out == ('Agreement has been enabled', True)
+
+
+def test_repl_agmt_disable(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    out, err, rc = salt(host, f'389ds.repl_agmt_disable {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}')
+
+    assert rc == 0
+    assert out == ('Agreement has been disabled', True)
+
+
+def test_repl_agmt_get_notexist_suffix(host, instance):
+    """
+    Neither replication nor replication agreement exists for suffix.
+    """
+    out, err, rc = salt(host, f'389ds.repl_agmt_get {INSTANCE} suffix={SUFFIX} agmt_name=blabla')
+
+    assert rc == 1
+    assert out == ({}, False)
+
+
+def test_repl_agmt_get_notexist_name(host, instance, replications):
+    """
+    Replication exists, but replication agreement does not.
+    """
+    out, err, rc = salt(host, f'389ds.repl_agmt_get {INSTANCE} suffix={SUFFIX} agmt_name=blabla')
+
+    assert rc == 1
+    assert out == ({}, False)
+
+
+def test_repl_agmt_get_exist(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    out, err, rc = salt(host, f'389ds.repl_agmt_get {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}')
+
+    assert rc == 0
+    assert out[1]
+    assert isinstance(out[0], dict)
+    assert out[0].get('type') == 'entry'  # JSON from dsconf
+
+
+def test_repl_agmt_init(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    out, err, rc = salt(host, f'389ds.repl_agmt_init {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name}')
+
+    assert rc == 0
+    assert out == ('Agreement initialization started...', True)
+
+
+def test_repl_agmt_set_single(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    for attr, val in {
+            'host': '127.0.0.3',
+            'port': '3389',
+            'conn_protocol': 'ldap',
+            'bind_dn': 'cn=replman,cn=config',
+            'bind_passwd': 'asdf',
+            'bind_method': 'simple',
+    }.items():
+        out, err, rc = salt(host, f'389ds.repl_agmt_set {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name} {attr}={val}')
+
+        assert rc == 0
+        assert out == ('Successfully updated agreement', True)
+
+
+def test_repl_agmt_set_all(host, instance, replications, repl_agmt):
+    agmt_name = repl_agmt
+
+    # not adding port=, ref. comment above
+    out, err, rc = salt(host, f'389ds.repl_agmt_set {INSTANCE} suffix={SUFFIX} agmt_name={agmt_name} host=127.0.0.3 conn_protocol=ldap bind_dn=cn=replman,cn=config bind_passwd=asdf bind_method=simple')
+
+    assert rc == 0
+    assert out == ('Successfully updated agreement', True)
