@@ -17,10 +17,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- set network = salt.pillar.get('network', {}) -%}
-{%- set backend = network.get('backend', 'wicked') -%}
 {%- set config = network.get('config', {}) %}
 {%- set routes = network.get('routes', {}) -%}
 {%- set interfaces = network.get('interfaces', {}) -%}
 {%- set control = network.get('control', {}) -%}
 
-{%- set legal_backends = ['wicked'] -%}
+{#- TODO: add another conditional with OS backend detection logic #}
+{%- if 'backend' in network %}
+  {%- set backend = network['backend'] %}
+{%- else %}
+  {%- set backend = 'wicked' %}
+{%- endif %}
+
+{%- set legal_backends = [
+      'NetworkManager',
+      'wicked',
+] -%}
