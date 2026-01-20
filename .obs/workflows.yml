@@ -1,0 +1,25 @@
+---
+master:
+  steps:
+    - branch_package:
+        source_project: isv:SUSEInfra:Tools
+        source_package: infrastructure-formulas
+        target_project: isv:SUSEInfra:Devel:Git
+  filters:
+    event: push
+    branches:
+      only:
+        - main
+        - devel
+release:
+  steps:
+    - submit_request:
+        source_project: isv:SUSEInfra:Devel:Git
+        source_package: infrastructure-formulas # branch_package branches it to -<tag>, but how to get <tag> here ?
+        target_project: isv:SUSEInfra:Tools
+  filters:
+    event: tag_push
+    branches:
+      only:
+        - main
+
