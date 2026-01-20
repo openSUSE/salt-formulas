@@ -3,7 +3,7 @@
 389ds:
   instances:
     myidm:
-      # config will be written to an answer file and loaded with dscreate
+      # "config" will be written to an answer file and loaded with dscreate
       # note: modifictions to these after the initial setup will be written to the answer file but not automatically applied
       config:
         slapd:
@@ -12,7 +12,7 @@
         backend-userroot:
           create_suffix_entry: True
           suffix: dc=example,dc=com
-      # replication will enable/disable replications
+      # "replication" will enable/disable replications
       # note: so far, modifications to these after the initial setup are only partially supported - changes to "replica-id" and "bind-dn" will be applied (with a reset of the replication), but others require manual steps
       replication:
         dc=example,dc=com:
@@ -20,7 +20,20 @@
           replica-id: 1
           bind-dn: cn=replication manager,cn=config
           bind-passwd: '{PBKDF2-SHA512}25000$N4bwPickZMz5v5cyJkQIIQ$PQojDC.8pY/DWOU1XDnwwglQmRyk671j3MpYRMI1Thv494pajOunezf9IAiTlQEJSJ9Y5iMR06UJQvPk.kj6MQ'
-
+      # "replication-agreement" will manage replications (create non-existing ones and update existing ones with different values)
+      # notes:
+      #   - all values except for bind-passwd are compared, reference the note below
+      #   - so far, only the attributes shown below are supported - others will be ignored
+      replication-agreement:
+        dc=example,dc=com:
+          mysrv1-to-mysrv2:
+            host: mysrv2.example.com
+            port: 636
+            conn-protocol: ldaps
+            bind-method: simple
+            bind-dn: cn=replication manager,cn=config
+            # notes regarding "bind-passwd": the value must not be hashed (which is an exception to all other passwd occurences in the 389ds pillar), and it will be used only in the creation of a new agreement, not with updates of existing ones - a change of bind-passwd needs to be reflected manually. there is no solution for this, as there is no way to pre-encrypt the password (after submitting the plain text, slapd will internally do an AES PBE which relies on the keystore).
+            bind-passwd: mysecret
       # the below allows for management of objects inside the LDAP database 
       data:
         # whether to delete objects not managed in the pillar below

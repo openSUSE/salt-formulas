@@ -51,9 +51,22 @@ def replications(host):
         ]
 
     for r in t_repls:
+
+
+        # after some preceding operation ns-slapd tends to crash with "free(): invalid pointer" - since "instance" is a module scoped fixture, restart the service here to not have further tests fail due to not being able to contact the LDAP server
+        host.run('[ "$(systemctl is-active dirsrv@testidm)" = failed ] && sudo systemctl restart dirsrv@testidm')
+
+        # this should not be needed, as part of fixture teardown is removing the replication
+        # yet running the whole first test module, the last test would fail because of "Replication is already enabled for this suffix", hence this workaround
+        result = host.run(f'sudo dsconf {INSTANCE} replication list | grep ^{SUFFIX}$')
+        if result.rc == 0:
+            print('Replication is already enabled.')
+            continue
+
+
         result = host.run(cmd_dsconf([
             INSTANCE, 'replication', 'enable',
-            '--suffix', SUFFIX, '--role', r['role'], '--replica-id', str(r['replica-id']), '--bind-dn', r['bind-dn'], '--bind-passwd', r['bind-passwd']
+            '--suffix', SUFFIX, '--role', r['role'], '--replica-id', str(r['replica-id']), '--bind-dn', r['bind-dn'], '--bind-passwd', r['bind-passwd'],
         ]))
         print(result)
         if result.rc != 0:
@@ -67,10 +80,32 @@ def replications(host):
         if result.rc != 0:
             print('Replication not present.')
             continue
+
+        # after some preceding operation ns-slapd tends to crash with "malloc_consolidate(): unaligned fastbin chunk detected" - since "instance" is a module scoped fixture, restart the service here to not have further tests fail due to not being able to contact the LDAP server
+        host.run('[ "$(systemctl is-active dirsrv@testidm)" = failed ] && sudo systemctl restart dirsrv@testidm')
+
         result = host.run(cmd_dsconf([INSTANCE, 'replication', 'disable', '--suffix', SUFFIX]))
         print(result)
         if result.rc != 0:
             pytest.fail('Could not delete testing replication.')
+
+
+@pytest.fixture()
+def repl_agmt(host):
+    agmt_name = 'test-fixt-agmt'
+
+    host.run(cmd_dsconf([
+        INSTANCE, 'repl-agmt', 'create',
+        '--suffix', SUFFIX,
+        '--host', '127.0.0.2', '--port', '636', '--conn-protocol', 'ldaps',
+        '--bind-dn', 'cn=replication manager,cn=config', '--bind-passwd', 'muchsecretmuchwow',
+        '--bind-method', 'SIMPLE',
+        agmt_name,
+    ]))
+
+    yield agmt_name
+
+    print(host.run(cmd_dsconf([INSTANCE, 'repl-agmt', 'delete', '--suffix', SUFFIX, agmt_name])))
 
 
 @pytest.fixture

@@ -72,7 +72,7 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
       },
     ),
 
-    # 2. pillar with config and replication
+    # 2. pillar with config, replication and replication-agreement
     (
       {
         '389ds': {
@@ -93,6 +93,18 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
                   'replica-id': 1,
                   'bind-dn': 'cn=repldude,cn=config',
                   'bind-passwd': '{PBKDF2-SHA512}10000$/0QwvLFeU6V5gkMjc7fH6g$jKmcCTfsP3wlz2ePKRuoJfjcrEANp74Mhs5hOcPPddN3ZgSraWF6YvvaoNYPzzza3FJ7s4worldHSM/A.tT5Jg',
+                },
+              },
+              'replication-agreement': {
+                SUFFIX: {
+                  'sampleagmtfresh': {
+                      'host': 'localhost',
+                      'port': '6636',
+                      'conn-protocol': 'ldaps',
+                      'bind-method': 'simple',
+                      'bind-dn': 'cn=replication manager,cn=config',
+                      'bind-passwd': 'supersecret',
+                  },
                 },
               },
             },
@@ -122,6 +134,14 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
           'comment': (
               f'Could not find configuration for instance: {INSTANCE}. Ignoring due to test mode.',
               f'Replication successfully enabled for "{SUFFIX}"',
+          ),
+        },
+        f'389ds_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmtfresh_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmtfresh_|-manage_replication_agreement': {
+          'name': f'389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmtfresh',
+          'result': (None, True),
+          'comment': (
+              f'Could not find configuration for instance: {INSTANCE}. Ignoring due to test mode.',
+              'Successfully created replication agreement "sampleagmtfresh"',
           ),
         },
       },
@@ -323,7 +343,7 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
 @pytest.mark.parametrize(
   'pillar, expect', [
 
-    # 0. pillar with config, replication, data and no clean - all matching what was already configured by the instance_with_samples fixture
+    # 0. pillar with config, replication, replication-agreement, data and no clean - all matching what was already configured by the instance_with_samples fixture
     (
       {
         '389ds': {
@@ -349,6 +369,18 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
                   'replica-id': '1',
                   'bind-dn': 'cn=replication manager,cn=config',
                   'bind-passwd': 'foo',
+                },
+              },
+              'replication-agreement': {
+                SUFFIX: {
+                  'sampleagmt': {
+                      'host': 'localhost',
+                      'port': 3389,
+                      'conn-protocol': 'ldap',
+                      'bind-method': 'simple',
+                      'bind-dn': 'cn=replication manager,cn=config',
+                      'bind-passwd': 'foo',
+                  },
                 },
               },
               'data': {
@@ -394,6 +426,10 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
           'name': f'389ds-{INSTANCE}-replication-{SUFFIX}',
           'comment': 'Replication configuration is up to date.',
         },
+        f'389ds_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt_|-manage_replication_agreement': {
+          'name': f'389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt',
+          'comment': 'Replication agreement is up to date.',
+        },
         '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
           'changes': {},
           'comment': 'LDAP entries already set',
@@ -401,7 +437,7 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
       },
     ),
 
-    # 1. pillar with config, replication, data and (the default) clean - all matching what was already configured by the instance_with_samples fixture
+    # 1. pillar with config, replication, replication-agreement, data and (the default) clean - all matching what was already configured by the instance_with_samples fixture
     (
       {
         '389ds': {
@@ -427,6 +463,18 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
                   'replica-id': '1',
                   'bind-dn': 'cn=replication manager,cn=config',
                   'bind-passwd': 'foo',
+                },
+              },
+              'replication-agreement': {
+                SUFFIX: {
+                  'sampleagmt': {
+                      'host': 'localhost',
+                      'port': '3389',
+                      'conn-protocol': 'ldap',
+                      'bind-method': 'simple',
+                      'bind-dn': 'cn=replication manager,cn=config',
+                      'bind-passwd': 'supersecret',
+                  },
                 },
               },
               'data': {
@@ -470,6 +518,10 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
         f'389ds_|-389ds-{INSTANCE}-replication-{SUFFIX}_|-389ds-{INSTANCE}-replication-{SUFFIX}_|-manage_replication': {
           'name': f'389ds-{INSTANCE}-replication-{SUFFIX}',
           'comment': 'Replication configuration is up to date.',
+        },
+        f'389ds_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt_|-manage_replication_agreement': {
+          'name': f'389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt',
+          'comment': 'Replication agreement is up to date.',
         },
         '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
           'changes': {},

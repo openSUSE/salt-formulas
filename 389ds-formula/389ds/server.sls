@@ -109,6 +109,35 @@ def _run_manage_instance(name, config):
                 ],
         }
 
+    for suffix, agreements in config.get('replication-agreement', {}).items():
+        for agreement, agmtconfig in agreements.items():
+            agmt_state = {
+                    'instance': name,
+                    'suffix': suffix,
+                    'agmt_name': agreement,
+                    'host': agmtconfig.get('host'),
+                    'port': agmtconfig.get('port'),
+                    'conn_protocol': agmtconfig.get('conn-protocol'),
+                    'bind_method': agmtconfig.get('bind-method'),
+                    'bind_dn': agmtconfig.get('bind-dn'),
+                    'bind_passwd': agmtconfig.get('bind-passwd'),
+                    'require': [
+                        {'pkg': '389ds-packages'},
+                    ],
+            }
+
+            for replsuffix, replconfig in config.get('replication', {}).items():
+                if suffix == replsuffix:
+                    agmt_state['require'].append(
+                        {'389ds': f'{_id}-replication-{suffix}'},
+                    )
+
+            _states[f'{_id}-replication-agreement-{suffix}-{agreement}'] = {
+                    '389ds.manage_replication_agreement': [
+                        {k: v} for k, v in agmt_state.items()
+                    ],
+            }
+
     return _states
 
 

@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from utils import INSTANCE, SUFFIX, salt
+from utils import INSTANCE, SUFFIX, cmd, salt
 
 
 @pytest.mark.parametrize('test', [True, False])
@@ -93,3 +93,112 @@ def test_manage_replication(host, instance, test):
         assert lowout['comment'] == f'Replication successfully enabled for "{SUFFIX}"'  # output from dsconf
 
     assert lowout['changes'] == {'new': {'nsds5replicaid': 1}}
+
+
+@pytest.mark.parametrize('test', [True, False])
+def test_manage_replication_agreement_create(host, instance, replications, test):
+    """
+    Test for 389ds.manage_replication_agreement, where the agreement defined in the pillar does not yet exist.
+    """
+    agmt_name = 'testagmt'
+
+    out, err, rc = salt(host, cmd([
+        'state.single',
+        '389ds.manage_replication_agreement',
+        'name=teststate',
+        f'instance={INSTANCE}',
+        f'suffix={SUFFIX}',
+        f'agmt_name={agmt_name}',
+        'host=127.0.0.2',
+        'port=389',
+        'conn_protocol=ldap',
+        'bind_dn=cn=replication manager,cn=config',
+        'bind_passwd=muchsecretmuchwow',
+        'bind_method=simple',
+        f'test={test}',
+    ]))
+
+    assert rc == 0
+
+    _id = '389ds_|-teststate_|-teststate_|-manage_replication_agreement'
+
+    if _id not in out:
+        pytest.fail('Unexpected state output')
+
+    lowout = out[_id]
+
+    assert lowout['name'] == 'teststate'
+
+    if test:
+        assert lowout['result'] is None
+        assert lowout['comment'] == 'Would create replication agreement.'
+
+    else:
+        assert lowout['result'] is True
+        assert lowout['comment'] == f'Successfully created replication agreement "{agmt_name}"'  # output from dsconf
+
+    assert lowout['changes'] == {
+            'new': {
+                'nsds5replicahost': '127.0.0.2',
+                'nsds5replicaport': '389',
+                'nsds5replicatransportinfo': 'ldap',
+                'nsds5replicabindmethod': 'simple',
+                'nsds5replicabinddn': 'cn=replication manager,cn=config',
+            },
+    }
+
+
+@pytest.mark.parametrize('test', [True, False])
+def test_manage_replication_agreement_update(host, instance, replications, repl_agmt, test):
+    """
+    Test for 389ds.manage_replication_agreement, , where the agreement defined in the pillar already exists, but with values not matching the ones currently configured on the system.
+    """
+    agmt_name = repl_agmt
+
+    out, err, rc = salt(host, cmd([
+        'state.single',
+        '389ds.manage_replication_agreement',
+        'name=teststate',
+        f'instance={INSTANCE}',
+        f'suffix={SUFFIX}',
+        f'agmt_name={agmt_name}',
+        'host=localhost',
+        'port=3389',
+        'conn_protocol=ldap',
+        'bind_dn=cn=replication manager,cn=config',
+        'bind_passwd=muchsecretmuchwow',
+        'bind_method=simple',
+        f'test={test}',
+    ]))
+
+    assert rc == 0
+
+    _id = '389ds_|-teststate_|-teststate_|-manage_replication_agreement'
+
+    if _id not in out:
+        pytest.fail('Unexpected state output')
+
+    lowout = out[_id]
+
+    assert lowout['name'] == 'teststate'
+
+    if test:
+        assert lowout['result'] is None
+        assert lowout['comment'] == 'Would update the replication agreement.'
+
+    else:
+        assert lowout['result'] is True
+        assert lowout['comment'] == 'Successfully updated agreement'  # output from dsconf
+
+    assert lowout['changes'] == {
+            'new': {
+                'nsds5replicahost': 'localhost',
+                'nsds5replicaport': '3389',
+                'nsds5replicatransportinfo': 'ldap',
+            },
+            'old': {
+                'nsds5replicahost': '127.0.0.2',
+                'nsds5replicaport': '636',
+                'nsds5replicatransportinfo': 'ldaps',
+            },
+    }
