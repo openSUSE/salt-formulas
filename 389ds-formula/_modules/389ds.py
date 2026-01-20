@@ -63,7 +63,7 @@ def replication_enable(instance, suffix, role, replica_id, bind_dn, bind_passwd)
         'replication', 'enable',
         '--suffix', suffix,
         '--role', role,
-        '--replica-id', replica_id,
+        '--replica-id', str(replica_id),
         '--bind-dn', bind_dn,
         '--bind-passwd', bind_passwd,
     ])
