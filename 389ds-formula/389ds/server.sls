@@ -37,13 +37,15 @@ def _run_manage_instance(name, config):
             'slapd': {
                 'instance_name': name,
             },
-            'backend-userroot': {},
     }
 
     for section, options in config.get('config', {}).items():
-        if section == 'general' or section not in answers or not isinstance(options, dict):
+        if section == 'general' or ( section not in answers and section[0:8] != 'backend-' ) or not isinstance(options, dict):
             log.warn(f'389ds: unhandled answer section "{section}", skipping')
             continue
+
+        if section not in answers:
+            answers[section] = {}
 
         for k, v in options.items():
             # some options take real booleans, others don't
