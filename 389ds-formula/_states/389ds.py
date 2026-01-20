@@ -105,7 +105,7 @@ def manage_replication(name, instance, suffix, role, replica_id, bind_dn, bind_p
             return ret
 
         res, ok = __salt__['389ds.replication_enable'](instance, suffix, role, replica_id, bind_dn, bind_passwd)
-        ret['comment'] = ret['comment'] + res  # "Replication successfully enabled for ..." or JSON with error
+        ret['comment'] = ret['comment'] + str(res)  # "Replication successfully enabled for ..." or JSON with error
         ret['result'] = ok
 
     return ret
