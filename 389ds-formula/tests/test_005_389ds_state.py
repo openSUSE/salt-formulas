@@ -249,6 +249,11 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
                           'sn': 'Mustermann',
                           'mail': ['foo@example.com'],
                         },
+                        'cn=Druck Druckeberger': {
+                          'objectClass': ['person', 'printerAbstract', 'top'],
+                          'printer-color-supported': True,
+                          'sn': 'Druckeberger',
+                        },
                       },
                     },
                   },
@@ -304,6 +309,10 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
                 'cn=Max Mustermannn,ou=people,dc=example,dc=com': {
                   'old': None,
                   'new': {'objectClass': ["b'inetOrgPerson'", "b'organizationalPerson'", "b'person'", "b'top'"], 'sn': ["b'Mustermann'"], 'mail': ["b'foo@example.com'"], 'cn': ["b'Max Mustermannn'"]},
+                },
+                'cn=Druck Druckeberger,ou=people,dc=example,dc=com': {
+                  'old': None,
+                  'new': {'objectClass': ["b'person'", "b'printerAbstract'", "b'top'"], 'cn': ["b'Druck Druckeberger'"], 'printer-color-supported': ["b'TRUE'"], 'sn': ["b'Druckeberger'"]},
                 },
               },
           ),
@@ -391,7 +400,7 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
                       'objectClass': ['top', 'organizationalunit'],
                       'children': {
                         'uid=demo_user': {
-                          'objectClass': ['top', 'nsPerson', 'nsAccount', 'nsOrgPerson', 'posixAccount'],
+                          'objectClass': ['top', 'nsPerson', 'nsAccount', 'nsOrgPerson', 'posixAccount', 'printerAbstract'],
                           'cn': 'Demo User',
                           'displayName': 'Demo User',
                           'homeDirectory': '/var/empty',
@@ -399,6 +408,7 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
                           'loginShell': '/bin/false',
                           'uidNumber': 99998,
                           'gidNumber': 99998,
+                          'printer-color-supported': False,
                         },
                       },
                     },
@@ -484,7 +494,7 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
                       'objectClass': ['top', 'organizationalunit'],
                       'children': {
                         'uid=demo_user': {
-                          'objectClass': ['top', 'nsPerson', 'nsAccount', 'nsOrgPerson', 'posixAccount'],
+                          'objectClass': ['top', 'nsPerson', 'nsAccount', 'nsOrgPerson', 'posixAccount', 'printerAbstract'],
                           'cn': 'Demo User',
                           'displayName': 'Demo User',
                           'homeDirectory': '/var/empty',
@@ -492,6 +502,7 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
                           'loginShell': '/bin/false',
                           'uidNumber': 99998,
                           'gidNumber': 99998,
+                          'printer-color-supported': False,
                         },
                       },
                     },
