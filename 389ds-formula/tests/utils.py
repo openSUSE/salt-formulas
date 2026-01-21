@@ -75,6 +75,14 @@ def instance_setup(host, samples=False):
         if result.rc != 0:
             pytest.fail('Could not create printer entry for testing.')
 
+        result = host.run(cmd(['sudo', 'dsidm', INSTANCE, '-b', 'dc=example,dc=com', 'ou', 'create', '--ou', 'testou']))
+        if result.rc != 0:
+            pytest.fail('Could not create OU for testing.')
+
+        result = host.run(f'sudo ldapmodify -H ldapi://%2frun%2fslapd-{INSTANCE}.socket <<EOLDIF\ndn: ou=testou,dc=example,dc=com\nchangetype: modify\nadd: aci\naci: ( targetattr = "*" ) ( version 3.0; acl "Self Read"; allow(read, search) (userdn = "ldap:///self"); )\nEOLDIF')
+        if result.rc != 0:
+            pytest.fail('Could not create ACI entry for testing.')
+
 
 def instance_teardown(host):
     result = host.run(cmd(['sudo', 'dsctl', INSTANCE, 'remove', '--do-it']))

@@ -147,6 +147,8 @@ def run():
             entries_drop = []
 
             cs = _connect_spec(name)
+
+            attributes = config['data'].get('attributes', [])
             clean = config['data'].get('clean', True)
 
             for suffix, parents in config['data'].get('tree', {}).items():
@@ -192,5 +194,10 @@ def run():
                         {'entries': entries_want},
                     ],
             }
+
+            if attributes:
+                states['389ds-data']['389ds.manage_data'].append({
+                    'attrlist': attributes,
+                })
 
     return states

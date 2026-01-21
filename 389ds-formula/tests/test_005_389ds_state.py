@@ -325,6 +325,105 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
       },
     ),
 
+    # 5. pillar with config, data, the default clean and an operational attribute
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'config': {
+                'slapd': {
+                  'root_password': PASS,
+                },
+                'backend-userroot': {
+                  'create_suffix_entry': True,
+                  'suffix': SUFFIX,
+                },
+              },
+              'data': {
+                'attributes': ['*', 'aci'],
+                'tree': {
+                  SUFFIX: {
+                    'ou=people': {
+                      'aci': '( targetattr = "*" ) ( version 3.0; acl "Self Read"; allow(read, search) (userdn = "ldap:///self"); )',
+                      'objectClass': ['organizationalUnit', 'top'],
+                      'children': {
+                        'cn=Max Mustermannn': {
+                          'objectClass': ['inetOrgPerson', 'organizationalPerson', 'person', 'top'],
+                          'sn': 'Mustermann',
+                          'mail': ['foo@example.com'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        'pkg_|-389ds-packages_|-389ds-packages_|-installed': {
+          'name': '389ds-packages',
+          'result': (None, True),
+        },
+        f'file_|-389ds-{INSTANCE}-answer-file_|-/root/.389_{INSTANCE}.inf_|-serialize': {
+          'name': f'/root/.389_{INSTANCE}.inf',
+          'result': (None, True),
+        },
+        f'cmd_|-389ds-{INSTANCE}-create_|-dscreate -j from-file /root/.389_{INSTANCE}.inf_|-run': {
+          'name': f'dscreate -j from-file /root/.389_{INSTANCE}.inf',
+          'result': (None, True),
+        },
+        f'service_|-389ds-{INSTANCE}-start_|-dirsrv@{INSTANCE}_|-running': {
+          'name': f'dirsrv@{INSTANCE}',
+          'result': (None, True),
+        },
+        '389ds_|-389ds-data-clean_|-389ds-data-clean_|-manage_data': {
+          'changes': {
+            'uid=demo_user,ou=people,dc=example,dc=com': {
+              'old': {
+                'cn': ["b'Demo User'"],
+                'displayName': ["b'Demo User'"],
+                'gidNuber': ["b'99998'"],
+                'homeDirectory': ["b'/var/empty'"],
+                'legalName': ["b'Demo User Name'"],
+                'loginShell': ["b'/bin/false'"],
+                'objectClass': ["b'top'", "b'nsPerson'", "b'nsAccount'", "b'nsOrgPerson'", "b'posixAccount'"],
+              },
+              'new': None,
+            },
+          },
+          'comment': 'Would change LDAP entries',
+          'result': (None, True),
+        },
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': (
+              {},
+              {
+                'ou=people,dc=example,dc=com': {
+                  'old': None,
+                  'new': {
+                      'aci': ["b'( targetattr = \"*\" ) ( version 3.0; acl \"Self Read\"; allow(read, search) (userdn = \"ldap:///self\"); )'"],
+                      'objectClass': ["b'organizationalUnit'", "b'top'"],
+                      'ou': ["b'people'"],
+                  },
+                },
+                'cn=Max Mustermannn,ou=people,dc=example,dc=com': {
+                  'old': None,
+                  'new': {'objectClass': ["b'inetOrgPerson'", "b'organizationalPerson'", "b'person'", "b'top'"], 'sn': ["b'Mustermann'"], 'mail': ["b'foo@example.com'"], 'cn': ["b'Max Mustermannn'"]},
+                },
+              },
+          ),
+          'comment': (
+            'Ignoring LDAP error "exception in ldap backend: SERVER_DOWN({\'result\': -1, \'desc\': "Can\'t contact LDAP server", \'errno\': 2, \'ctrls\': [], \'info\': \'No such file or directory\'})" due to test mode.',
+            'Successfully updated LDAP entries',
+          ),
+          'result': (None, True),
+        },
+      },
+    ),
+
   ],
   indirect=['pillar'],
 )
@@ -533,6 +632,90 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
         f'389ds_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt_|-389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt_|-manage_replication_agreement': {
           'name': f'389ds-{INSTANCE}-replication-agreement-{SUFFIX}-sampleagmt',
           'comment': 'Replication agreement is up to date.',
+        },
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {},
+          'comment': 'LDAP entries already set',
+        },
+      },
+    ),
+
+    # 2. pillar with config, data, the default clean and operational attributes - all matching what was already configured by the instance_with_samples fixture
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'config': {
+                'slapd': {
+                  'instance_name': INSTANCE,
+                  'root_password': PASS,
+                  'port': 3389,
+                  'secure_port': 6636,
+                  'self_sign_cert': False,
+                },
+                'backend-userroot': {
+                  'create_suffix_entry': True,
+                  'suffix': SUFFIX,
+                  'sample_entries': True,
+                },
+              },
+              'data': {
+                'attributes': ['*', 'aci'],
+                'tree': {
+                  SUFFIX: {
+                    # test single aci
+                    'ou=testou': {
+                      # custom aci (from sample ldif in test setup)
+                      'aci': '( targetattr = "*" ) ( version 3.0; acl "Self Read"; allow(read, search) (userdn = "ldap:///self"); )',
+                      'objectClass': ['top', 'organizationalunit'],
+                    },
+                    # test multiple acis
+                    'ou=people': {
+                      'aci': [
+                        # default acis (from sample entries enabled with dscreate during test setup)
+                        '(targetattr="objectClass || description || nsUniqueId || uid || displayName || loginShell || uidNumber || gidNumber || gecos || homeDirectory || cn || memberOf || mail || nsSshPublicKey || nsAccountLock || userCertificate")(targetfilter="(objectClass=posixaccount)")(version 3.0; acl "Enable anyone user read"; allow (read, search, compare)(userdn="ldap:///anyone");)',
+                        '(targetattr="displayName || legalName || userPassword || nsSshPublicKey")(version 3.0; acl "Enable self partial modify"; allow (write)(userdn="ldap:///self");)',
+                        '(targetattr="legalName || telephoneNumber || mobile || sn")(targetfilter="(|(objectClass=nsPerson)(objectClass=inetOrgPerson))")(version 3.0; acl "Enable self legalname read"; allow (read, search, compare)(userdn="ldap:///self");)',
+                        '(targetattr="legalName || telephoneNumber")(targetfilter="(objectClass=nsPerson)")(version 3.0; acl "Enable user legalname read"; allow (read, search, compare)(groupdn="ldap:///cn=user_private_read,ou=permissions,dc=example,dc=com");)',
+                        '(targetattr="uid || description || displayName || loginShell || uidNumber || gidNumber || gecos || homeDirectory || cn || memberOf || mail || legalName || telephoneNumber || mobile")(targetfilter="(&(objectClass=nsPerson)(objectClass=nsAccount))")(version 3.0; acl "Enable user admin create"; allow (write, add, delete, read)(groupdn="ldap:///cn=user_admin,ou=permissions,dc=example,dc=com");)',
+                        '(targetattr="uid || description || displayName || loginShell || uidNumber || gidNumber || gecos || homeDirectory || cn || memberOf || mail || legalName || telephoneNumber || mobile")(targetfilter="(&(objectClass=nsPerson)(objectClass=nsAccount))")(version 3.0; acl "Enable user modify to change users"; allow (write, read)(groupdn="ldap:///cn=user_modify,ou=permissions,dc=example,dc=com");)',
+                        '(targetattr="userPassword || nsAccountLock || userCertificate || nsSshPublicKey")(targetfilter="(objectClass=nsAccount)")(version 3.0; acl "Enable user password reset"; allow (write, read)(groupdn="ldap:///cn=user_passwd_reset,ou=permissions,dc=example,dc=com");)',
+                      ],
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'uid=demo_user': {
+                          'objectClass': ['top', 'nsPerson', 'nsAccount', 'nsOrgPerson', 'posixAccount', 'printerAbstract'],
+                          'cn': 'Demo User',
+                          'displayName': 'Demo User',
+                          'homeDirectory': '/var/empty',
+                          'legalName': 'Demo User Name',
+                          'loginShell': '/bin/false',
+                          'uidNumber': 99998,
+                          'gidNumber': 99998,
+                          'printer-color-supported': False,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        'pkg_|-389ds-packages_|-389ds-packages_|-installed': {
+          'name': '389ds-packages',
+        },
+        f'file_|-389ds-{INSTANCE}-answer-file_|-/root/.389_{INSTANCE}.inf_|-serialize': {
+          'name': f'/root/.389_{INSTANCE}.inf',
+        },
+        f'cmd_|-389ds-{INSTANCE}-create_|-dscreate -j from-file /root/.389_{INSTANCE}.inf_|-run': {
+          'name': f'dscreate -j from-file /root/.389_{INSTANCE}.inf',
+        },
+        f'service_|-389ds-{INSTANCE}-start_|-dirsrv@{INSTANCE}_|-running': {
+          'name': f'dirsrv@{INSTANCE}',
         },
         '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
           'changes': {},

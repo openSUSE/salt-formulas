@@ -20,8 +20,9 @@ import pytest
 from utils import INSTANCE, SUFFIX, cmd, salt
 
 
+@pytest.mark.parametrize('attrlist', [None, ['*', 'aci']])
 @pytest.mark.parametrize('test', [True, False])
-def test_manage_data(host, instance, test):
+def test_manage_data(host, instance, attrlist, test):
     """
     Test for 389ds.manage_data.
     As 389ds.manage_data is just a wrapper over ldap.managed, we only test the altered error handling here.
@@ -32,6 +33,7 @@ def test_manage_data(host, instance, test):
         ' name=teststate'
         ' entries={}'
         ' connect_spec={}'
+        f' attrlist="{attrlist}"'
         f' test={test}'
     ))
 
