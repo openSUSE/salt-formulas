@@ -26,7 +26,7 @@
 %define pythons python3
 %endif
 Name:           infrastructure-formulas
-Version:        3.3.0
+Version:        3.4.0
 Release:        0
 Summary:        Salt states for openSUSE and SLE
 License:        GPL-3.0-or-later
@@ -40,6 +40,7 @@ Requires:       bootloader-formula
 Requires:       doofetch-formula
 Requires:       gitea-formula
 Requires:       grains-formula
+Requires:       helm-formula
 Requires:       hosts-formula
 Requires:       infrastructure-formula
 Requires:       jenkins-formula
@@ -137,6 +138,14 @@ Requires:       %{name}-common
 
 %description -n grains-formula
 Salt state for managing grains.
+
+%package -n helm-formula
+Summary:        Salt states for Helm
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n helm-formula
+Salt states for managing Helm.
 
 %package -n hosts-formula
 Summary:        Salt states for managing %{_sysconfdir}/hosts
@@ -479,6 +488,8 @@ popd
 %files -n gitea-formula -f gitea.files
 
 %files -n grains-formula -f grains.files
+
+%files -n helm-formula -f helm.files
 
 %files -n hosts-formula -f hosts.files
 
