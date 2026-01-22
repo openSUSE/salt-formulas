@@ -16,14 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-def manage_data(name, entries, connect_spec):
+def manage_data(name, entries, connect_spec, attrlist=None):
     """
     This is a wrapper over ldap.managed softening the exception handling to avoid state failure if the LDAP server does not yet exist but would be created during a state run.
     """
     out = None
 
     try:
-        out = __states__['ldap.managed'](name, entries, connect_spec)
+        try:
+            # the "attrlist" argument is a new feature
+            out = __states__['ldap.managed'](name, entries, connect_spec, attrlist)
+        except TypeError:
+            out = __states__['ldap.managed'](name, entries, connect_spec)
     # LDAPError (from salt.modules.ldap3 or from ldap) does not match here albeit being printed, possibly because loading happens through
     # salt.loaded.int.module which cannot be imported
     #except LDAPError as e:

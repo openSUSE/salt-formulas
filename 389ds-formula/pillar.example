@@ -36,6 +36,13 @@
             bind-passwd: mysecret
       # the below allows for management of objects inside the LDAP database 
       data:
+        # list of attributes to pass through to ldap3.search
+        # this is primarily needed for management of operational attributes and is not set by default
+        # (if operational attributes are defined in the tree below but not declared here, they will always report changes due to the default search only returning user attributes)
+        # note this feature requires a patch in Salt which is not merged upstream at the time of writing: https://github.com/saltstack/salt/pull/68650
+        attributes:
+          - '*'  # standard LDAP attribute selectors are supported, but you probably do not want "+", as it would also include attributes managed by the server, such as the change time
+          - aci
         # whether to delete objects not managed in the pillar below
         # note this will so far only cover the deletion of objects under parent objects defined in the pillar
         # defaults to True
