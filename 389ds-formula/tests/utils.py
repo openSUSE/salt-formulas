@@ -70,6 +70,11 @@ def instance_setup(host, samples=False):
         if result.rc != 0:
             pytest.fail('Could not create replication agreement for testing.')
 
+        # we use printerAbstract here because it's one of the few object classes in the default schemas having a boolean attribute
+        result = host.run(f'sudo ldapmodify -H ldapi://%2frun%2fslapd-{INSTANCE}.socket <<EOLDIF\ndn: uid=demo_user,ou=people,dc=example,dc=com\nchangetype: modify\nadd: objectClass\nobjectClass: printerAbstract\n-\nadd: printer-color-supported\nprinter-color-supported: FALSE\nEOLDIF')
+        if result.rc != 0:
+            pytest.fail('Could not create printer entry for testing.')
+
 
 def instance_teardown(host):
     result = host.run(cmd(['sudo', 'dsctl', INSTANCE, 'remove', '--do-it']))

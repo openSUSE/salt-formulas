@@ -82,10 +82,16 @@ def _entry(dn, attrs):
         if attr == 'children':
             continue
 
-        if isinstance(vals, str):
+        if not isinstance(vals, list):
             vals = [vals]
 
-        new_attrs[attr] = vals
+        new_attrs[attr] = []
+
+        for val in vals:
+            if val is True or val is False:
+                val = str(val).upper()
+
+            new_attrs[attr].append(val)
 
     dn_a, dn_v = _attr_from_dn(dn)
 
