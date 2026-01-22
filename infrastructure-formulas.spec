@@ -1,7 +1,7 @@
 #
 # spec file for package infrastructure-formulas
 #
-# Copyright (c) 2025 SUSE LLC
+# Copyright (c) 2026 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -19,15 +19,21 @@
 %define fdir %{_datadir}/salt-formulas
 %define sdir %{fdir}/states
 %define mdir %{fdir}/metadata
+# align with salt
+%if 0%{?sle_version} == 150700
+%{?sle15_python_module_pythons}
+%else
 %define pythons python3
+%endif
 Name:           infrastructure-formulas
-Version:        3.2.1
+Version:        3.3.0
 Release:        0
 Summary:        Salt states for openSUSE and SLE
 License:        GPL-3.0-or-later
 Group:          System/Management
 URL:            https://github.com/openSUSE/salt-formulas
 Source:         _service
+Requires:       389ds-formula
 Requires:       apache_httpd-formula
 Requires:       backupscript-formula
 Requires:       bootloader-formula
@@ -71,6 +77,14 @@ License:        GPL-3.0-or-later
 
 %description common
 Files and directories shared by openSUSE/SUSE infrastructure formuas.
+
+%package -n 389ds-formula
+Summary:        Salt modules and states for 389-DS
+License:        GPL-3.0-or-later
+Requires:       %{name}-common
+
+%description -n 389ds-formula
+Salt modules and states for the configuration and management of 389-DS LDAP servers.
 
 %package -n apache_httpd-formula
 Summary:        Salt states for managing the Apache httpd
@@ -451,6 +465,8 @@ popd
 %dir %{mdir}
 %dir %{sdir}
 %dir %{sdir}/_{modules,states}
+
+%files -n 389ds-formula -f 389ds.files
 
 %files -n apache_httpd-formula -f apache_httpd.files
 
