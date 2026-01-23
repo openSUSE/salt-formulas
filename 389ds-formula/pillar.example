@@ -44,9 +44,9 @@
           - '*'  # standard LDAP attribute selectors are supported, but you probably do not want "+", as it would also include attributes managed by the server, such as the change time
           - aci
         # whether to delete objects not managed in the pillar below
-        # note this will so far only cover the deletion of objects under parent objects defined in the pillar
-        # defaults to True
-        clean: true
+        # this is the global default, which defaults to True
+        # the "clean" option in objects below can be used to override this default
+        clean: True
         tree:
           # the top keys under "tree" are the suffixes
           dc=example,dc=com:
@@ -57,7 +57,7 @@
               objectClass:
                 - organizationalUnit
                 - top
-              # only "children" is special - it recurses to further objects
+              # "children" is special - it recurses to further objects
               children:
                 # this becomes "cn=Max Mustermannn,ou=people,dc=example,dc=com"
                 cn=Max Mustermannn:
@@ -90,3 +90,17 @@
                   uidNumber: 99998
                   gidNumber: 99998
                   userPassword: '{PBKDF2-SHA512}100000$zPwioWIiZGQArGMeRtg7a2wC/DlkRWQP$iY2x9Arj7NqZg1d6NnEvw7OPWOokxL9NbAmubY6DfvMI36rx9cJhZcYSXYTS3gcVVTVlQ7RKJJOnMlKKWoYpXA=='
+
+            ou=ext:
+              # override the global "clean" setting
+              clean: False
+              objectClass:
+                - organizationalUnit
+                - top
+              children:
+                ou=subext:
+                  # override the parent "clean" setting
+                  clean: True
+                  objectClass:
+                    - organizationalUnit
+                    - top

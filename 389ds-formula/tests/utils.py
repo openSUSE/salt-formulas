@@ -79,6 +79,15 @@ def instance_setup(host, samples=False):
         if result.rc != 0:
             pytest.fail('Could not create OU for testing.')
 
+        for i in [1, 2]:
+            result = host.run(cmd(['sudo', 'dsidm', INSTANCE, '-b', 'ou=testou,dc=example,dc=com', 'ou', 'create', '--ou', f'testsubou{i}']))
+            if result.rc != 0:
+                pytest.fail('Could not create OU for testing.')
+
+            result = host.run(f'sudo ldapadd -H ldapi://%2frun%2fslapd-{INSTANCE}.socket <<EOLDIF\ndn: uid=testuser{i},ou=testsubou{i},ou=testou,dc=example,dc=com\nuid: testuser{i}\nobjectClass: top\nobjectClass: account\nEOLDIF')
+            if result.rc != 0:
+                pytest.fail('Could not create user for testing.')
+
         result = host.run(f'sudo ldapmodify -H ldapi://%2frun%2fslapd-{INSTANCE}.socket <<EOLDIF\ndn: ou=testou,dc=example,dc=com\nchangetype: modify\nadd: aci\naci: ( targetattr = "*" ) ( version 3.0; acl "Self Read"; allow(read, search) (userdn = "ldap:///self"); )\nEOLDIF')
         if result.rc != 0:
             pytest.fail('Could not create ACI entry for testing.')

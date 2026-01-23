@@ -118,6 +118,7 @@ def _entries(dn, data, parent_dn=None):
     """
     out_dns = []
     out_entries = []
+    out_clean = {}
 
     if not data:
         return out_dns, out_entries
@@ -126,15 +127,47 @@ def _entries(dn, data, parent_dn=None):
         dn = f'{dn},{parent_dn}'
 
     children = data.pop('children', {})
+    clean = data.pop('clean', None)
+
+    # in case of children, we always want to know whether subordinates are to be cleaned up
+    # in case of no children however, this is only tracked if an explicit clean choice was passed
+    # (otherwise we risk useless LDAP searches for every single leaf object further down if the inherited clean choice is True)
+    if children or clean is not None:
+        out_clean[dn] = clean
+
     out_dns.append(dn)
     out_entries.append(_entry(dn, data))
 
     for child_dn, child_data in children.items():
-        c_dns, c_entries = _entries(child_dn, child_data, dn)
+        c_dns, c_entries, c_clean = _entries(child_dn, child_data, dn)
         out_dns.extend(c_dns)
         out_entries.extend(c_entries)
+        out_clean.update(c_clean)
 
-    return out_dns, out_entries
+    return out_dns, out_entries, out_clean
+
+
+def _search(cs, base):
+    try:
+        results = __salt__['ldap3.search'](cs, base=base, scope='onelevel', attrlist=['dn'])
+
+    # cannot handle LDAPError specificially here because it comes through salt.loaded.int.module
+    except Exception as e:
+        log.debug(f'Exception from ldap3.search: {e}.')
+        results = []
+
+    return results
+
+
+def _entry_clean(dn):
+    log.debug(f'Marking DN "{dn}" for removal.')
+
+    return {
+        dn: [
+            {'delete_others': True},
+            {'delete': {}},
+        ],
+    }
 
 
 def run():
@@ -157,27 +190,26 @@ def run():
                     p_dn = f'{parent},{suffix}'
                     log.debug(f'Traversing into "{p_dn}".')
 
-                    sub_dns, sub_entries = _entries(p_dn, data)
+                    p_clean = data.pop('clean', clean)
+                    sub_dns, sub_entries, sub_cleans = _entries(p_dn, data)
                     dns_want.extend(sub_dns)
                     entries_want.extend(sub_entries)
 
-                    if clean:
-                        try:
-                            results = __salt__['ldap3.search'](cs, base=p_dn, attrlist=['dn'])
-                        # cannot handle LDAPError specificially here because it comes through salt.loaded.int.module
-                        except Exception as e:
-                            log.debug(f'Exception from ldap3.search: {e}.')
-                            results = []
+                    for sub_dn, sub_clean in sub_cleans.items():
+                        log.debug(f'Detecting cleaning preference for "{sub_dn}".')
 
-                        for existing_dn in results:
+                        if sub_clean is None:
+                            sub_clean = p_clean
+
+                        if not sub_clean:
+                            log.debug(f'Skipping cleaning of child "{sub_dn}".')
+                            continue
+
+                        log.debug(f'Starting cleaning of child "{sub_dn}".')
+
+                        for existing_dn in _search(cs, sub_dn):
                             if existing_dn not in dns_want and existing_dn != p_dn:
-                                log.debug(f'Marking existing DN "{existing_dn}" for removal.')
-                                entries_drop.append({
-                                    existing_dn: [
-                                        {'delete_others': True},
-                                        {'delete': {}},
-                                    ],
-                                })
+                                entries_drop.append(_entry_clean(existing_dn))
 
             if entries_drop:
                 states['389ds-data-clean'] = {
