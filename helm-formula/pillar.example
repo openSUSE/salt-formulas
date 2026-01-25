@@ -1,0 +1,20 @@
+# vim: ft=yaml
+
+helm:
+  releases:
+    # namespace
+    test1:
+      # release name
+      cert-manager:
+        # chart reference is mandatory
+        chart:
+          # chart name can be <registry>/<name> or a OCI URL
+          name: oci://dp.apps.rancher.io/charts/cert-manager
+        # everything below is optional
+          version: 1.19.1
+        values:
+          # all user values can be passed in this mapping
+          crds:
+            enabled: False
+        description: Hello
+        timeout: 5m  # defaults to 15s to avoid unexpected lockup
