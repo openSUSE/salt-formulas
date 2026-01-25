@@ -1,3 +1,4 @@
+{%- from 'macros.jinja' import expand_recurse %}
 {#- FIXME: move these to context variables #}
 {%- set interfaces = salt['pillar.get']('juniper_junos:interfaces') -%}
 {%- set present_interfaces = salt['susejunos.get_active_interfaces']() -%}
@@ -110,15 +111,12 @@ delete interfaces {{ interface }}
 {%- if 'mc' in aec %}
 {%- set mclc = aec['mc'] -%}
 {%- set setifaemc = setifae ~ 'mc-ae' -%}
-{%- set mclo = ['mc-ae-id', 'redundancy-group', 'chassis-id', 'status-control', 'init-delay-time'] -%}
 
-{%- for option in mclo %}
-{%- if option in mclc %}
-{{ setifaemc }} {{ option }} {{ mclc[option] }}
-{%- endif %}
+{{ setifaemc }} mode {{ mclc.pop('mode', 'active-active') }}
+
+{%- for option, value in mclc.items() %}
+{{ expand_recurse(option, value, setifaemc) }}
 {%- endfor %}
-
-{{ setifaemc }} mode {{ mclc.get('mode', 'active-active') }}
 
 {%- endif %} {#- close mc check -#}
 {%- endif %} {#- close ae check -#}
