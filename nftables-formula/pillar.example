@@ -1,0 +1,56 @@
+nftables:
+  config:
+    testchain:
+      # passive configurations will not be included in the top nftables.conf and can be referenced in lower "includes"
+      mode: passive
+      chains:
+        forward:
+          type: filter
+          rules:
+            - ct state established, related accept
+    sets:
+      mode: passive
+      sets:
+        myv6net:
+          type: ipv6_addr
+          flags: interval
+          auto-merge: true
+          elements:
+          - 127.0.0.1/128
+          - $mylan
+    variables:
+      priority: 01
+      variables:
+        vpn_ranges:
+          - 192.168.0.0/24
+          - 192.168.1.0/24
+        myhost: 192.168.0.1/32
+    tables:
+      priority: 02
+      tables:
+        nat:
+          # if the include matches the name of a passive configuration, it will be expanded to its path
+          # multiple includes can be passed using a list
+          include: sets
+        inet:
+          type: filter
+          chains:
+            input:
+              type: filter
+              hook: input
+              priority: 0
+              policy: drop
+              counter: true
+              log:
+                prefix: Denied Inbound
+                flags: all
+              maps:
+                dport:
+                  80: 127.0.0.1
+              vmaps:
+                iif:
+                  eth0: jump testchain              
+              rules:
+                - iif external jump input_external
+                - ct state established, related accept
+                - ct state invalid accept
