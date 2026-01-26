@@ -1,0 +1,5 @@
+---
+summary:
+  Salt helpers for POSIX.1e ACLs
+description:
+  Formula containing modules to help with managing POSIX.1e style ACLs.
