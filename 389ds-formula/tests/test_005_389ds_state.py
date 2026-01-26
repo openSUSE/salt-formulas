@@ -428,8 +428,8 @@ from utils import INSTANCE, PASS, SUFFIX, expand_expect_out, reduce_state_out
   indirect=['pillar'],
 )
 @pytest.mark.parametrize('test', [True, False])
-def test_fresh(host, salt_state_apply, pillar, expect, test):
-    out, err, rc = salt_state_apply
+def test_fresh(host, salt_state_apply_main, pillar, expect, test):
+    out, err, rc = salt_state_apply_main
     have = reduce_state_out(out)
 
     # in test mode the LDAP server is not up yet and the data-clean state will not be rendered as a result
@@ -728,8 +728,8 @@ def test_fresh(host, salt_state_apply, pillar, expect, test):
   indirect=['pillar'],
 )
 @pytest.mark.parametrize('test', [True, False])
-def test_nochanges(host, instance_with_samples, pillar, test, salt_state_apply, expect):
-    out, err, rc = salt_state_apply
+def test_nochanges(host, instance_with_samples, pillar, test, salt_state_apply_main, expect):
+    out, err, rc = salt_state_apply_main
     have = reduce_state_out(out)
     assert len(have) == len(expect)
 
@@ -741,3 +741,340 @@ def test_nochanges(host, instance_with_samples, pillar, test, salt_state_apply, 
             assert have[expect_state][expect_k] == expect_v
 
         assert have[expect_state]['result'] is True
+
+
+@pytest.mark.parametrize(
+  'pillar, expect', [
+
+    # 0. global clean False, ou clean True
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'data': {
+                'clean': False,
+                'tree': {
+                  SUFFIX: {
+                    'ou=people': {
+                      'clean': True,
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'cn=Max Mustermannn': {
+                          'objectClass': ['inetOrgPerson', 'organizationalPerson', 'person', 'top'],
+                          'sn': 'Mustermann',
+                          'mail': ['foo@example.com'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        '389ds_|-389ds-data-clean_|-389ds-data-clean_|-manage_data': {
+          'changes': {
+            'uid=demo_user,ou=people,dc=example,dc=com': {
+              'old': {
+                'cn': ["b'Demo User'"],
+                'displayName': ["b'Demo User'"],
+                'gidNumber': ["b'99998'"],
+                'homeDirectory': ["b'/var/empty'"],
+                'legalName': ["b'Demo User Name'"],
+                'loginShell': ["b'/bin/false'"],
+                'objectClass': ["b'nsAccount'", "b'nsOrgPerson'", "b'nsPerson'", "b'posixAccount'", "b'printerAbstract'", "b'top'"],
+                'printer-color-supported': ["b'FALSE'"],
+                'uid': ["b'demo_user'"],
+                'uidNumber': ["b'99998'"],
+              },
+              'new': None,
+            },
+          },
+          'comment': (
+            'Would change LDAP entries',
+            'Successfully updated LDAP entries',
+          ),
+          'result': (None, True),
+        },
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {
+            'cn=Max Mustermannn,ou=people,dc=example,dc=com': {
+              'old': None,
+              'new': {'objectClass': ["b'inetOrgPerson'", "b'organizationalPerson'", "b'person'", "b'top'"], 'sn': ["b'Mustermann'"], 'mail': ["b'foo@example.com'"], 'cn': ["b'Max Mustermannn'"]},
+            },
+          },
+          'result': (None, True),
+        },
+      },
+    ),
+
+    # 1. global clean True, ou clean False
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'data': {
+                'clean': True,
+                'tree': {
+                  SUFFIX: {
+                    'ou=people': {
+                      'clean': False,
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'cn=Max Mustermannn': {
+                          'objectClass': ['inetOrgPerson', 'organizationalPerson', 'person', 'top'],
+                          'sn': 'Mustermann',
+                          'mail': ['foo@example.com'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {
+            'cn=Max Mustermannn,ou=people,dc=example,dc=com': {
+              'old': None,
+              'new': {'objectClass': ["b'inetOrgPerson'", "b'organizationalPerson'", "b'person'", "b'top'"], 'sn': ["b'Mustermann'"], 'mail': ["b'foo@example.com'"], 'cn': ["b'Max Mustermannn'"]},
+            },
+          },
+          'result': (None, True),
+        },
+      },
+    ),
+
+    # 2. global clean Default (= True), parent ou clean Default (= True), two child ou's - one clean Default (= True), the other clean False
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'data': {
+                'tree': {
+                  SUFFIX: {
+                    'ou=testou': {
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'ou=testsubou1': {
+                          'children': {
+                            'uid=testuser1': {
+                              'objectClass': ['top', 'account'],
+                            },
+                          },
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                        'ou=testsubou2': {
+                          'clean': False,
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {},
+          'comment': 'LDAP entries already set',
+          'result': True,
+        },
+      },
+    ),
+
+    # 3. global clean False, parent ou clean Default (= False), two child ou's - one clean Default (= False), the other clean True
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'data': {
+                'clean': False,
+                'tree': {
+                  SUFFIX: {
+                    'ou=testou': {
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'ou=testsubou1': {
+                          'children': {
+                            'uid=testuser1': {
+                              'objectClass': ['top', 'account'],
+                            },
+                          },
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                        'ou=testsubou2': {
+                          'clean': True,
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        '389ds_|-389ds-data-clean_|-389ds-data-clean_|-manage_data': {
+          'changes': {
+            'uid=testuser2,ou=testsubou2,ou=testou,dc=example,dc=com': {
+              'old': {
+                'objectClass': ["b'account'", "b'top'"],
+                'uid': ["b'testuser2'"],
+              },
+              'new': None,
+            },
+          },
+          'result': (None, True),
+        },
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {},
+          'comment': 'LDAP entries already set',
+          'result': True,
+        },
+      },
+    ),
+
+    # 4. global clean True, parent ou clean Default (= True), two child ou's - one Default (= True), the other False (with stray data)
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'data': {
+                'clean': True,
+                'tree': {
+                  SUFFIX: {
+                    'ou=testou': {
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'ou=testsubou1': {
+                          'children': {
+                            'uid=testuser3': {
+                              'objectClass': ['top', 'account'],
+                            },
+                          },
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                        'ou=testsubou2': {
+                          'clean': False,
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        '389ds_|-389ds-data-clean_|-389ds-data-clean_|-manage_data': {
+          'changes': {
+            'uid=testuser1,ou=testsubou1,ou=testou,dc=example,dc=com': {
+              'old': {
+                'objectClass': ["b'account'", "b'top'"],
+                'uid': ["b'testuser1'"],
+              },
+              'new': None,
+            },
+          },
+        },
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {
+            'uid=testuser3,ou=testsubou1,ou=testou,dc=example,dc=com': {
+              'old': None,
+              'new': {
+                'objectClass': ["b'account'", "b'top'"],
+                'uid': ["b'testuser3'"],
+              },
+            },
+          },
+          'result': (None, True),
+        },
+      },
+    ),
+
+    # 5. global clean True, parent ou clean Default (= True), two child ou's - one Default (= True), the other False (without stray data)
+    (
+      {
+        '389ds': {
+          'instances': {
+            INSTANCE: {
+              'data': {
+                'clean': True,
+                'tree': {
+                  SUFFIX: {
+                    'ou=testou': {
+                      'objectClass': ['top', 'organizationalunit'],
+                      'children': {
+                        'ou=testsubou1': {
+                          'children': {
+                            'uid=testuser1': {
+                              'objectClass': ['top', 'account'],
+                            },
+                          },
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                        'ou=testsubou2': {
+                          'clean': False,
+                          'objectClass': ['top', 'organizationalunit'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        '389ds_|-389ds-data_|-389ds-data_|-manage_data': {
+          'changes': {},
+          'comment': 'LDAP entries already set',
+          'result': True,
+        },
+      },
+    ),
+
+  ],
+  indirect=['pillar'],
+)
+@pytest.mark.parametrize('test', [True, False])
+def test_data_clean(host, instance_with_samples, pillar, test, salt_state_apply_data, expect):
+    out, err, rc = salt_state_apply_data
+    have = reduce_state_out(out)
+
+    for expect_state, expect_data in expand_expect_out(expect, test).items():
+        assert expect_state in have
+
+        for expect_k, expect_v in expect_data.items():
+            assert expect_k in have[expect_state]
+
+            have_v = have[expect_state][expect_k]
+
+            # work around attribute order bug
+            if isinstance(have_v, list) and isinstance(expect_v, list):
+                have_v.sort()
+                expect_v.sort()
+
+            assert have_v == expect_v
+
+    # ensure not more states than expected were rendered
+    assert len(have) == len(expect)

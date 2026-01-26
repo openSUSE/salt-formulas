@@ -19,8 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from shlex import quote
 
 import pytest
-from utils import (DSCONF_FILE, INSTANCE, SUFFIX, cmd, cmd_dsconf,
-                   instance_setup, instance_teardown, salt)
+from utils import INSTANCE, SUFFIX, cmd_dsconf, instance_setup, instance_teardown, salt
 
 
 @pytest.fixture(scope='module')
@@ -115,7 +114,7 @@ def pillar(request):
 
 
 @pytest.fixture
-def salt_state_apply(host, pillar, test):
+def salt_state_apply_main(host, pillar, test):
     print(f'sa pillar: {pillar}')
     print(f'sa test: {test}')
 
@@ -123,7 +122,16 @@ def salt_state_apply(host, pillar, test):
 
     yield salt(host, f'state.apply 389ds pillar={pillar} test={test}')
 
-    # loose cleanup regardless of whether the above changed anything
-    host.run(cmd(['sudo', 'dsctl', INSTANCE, 'remove', '--do-it']))
-    host.run('rpm --quiet -q 389-ds && sudo zypper -nq rm 389-ds')
-    host.run(cmd(['sudo', 'rm', '-f', DSCONF_FILE]))
+    instance_teardown(host)
+
+
+@pytest.fixture
+def salt_state_apply_data(host, pillar, test):
+    print(f'sa pillar: {pillar}')
+    print(f'sa test: {test}')
+
+    pillar = quote(str(pillar))
+
+    yield salt(host, f'state.apply 389ds.data pillar={pillar} test={test}')
+
+    instance_teardown(host)
