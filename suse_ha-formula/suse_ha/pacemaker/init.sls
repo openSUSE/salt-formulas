@@ -16,15 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
-{%- from 'suse_ha/map.jinja' import cluster, fencing, sysconfig -%}
+{%- from 'suse_ha/map.jinja' import cluster, cmd_kwargs, fencing, is_standby, sysconfig -%}
 {%- from 'suse_ha/macros.jinja' import ha_resource, property, rsc_default, ipmi_secret -%}
 {%- set myfqdn = grains['fqdn'] -%}
 {%- set myhost = grains['host'] -%}
-{%- if salt['cmd.retcode']('test -x /usr/sbin/crmadmin') == 0 -%}
-{%- set clusterdc = salt['cmd.run']('/usr/sbin/crmadmin -q -D 1') -%}
+{%- if salt['cmd.has_exec']('/usr/sbin/crmadmin') -%}
+  {%- set clusterdc = salt['cmd.run']('/usr/sbin/crmadmin -q -D 1', **cmd_kwargs) -%}
 {%- else -%}
-{%- do salt.log.error('crmadmin is not available!') -%}
-{%- set clusterdc = None -%}
+  {%- do salt.log.error('crmadmin is not available!') -%}
+  {%- set clusterdc = None -%}
 {%- endif -%}
 
 {% if myfqdn == clusterdc or myhost == clusterdc %}
@@ -91,9 +91,13 @@ include:
 {%- endif %}
 {%- endif %}
   - suse_ha.resources
+  - suse_ha.restart
 
 {%- else %}
 {%- do salt.log.info('Not sending any Pacemaker configuration - ' ~ myfqdn ~ ' is not the designated controller.') -%}
+
+include:
+  - suse_ha.restart
 
 {%- if fencing.enable and 'ipmi' in fencing %}
 {%- for host, config in fencing.ipmi.hosts.items() %}
@@ -107,7 +111,7 @@ include:
 pacemaker.service:
   service.running:
     - enable: True
-    - reload: True
+    - reload: False
     - retry:
         attempts: 3
         interval: 10
@@ -116,8 +120,6 @@ pacemaker.service:
       - suse_ha_packages
       - corosync.service
 {%- if sysconfig.pacemaker | length %}
-    - watch:
-      - suse_sysconfig: /etc/sysconfig/pacemaker
   suse_sysconfig.sysconfig:
     - name: /etc/sysconfig/pacemaker
     - header_pillar: managed_by_salt_formula_sysconfig
@@ -130,6 +132,8 @@ pacemaker.service:
         {%- endfor %}
     - require:
       - suse_ha_packages
+    - watch_in:
+      - cmd: suse_ha_restart
 {%- endif %}
 {%- else %}
 {%- do salt.log.error('suse_ha: cluster pillar not configured, not enabling Pacemaker!') %}
