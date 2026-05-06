@@ -53,13 +53,16 @@ def generate_infrastructure_pillar(enabled_domains):
                 delegated_domain = clusterconfig['delegate_to']
 
                 domaindata['inherited_clusters'].update({
-                    delegated_domain: pillar_domain_data(delegated_domain, ['clusters']),
+                    delegated_domain: pillar_domain_data(delegated_domain, ['clusters'])['clusters'],
                 })
 
-                if cluster in domaindata['inherited_clusters']:
-                    clusterconfig = domaindata['inherited_clusters'][cluster]
+                log(f'Have inherited_clusters: {domaindata["inherited_clusters"]}')
+
+                if cluster in domaindata['inherited_clusters'][delegated_domain]:
+                    clusterconfig = domaindata['inherited_clusters'][delegated_domain][cluster]
                 else:
                     log(f'Delegation of cluster {cluster} to {delegated_domain} is not possible!')
+                    continue
 
             clusterpillar = {
                     'storage': clusterconfig['storage'],
