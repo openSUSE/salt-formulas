@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -#}
 
 {%- set myid = grains['id'] -%}
+{%- set myhost = grains['host'] -%}
 {%- if pillar['do_vd'] | default(False) and 'delegated_orchestra' in pillar -%}
   {%- do salt.log.debug('libvirt.domains: delegated from orchestration run') -%}
   {%- set dopillar = pillar['delegated_orchestra'] -%}
@@ -59,7 +60,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
       {%- if dname == domain or do_all_domains %}
         {%- for machine, config in dpillar['machines'].items() %}
           {%- set machine = machine ~ '.' ~ dname %}
-          {%- if config['cluster'] == cluster and ( not 'node' in config or config['node'] == myid ) %}
+          {%- if config['cluster'] == cluster and ( not 'node' in config or config['node'] == myhost ) %}
             {%- set domainxmlname = machine ~ '.xml' %}
             {%- do domainxmls.append(domainxmlname) %}
             {%- set domainxml = domaindir ~ '/' ~ domainxmlname %}
