@@ -97,11 +97,12 @@ def generate_infrastructure_pillar(enabled_domains):
             if 'node' in hostconfig:
                 node = hostconfig['node']
 
-                # the node key is compared against the hypervisor minion ID, which is always a FQDN in our infrastructure
+                # the node key is compared against the hypervisor host grain
+                # this expects every hypervisor host name to exist only once across all domains
                 if '.' in node:
-                    hostpillar['node'] = node
+                    hostpillar['node'] = node.split('.', 1)[0]
                 else:
-                    hostpillar['node'] = f'{node}.{domain}'
+                    hostpillar['node'] = node
 
             hostinterfaces = hostconfig.get('interfaces', {})
 
