@@ -46,10 +46,10 @@ from salt.utils.napalm import proxy_napalm_wrap
 
 # ----------------------------------------------------------------------------------------------------------------------
 # module properties
-ifname_regex = re.compile('set interfaces (\S+)\s+')
-unit_regex = re.compile('set interfaces \S+\s+unit\s+(\S+)')
-vlanid_regex = re.compile('set vlans (\S+)\s+vlan-id\s+(\d+)')
-vlan_regex = re.compile('set vlans (\S+)')
+ifname_regex = re.compile(r'set interfaces (\S+)\s+')
+unit_regex = re.compile(r'set interfaces \S+\s+unit\s+(\S+)')
+vlanid_regex = re.compile(r'set vlans (\S+)\s+vlan-id\s+(\d+)')
+vlan_regex = re.compile(r'set vlans (\S+)')
 
 # ----------------------------------------------------------------------------------------------------------------------
 __virtualname__ = 'susejunos'
