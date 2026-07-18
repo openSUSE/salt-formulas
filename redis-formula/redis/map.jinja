@@ -34,10 +34,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 {%- do config.update({instance: iconfig}) -%}
 {%- endfor -%} {#- end instances loop -#}
 
-{%- if grains['osrelease'] | float > 15.4 -%}
-{%- set package = 'redis7' -%}
+{%- set osrelease = grains['osrelease'] | float -%}
+
+{%- if osrelease >= 16 -%}
+  {%- set package = 'redis' %}
+{%- elif osrelease > 15.4 -%}
+  {%- set package = 'redis7' -%}
 {%- else -%}
-{%- set package = 'redis' -%}
+  {%- set package = 'redis' -%}
 {%- endif -%}
 
 {%- set dirs = {
