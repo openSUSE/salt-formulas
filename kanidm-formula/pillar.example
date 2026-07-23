@@ -1,0 +1,13 @@
+# vim: ft=yaml
+
+kanidm:
+  client:
+    config:
+      uri: https://idm.example.com
+  server:
+    config:
+      domain: idm.example.com
+      origin: https://idm.example.com
+    data:
+      persons:
+        testperson1: {}
