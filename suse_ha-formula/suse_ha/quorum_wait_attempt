@@ -1,0 +1,9 @@
+pacemaker_wait_for_quorum:
+  loop.until_no_eval:
+    - name: cmd.run
+    - args:
+      - crm_node -q
+    - expected: '1'
+    - period: 5
+    - timeout: 30
+
