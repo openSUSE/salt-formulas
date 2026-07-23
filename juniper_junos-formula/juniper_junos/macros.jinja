@@ -1,0 +1,32 @@
+{#-
+Jinja macros file for Juniper Junos related Salt templates
+Copyright (C) 2024 SUSE LLC <georg.pfuetzenreuter@suse.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-#}
+
+{%- macro expand_recurse(key_high, value_high, prefix=None) -%}
+{%- set prefix = prefix ~ ' ' if prefix else '' -%}
+{%- if value_high is string or value_high is number %}
+{{ prefix }}{{ key_high }} {{ value_high }}
+{%- elif value_high is mapping %}
+  {%- for key_low, value_low in value_high.items() %}
+    {%- if value_low is string %}
+{{ prefix }}{{ key_high }} {{ key_low }} {{ value_low }}
+    {%- elif value_low is mapping %}
+{{ expand_recurse(key_low, value_low, prefix ~ key_high) }}
+    {%- endif %}
+  {%- endfor %}
+{%- endif %}
+{%- endmacro -%}
