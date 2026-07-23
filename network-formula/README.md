@@ -12,7 +12,9 @@ Currently only [Wicked](https://github.com/openSUSE/wicked) is supported, howeve
 
 `network`
 
-Configures all possible aspects using either the pillar specified or the default backend (Wicked).
+Configures all the pillar specified or the default backend (Wicked).
+
+### Wicked
 
 `network.wicked`
 
@@ -29,6 +31,22 @@ Configures routes using Wicked (`/etc/sysconfig/network/routes`).
 `network.wicked.netconfig`
 
 Configures netconfig (`/etc/sysconfig/network/config`).
+
+### NetworkManager
+
+`network.NetworkManager`
+
+Configures all aspects using NetworkManager.
+
+`network.NetworkManager.packages`
+
+Installs NetworkManager and removes Wicked (TODO).
+
+`network.NetworkManager.connections`
+
+Configures NetworkManager connection profiles (`/etc/NetworkManager/system-connections/`).
+
+### systemd
 
 `network.systemd.link`
 

@@ -1,0 +1,194 @@
+#!/bin/bash
+# shellcheck disable=SC2162
+
+set -Cu
+
+base='{{ base }}'
+base_backup='{{ base_backup }}'
+
+#{%- raw %}
+call="${1?Missing command.}"
+shift
+interfaces=("$@")
+
+logtool="$(type -P logger) -t saltsafe_nm" || logtool='echo'
+
+fail() {
+	echo "$1"
+	exit 1
+}
+
+if ! type nmcli >/dev/null
+then
+	fail 'Cannot locate nmcli.'
+fi
+
+log() {
+	local msg="$2"
+	case $1 in
+		0 )
+			$logtool "$msg"
+			;;
+
+		1 )
+			if [ "$logtool" == 'echo' ]
+			then
+				local msg="saltsafe_nm: $msg"
+				>&2 $logtool "$msg"
+			else
+				$logtool -s "$msg"
+			fi
+			;;
+		* )
+			fail 'Invalid function call'
+			;;
+	esac
+
+}
+
+quit() {
+	case "$1" in
+		0 ) result="$result result=True" ;;
+		1 ) result="$result result=False" ;;
+	esac
+	echo
+	echo "$result"
+	exit "$1"
+}
+
+check() {
+	if [ "$SALTSAFE_TEST_MASTER" -eq 0 ]
+	then
+		target='localhost'
+		salt='--local'
+	else
+		target="$master_ip"
+		salt=''
+	fi
+
+	if ! ping -c3 -w5 -q "$target" >/dev/null
+	then
+		return 1
+	fi
+	if ! timeout 20 salt-call -t15 --out quiet $salt test.ping 2>/dev/null
+	then
+		return 1
+	fi
+}
+
+rollback() {
+	rollback=yes
+	cp -v "$file_backup" "$file"
+}
+
+run() {
+	for file
+	do
+		if ! nmcli connection load "$base/$file"
+		then
+			break
+		fi
+	done
+}
+
+backup() {
+	for file
+	do
+		file_backup="$base_backup/$file"
+		if [ "$1" != 'init' ] && [ -f "$file_backup" ]
+		then
+			mv "$file_backup" "$file_backup.previous"
+		fi
+		if [ -f "$file" ]
+		then
+			cp "$file" "$file_backup"
+		fi
+	done
+}
+
+run_cycle() {
+	if run
+	then
+		if check
+		then
+			if [ "$rollback" == 'yes' ]
+			then
+				log 1 "Reverted configuration of interface(s): ${interfaces[*]}."
+				result='changed=yes comment="NM configuration reverted.'
+			else
+				log 0 "Reloaded configuration of interface(s): ${interfaces[*]}."
+				result='changed=yes comment="NM configuration applied."'
+				backup
+			fi
+			quit 0
+		else
+			log 1 "Validation failed after configuration reload of interface(s): ${interfaces[*]}."
+			result='changed=yes comment="NM configuration applied, but validation failed."'
+		fi
+		if [ "$rollback" = 'yes' ]
+		then
+			log 1 'Rollback was not successful. Giving up.'
+			result='changed=yes comment="Failed to revert interface configuration, this situation is fatal."'
+			quit 1
+		fi
+	else
+		result='changed=yes comment="Execution failed."'
+		return "$?"
+	fi
+}
+
+if [ "$call" != 'reload' ]
+then
+	fail 'Invalid invocation.'
+fi
+
+if ! (( ${#interfaces[@]} ))
+then
+	fail 'Invalid invocation, need at least one interface to operate.'
+fi
+
+backup init
+
+danger=no
+rollback=no
+
+if [ "$SALTSAFE_TEST_MASTER" -eq 1 ]
+then
+	# Get IP addresses of the Salt minion and master
+	read minion_ip master_ip < <(ss -HntA tcp dst :4505 | awk 'END { gsub(/\[|\]/,""); split($4, con_out, /:[[:digit:]]{4,5}$/); split($5, con_in, /:[[:digit:]]{4,5}$/); print con_out[1] " " con_in[1] }')
+	
+	if [ -z "$minion_ip" ] || [ -z "$master_ip" ]
+	then
+		fail 'Unable to determine Salt connection, refusing to operate.'
+	fi
+	
+	# Assess whether the master is located in a remote network, requiring routing for the connection
+	if [ "$(ip -ts r g "$master_ip" | awk -v ip="$master_ip" '$0 ~ ip { print $2 }')" == 'via' ]
+	then
+		danger=yes
+	fi
+	
+	# Assess whether the network interface used for connectivity to the Salt master is part of the interfaces to be modified
+	if [[ " ${interfaces[*]} " == *"$(ip -br a sh | awk -v ip="$minion_ip" '$0 ~ ip { print $1 }')"* ]]
+	then
+		danger=yes
+		if ! check
+		then
+			log 1 "Failed to verify Salt master connectivity, refusing to operate on potentially dangerous interfaces: ${interfaces[*]}."
+			result='changed=no comment="Interface is used for Salt connectivity, but functionality could not be validated. Refusing to risk bringing it down."'
+			quit 1
+		fi
+	fi
+fi
+
+run_cycle
+
+if [ "$danger" == 'yes' ]
+then
+	log 1 'Rolling back ...'
+	rollback
+	run_cycle
+fi
+
+quit 1
+#{%- endraw %}
