@@ -28,7 +28,7 @@ SCTL="systemctl ${SCTL_ARGS[@]}"
 
 
 echo '==> Pulling images ...'
-$SRUN sh -c 'podman images --format "{{.Repository}}" | sed "/<none>/d" | xargs podman pull -q'
+$SRUN sh -c 'podman images --format "{{.Repository}}:{{.Tag}}" | sed "/<none>/d" | xargs podman pull -q'
 
 echo '==> Fetching containers ...'
 # https://github.com/containers/podman/issues/14888
