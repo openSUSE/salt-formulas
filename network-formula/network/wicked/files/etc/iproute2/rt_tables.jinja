@@ -1,0 +1,15 @@
+{%- set custom_tables = salt['pillar.get']('network:tables', {}) | dictsort -%}
+{{ pillar['managed_by_salt'] }}
+#
+# reserved values
+#
+255	local
+254	main
+253	default
+0	unspec
+#
+# local
+#
+{%- for table, table_num in custom_tables %}
+{{ table_num }}	{{ table }}
+{%- endfor %}

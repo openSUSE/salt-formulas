@@ -51,10 +51,10 @@ include:
       {%- else %}
         {%- set value = 'no' %}
       {%- endif %}
-    {%- elif option != 'ethtool_options' %}
+    {%- elif option not in ['ethtool_options', 'rules'] %}
       {%- set value = value | lower %}
     {%- endif %}
-    {%- if not option in ['address', 'addresses'] %}
+    {%- if not option in ['address', 'addresses', 'rules'] %}
       {%- do ifcfg_data[interface].update({option: value}) %}
     {%- endif %}
   {%- endfor %}
@@ -69,6 +69,21 @@ include:
     {%- endif %}
     {%- do enslaved.extend(config['bridge_ports'].split()) %}
   {%- endif %}
+
+  {%- if 'rules' in config %}
+/etc/sysconfig/network/ifrule-{{ interface }}:
+  file.managed:
+    - contents:
+      - {{ pillar.get('managed_by_salt_formula', '# Managed by the network formula') | yaml_encode }}
+    {%- for table, table_rules in config.rules.items() %}
+      {%- for action, targets in table_rules.items() %}
+        {%- for target in targets %}
+      - {{ action }} {{ target }} table {{ table }}
+        {%- endfor %}
+      {%- endfor %}
+    {%- endfor %}
+  {%- endif %}
+
 {%- endfor %} {#- close first interfaces loop #}
 
 {%- for interface, config in interfaces.items() %}
@@ -92,7 +107,7 @@ include:
       {%- endif %}
     {%- endfor %} {#- close interface loop #}
 
-  {%- if interface_files %}
+    {%- if interface_files %}
 network_wicked_ifcfg_backup:
   file.copy:
     - names:
@@ -102,7 +117,7 @@ network_wicked_ifcfg_backup:
       {%- endfor %}
     - require:
       - file: network_wicked_backup_directory
-  {%- endif %} {#- close interface_files check #}
+    {%- endif %} {#- close interface_files check #}
 
 network_wicked_ifcfg_settings:
   file.managed:
@@ -189,4 +204,15 @@ network_wicked_destroy_interface_{{ interface }}:
       {%- endif %} {#- close interface check #}
     {%- endif %} {#- close file check #}
   {%- endfor %} {#- close file loop #}
+
+  {%- for file in salt['file.find'](base, mindepth=1, maxdepth=1, name='ifrule-*', print='name', type='f') %}
+    {%- if file[-4:] != '.bak' %}
+      {%- set interface = file.replace('ifrule-', '') %}
+      {%- if interface not in interfaces or 'rules' not in interfaces[interface] %}
+network_wicked_remove_ifrule_{{ interface }}:
+  file.absent:
+    - name: {{ base }}/{{ file }}
+      {%- endif %}
+    {%- endif %}
+  {%- endfor %} {#- close ifrule file loop #}
 {%- endif %} {#- close control.clean check #}
