@@ -26,7 +26,7 @@
 %define pythons python3
 %endif
 Name:           infrastructure-formulas
-Version:        3.4.0
+Version:        0
 Release:        0
 Summary:        Salt states for openSUSE and SLE
 License:        GPL-3.0-or-later
