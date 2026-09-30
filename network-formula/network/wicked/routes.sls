@@ -22,7 +22,23 @@ include:
   - .common
   - .service
 
+{%- macro render_routes(routes_map, table=None, track_shell=False) %}
+  {%- for route, config in routes_map.items() %}
+    {%- if route != 'tables' %}
+      {%- if route in ['default4', 'default6'] %}
+        {%- set route = 'default' %}
+      {%- endif %}
+      {%- if track_shell %}
+        {%- do shell_routes.append(route ~ '_' ~ config.get('gateway', '')) %}
+      {%- endif %}
+      {%- set options = config.get('options', []) %}
+        - '{{ route }} {{ config.get('gateway', '-') }} {{ config.get('netmask', '-') }} {{ config.get('interface', '-') }}{{ ' ' ~ ' '.join(options) if options else '' }}{{ ' table ' ~ (table|string) if table is not none else '' }}'
+    {%- endif %}
+  {%- endfor %} {#- close routes loop #}
+{%- endmacro %}
+
 {%- set file = base ~ '/routes' %}
+
 {%- if salt['file.file_exists'](file) %}
   {%- set backup = True %}
 network_wicked_routes_backup:
@@ -42,14 +58,12 @@ network_wicked_routes:
     - name: {{ file }}
     - contents:
         - {{ pillar.get('managed_by_salt_formula', '# Managed by the network formula') | yaml_encode }}
-      {%- for route, config in routes.items() %}
-        {%- if route in ['default4', 'default6'] %}
-          {%- set route = 'default' %}
-        {%- endif %}
-        {%- do shell_routes.append(route ~ '_' ~ config.get('gateway', '')) %}
-        {%- set options = config.get('options', []) %}
-        - '{{ route }} {{ config.get('gateway', '-') }} {{ config.get('netmask', '-') }} {{ config.get('interface', '-') }}{{ ' ' ~ ' '.join(options) if options else '' }}'
-      {%- endfor %} {#- close routes loop #}
+      {# Main routing table #}
+{{ render_routes(routes, track_shell=True) }}
+      {# Additional routing tables #}
+      {%- for table, table_routes in routes.get('tables', {}).items() %}
+{{ render_routes(table_routes, table) }}
+      {%- endfor %} {#- close additional routes loop #}
     - mode: '0640'
 
   {%- if do_apply %}
