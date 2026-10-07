@@ -20,3 +20,4 @@ include:
   - .interfaces
   - .routes
   - .netconfig
+  - .rt_tables

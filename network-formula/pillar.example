@@ -37,12 +37,22 @@ network:
       mtu: 9000
       # boolean values are converted automatically
       firewall: false
+      # define policy routing rules for this interface
+      # format: { table: { action: [ list of prefixes/addresses ] } }
+      rules:
+        mytable:
+          from:
+            - 10.16.0.0/16
+            - 2aa5:d440:6883::/48
     dummy0:
       addresses:
         - 192.168.101.1/24
         - fe80::1/64
     mlx0:
       ethtool_options: -K foo rxvlan off
+  # define custom routing tables in /etc/iproute2/rt_tables
+  tables:
+    mytable: 100
   # each listed route will be written into /etc/sysconfig/network/routes and applied
   # "default4" and "default6" will be written as "default"
   routes:
@@ -55,6 +65,12 @@ network:
       gateway: 192.168.120.2
       options:
         - blackhole
+    # define routes for specific routing tables
+    tables:
+      mytable:
+        10.0.1.0/16:
+          gateway: 192.168.130.1
+          interface: eth1
 
   systemd:
     # remove files not configured in this pillar from /etc/systemd/network/ (defaults to true)
